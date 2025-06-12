@@ -121,7 +121,7 @@ const MatchDropdown = ({ matches, isOpen, onClose, currentMatchId, triggerRef })
         // Set the selected competition and go back to matches view
         setSelectedCompetition(competition);
         setShowLeagues(false);
-    };    if (showLeagues) {
+    }; if (showLeagues) {
         return (
             <div className="absolute top-full left-0 z-50 mt-2 w-[500px]" ref={dropdownRef}>
                 <Card className="border border-gray-300 shadow-xl bg-gray-800 w-full max-h-96 overflow-y-auto transform transition-all duration-300 ease-in-out dropdown-scrollbar">
@@ -158,7 +158,7 @@ const MatchDropdown = ({ matches, isOpen, onClose, currentMatchId, triggerRef })
                 </Card>
             </div>
         );
-    }    return (
+    } return (
         <div className="absolute top-full left-0 z-50 mt-2 w-[500px]" ref={dropdownRef}>
             <Card className="border border-gray-300 shadow-xl bg-gray-800 w-full max-h-96 overflow-y-auto transform transition-all duration-300 ease-in-out dropdown-scrollbar">
                 <CardContent className="p-0">

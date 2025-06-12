@@ -1,14 +1,21 @@
-
-
-
 'use client';
 
-import React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useSidebar } from '@/contexts/SidebarContext.js';
+import React, { useEffect, useRef } from 'react';
+import { ChevronLeft, ChevronRight, Pin } from 'lucide-react';
+import { useCustomSidebar } from '../../contexts/SidebarContext.js';
 
 const Sidebar = () => {
-    const { isCollapsed, setIsCollapsed } = useSidebar();
+    const context = useCustomSidebar();
+    console.log('Raw context from useCustomSidebar:', context);
+    console.log('Context keys:', Object.keys(context || {}));
+
+    const { isCollapsed, setIsCollapsed, isPinned, setIsPinned } = context || {};
+
+    // Debug log
+    console.log('Sidebar context:', { isCollapsed, setIsCollapsed, isPinned, setIsPinned });
+
+    const sidebarRef = useRef(null);
+    const hoverTimeoutRef = useRef(null);
 
     const popularSports = [
         { name: 'Odds Boost', icon: '💫', count: null },
@@ -19,20 +26,60 @@ const Sidebar = () => {
         { name: 'La Liga', icon: '⚽', count: null },
     ];
 
-    // const allSports = [
-    //     { name: 'American Football', count: 666 },
-    //     { name: 'Athletics', count: 1 },
-    //     { name: 'Australian Rules', count: '999+' },
-    //     { name: 'Baseball', count: '999+' },
-    //     { name: 'Basketball', count: '999+' },
-    //     { name: 'Boxing', count: 66 },
-    //     { name: 'Cricket', count: 219 },
-    //     { name: 'Cycling', count: 5 },
-    // ];
+    // Handle mouse enter
+    const handleMouseEnter = () => {
+        if (!isPinned) {
+            // Clear any existing timeout
+            if (hoverTimeoutRef.current) {
+                clearTimeout(hoverTimeoutRef.current);
+            }
+            setIsCollapsed(false);
+        }
+    };    // Handle mouse leave
+    const handleMouseLeave = () => {
+        if (!isPinned) {
+            // Add a small delay to prevent flickering
+            hoverTimeoutRef.current = setTimeout(() => {
+                setIsCollapsed(true);
+            }, 50);
+        }
+    };// Toggle pin state
+    const togglePin = () => {
+
+
+        if (typeof setIsPinned !== 'function') {
+            console.error('setIsPinned is not a function!', { setIsPinned });
+            return;
+        }
+
+        try {
+            setIsPinned(!isPinned);
+            if (!isPinned) {
+                setIsCollapsed(false);
+
+            }
+        } catch (error) {
+            console.error('Error in togglePin:', error);
+        }
+    };
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (hoverTimeoutRef.current) {
+                clearTimeout(hoverTimeoutRef.current);
+            }
+        };
+    }, []);
 
     return (
-        <div className={`${isCollapsed ? 'w-16' : 'w-56'} bg-gray-800 text-white h-full transition-all duration-300 flex-shrink-0 overflow-y-auto`}>
-            {/* Collapse/Expand Button */}
+        <div
+            ref={sidebarRef}
+            className={`${isCollapsed ? 'w-16' : 'w-56'} bg-gray-800 text-white h-full transition-all duration-300 flex-shrink-0 overflow-y-auto`}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+        >
+            {/* Header with Pin Button */}
             <div className="p-3 border-b border-gray-700 flex items-center justify-between">
                 {!isCollapsed && (
                     <div className="flex items-center text-sm">
@@ -41,10 +88,15 @@ const Sidebar = () => {
                     </div>
                 )}
                 <button
-                    onClick={() => setIsCollapsed(!isCollapsed)}
-                    className="p-1 hover:bg-gray-700 rounded transition-colors"
+                    onClick={togglePin}
+                    className={`p-1 hover:bg-gray-700 rounded transition-colors ${isPinned ? 'text-blue-400' : 'text-gray-400'
+                        }`}
+                    title={isPinned ? 'Unpin sidebar' : 'Pin sidebar'}
                 >
-                    {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+                    <Pin
+                        size={16}
+                        className={`transition-transform ${isPinned ? 'rotate-45' : ''}`}
+                    />
                 </button>
             </div>
 
@@ -53,52 +105,40 @@ const Sidebar = () => {
                     {/* Popular section */}
                     <div className="p-4">
                         <h3 className="text-sm font-semibold mb-3">POPULAR LEAGUES</h3>
-                        <div className="space-y-1">
-                            {popularSports.map((sport, index) => (
-                                <div key={index} className="flex items-center py-2 px-3 hover:bg-gray-700 rounded cursor-pointer">
-                                    <span className="text-green-400 mr-3">🌟</span>
-                                    <span className="text-sm">{sport.name}</span>
-                                </div>
-                            ))}
+                        <div className="space-y-1">                            {popularSports.map((sport, index) => (
+                            <div key={index} className="flex items-center py-2 px-3 hover:bg-gray-700 rounded cursor-pointer">
+                                <span className="text-green-400 mr-3">{sport.icon}</span>
+                                <span className="text-sm">{sport.name}</span>
+                            </div>
+                        ))}
                         </div>
                     </div>
 
-                    {/* All Sports section */}
-                    {/* <div className="px-4 pb-4">
-                        <div className="flex justify-between items-center mb-3">
-                            <h3 className="text-sm font-semibold">ALL SPORTS</h3>
-                            <span className="text-xs text-gray-400">NUMBER OF BETS</span>
+                    {/* Pin status indicator */}
+                    {isPinned && (
+                        <div className="px-4 pb-2">
+                            <div className="text-xs text-blue-400 flex items-center">
+                                <Pin size={12} className="mr-1 rotate-45" />
+                                Sidebar pinned
+                            </div>
                         </div>
-                        <div className="space-y-1">
-                            {allSports.map((sport, index) => (
-                                <div key={index} className="flex items-center justify-between py-2 px-3 hover:bg-gray-700 rounded cursor-pointer">
-                                    <div className="flex items-center">
-                                        <span className="text-white mr-3">⚪</span>
-                                        <span className="text-sm">{sport.name}</span>
-                                    </div>
-                                    <span className="text-xs text-gray-400">{sport.count}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div> */}
+                    )}
                 </>
             )}
 
             {isCollapsed && (
                 <div className="p-2 space-y-2">
                     {/* Collapsed view - show only icons */}
-                    <div className="flex flex-col items-center space-y-3 pt-4">
-                        {popularSports.slice(0, 6).map((sport, index) => (
-                            <div key={index} className="w-10 h-10 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center cursor-pointer transition-colors">
-                                <span className="text-sm">🌟</span>
-                            </div>
-                        ))}
+                    <div className="flex flex-col items-center space-y-3 pt-4">                        {popularSports.slice(0, 6).map((sport, index) => (
+                        <div key={index} className="w-10 h-10 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center cursor-pointer transition-colors">
+                            <span className="text-sm">{sport.icon}</span>
+                        </div>
+                    ))}
                     </div>
                 </div>
             )}
         </div>
     );
-
 };
 
 export default Sidebar;

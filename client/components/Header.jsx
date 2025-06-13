@@ -49,13 +49,16 @@ const Header = () => {
 
                     </div>                    <div className="flex items-center space-x-2 lg:space-x-3">
                         <LoginDialog>
-                            <Button variant="outline" className="text-green-600 border-white hover:bg-white text-xs lg:text-sm px-2 lg:px-4 py-1 lg:py-2">
+                            <Button variant="outline" className="text-black border-white  hover:bg-gray-100 transition-all text-xs lg:text-sm px-2 lg:px-4 py-1 lg:py-2">
                                 Log in
                             </Button>
                         </LoginDialog>
-                        <Button className="bg-warning text-black hover:bg-warning-dark text-xs lg:text-sm px-2 lg:px-4 py-1 lg:py-2">
+                        <Link href={"/signup"} className="active:scale-[0.98]
+                        transition-all  bg-warning text-black hover:bg-warning-dark text-xs lg:text-sm px-2 lg:px-4 py-1 lg:py-2 font-semibold ">
+
                             Register
-                        </Button>
+
+                        </Link>
                     </div>
                 </div>
             </div>

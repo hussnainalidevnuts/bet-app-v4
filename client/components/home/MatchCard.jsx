@@ -4,8 +4,11 @@ import React from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useBetting } from '@/hooks/useBetting';
 
 const MatchCard = ({ match }) => {
+    const { createBetHandler } = useBetting();
+
     return (
         <Link href={`/matches/${match.id}`}>
             <div className=" bg-white border border-gray-200 cursor-pointer rounded-none shadow-none">
@@ -28,12 +31,8 @@ const MatchCard = ({ match }) => {
                         {match.odds['1'] && (
                             <Button
                                 size={"sm"}
-                                className="flex-1 flex justify-between py-2 gap-0 "
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    console.log('Selected odds: 1 -', match.odds['1']);
-                                }}
+                                className="flex-1 flex justify-between py-2 gap-0 betting-button"
+                                onClick={createBetHandler(match, '1', match.odds['1'])}
                             >
                                 <div className="text-[11px]">1</div>
                                 <div className='text-[13px]  font-bold'>{match.odds['1']}</div>
@@ -41,14 +40,9 @@ const MatchCard = ({ match }) => {
                         )}
                         {match.odds['X'] && (
                             <Button
-                                className="flex-1 flex justify-between py-2  gap-0"
+                                className="flex-1 flex justify-between py-2  gap-0 betting-button"
                                 size={"sm"}
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    // Handle odds selection logic here
-                                    console.log('Selected odds: X -', match.odds['X']);
-                                }}
+                                onClick={createBetHandler(match, 'X', match.odds['X'])}
                             >
                                 <div className="text-[11px]">X</div>
                                 <div className='text-[13px] font-bold'>{match.odds['X']}</div>
@@ -57,13 +51,8 @@ const MatchCard = ({ match }) => {
                         {match.odds['2'] && (
                             <Button
                                 size={"sm"}
-                                className="flex-1 flex justify-between py-2  gap-0"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    // Handle odds selection logic here
-                                    console.log('Selected odds: 2 -', match.odds['2']);
-                                }}
+                                className="flex-1 flex justify-between py-2  gap-0 betting-button"
+                                onClick={createBetHandler(match, '2', match.odds['2'])}
                             >
                                 <div className="text-[11px]">2</div>
                                 <div className='text-[13px] font-bold'>{match.odds['2']}</div>

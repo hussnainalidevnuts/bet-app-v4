@@ -5,9 +5,12 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useBetting } from '@/hooks/useBetting';
 import leaguesData, { getLiveLeagues } from '@/data/dummayLeagues';
 // League Card Component
 const LeagueCard = ({ league, isInPlay = false, viewAllText = null }) => {
+    const { createBetHandler } = useBetting();
+
     return (
         <div className="bg-white border border-gray-200 rounded-none shadow-none mb-4 h-[495px] flex flex-col">
             {/* League Header */}
@@ -79,30 +82,21 @@ const LeagueCard = ({ league, isInPlay = false, viewAllText = null }) => {
                                             {match.isLive && (
                                                 <div className="text-red-500 font-medium">LIVE</div>
                                             )}
-                                        </div> */}
-                                    <div className="flex gap-1">
+                                        </div> */}                                    <div className="flex gap-1">
                                         {match.odds['1'] && (
                                             <Button
                                                 size={"sm"}
-                                                className="w-14 h-8 p-0 text-xs font-bold"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    console.log('Selected odds: 1 -', match.odds['1']);
-                                                }}
+                                                className="w-14 h-8 p-0 text-xs font-bold betting-button"
+                                                onClick={createBetHandler(match, '1', match.odds['1'])}
                                             >
                                                 {match.odds['1']}
                                             </Button>
                                         )}
                                         {match.odds['X'] && (
                                             <Button
-                                                className="w-14 h-8 p-0 text-xs font-bold"
+                                                className="w-14 h-8 p-0 text-xs font-bold betting-button"
                                                 size={"sm"}
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    console.log('Selected odds: X -', match.odds['X']);
-                                                }}
+                                                onClick={createBetHandler(match, 'X', match.odds['X'])}
                                             >
                                                 {match.odds['X']}
                                             </Button>
@@ -110,12 +104,8 @@ const LeagueCard = ({ league, isInPlay = false, viewAllText = null }) => {
                                         {match.odds['2'] && (
                                             <Button
                                                 size={"sm"}
-                                                className="w-14 h-8 p-0 text-xs font-bold"
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    console.log('Selected odds: 2 -', match.odds['2']);
-                                                }}
+                                                className="w-14 h-8 p-0 text-xs font-bold betting-button"
+                                                onClick={createBetHandler(match, '2', match.odds['2'])}
                                             >
                                                 {match.odds['2']}
                                             </Button>

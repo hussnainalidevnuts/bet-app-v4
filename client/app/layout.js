@@ -6,6 +6,7 @@ import AuthProvider from "@/components/auth/AuthProvider";
 import Header from "@/components/Header";
 import SidebarWrapper from "@/components/SidebarWrapper";
 import ContentWrapper from "@/components/ContentWrapper";
+import BetSlip from "@/components/BetSlip";
 import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -38,6 +39,9 @@ export default function RootLayout({ children }) {
                   <ContentWrapper>{children}</ContentWrapper>
                 </div>
               </div>
+
+              {/* Bet Slip - Global component */}
+              <BetSlip />
             </SidebarProvider>
           </AuthProvider>
         </ReduxProvider>

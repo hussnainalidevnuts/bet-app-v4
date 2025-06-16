@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'; // Added useState and useEff
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft } from 'lucide-react';
+import { useBetting } from '@/hooks/useBetting';
 import {
     Accordion,
     AccordionContent,
@@ -23,6 +24,7 @@ const MatchListPage = ({ config }) => {
     } = config;
 
     const [leagues, setLeagues] = useState([]);
+    const { createBetHandler } = useBetting();
     useEffect(() => {
         if (fetchDataFunction) {
             const data = fetchDataFunction();
@@ -161,19 +163,13 @@ const MatchListPage = ({ config }) => {
                                                                 </div>
                                                                 </div>
                                                             </Link>
-                                                        </div>
-
-                                                        {/* Betting Buttons */}
+                                                        </div>                                                        {/* Betting Buttons */}
                                                         <div className="flex gap-1 ml-2 md:ml-4"> {/* Adjusted margin for responsiveness */}
                                                             {match.odds && match.odds['1'] && (
                                                                 <Button
                                                                     size="sm"
-                                                                    className="w-12 h-8 md:w-14 p-0 text-xs font-bold"
-                                                                    onClick={(e) => {
-                                                                        e.preventDefault();
-                                                                        e.stopPropagation();
-                                                                        console.log('Selected odds: 1 -', match.odds['1']);
-                                                                    }}
+                                                                    className="w-12 h-8 md:w-14 p-0 text-xs font-bold betting-button"
+                                                                    onClick={createBetHandler(match, '1', match.odds['1'])}
                                                                 >
                                                                     {match.odds['1']}
                                                                 </Button>
@@ -181,12 +177,8 @@ const MatchListPage = ({ config }) => {
                                                             {match.odds && match.odds['X'] && (
                                                                 <Button
                                                                     size="sm"
-                                                                    className="w-12 h-8 md:w-14 p-0 text-xs font-bold"
-                                                                    onClick={(e) => {
-                                                                        e.preventDefault();
-                                                                        e.stopPropagation();
-                                                                        console.log('Selected odds: X -', match.odds['X']);
-                                                                    }}
+                                                                    className="w-12 h-8 md:w-14 p-0 text-xs font-bold betting-button"
+                                                                    onClick={createBetHandler(match, 'X', match.odds['X'])}
                                                                 >
                                                                     {match.odds['X']}
                                                                 </Button>
@@ -194,12 +186,8 @@ const MatchListPage = ({ config }) => {
                                                             {match.odds && match.odds['2'] && (
                                                                 <Button
                                                                     size="sm"
-                                                                    className="w-12 h-8 md:w-14 p-0 text-xs font-bold"
-                                                                    onClick={(e) => {
-                                                                        e.preventDefault();
-                                                                        e.stopPropagation();
-                                                                        console.log('Selected odds: 2 -', match.odds['2']);
-                                                                    }}
+                                                                    className="w-12 h-8 md:w-14 p-0 text-xs font-bold betting-button"
+                                                                    onClick={createBetHandler(match, '2', match.odds['2'])}
                                                                 >
                                                                     {match.odds['2']}
                                                                 </Button>

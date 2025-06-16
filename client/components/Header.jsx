@@ -4,9 +4,9 @@ import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle} from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { User, Settings, LogOut } from 'lucide-react';
+import { User, Settings, LogOut, CreditCard, History, Trophy, CircleDollarSign } from 'lucide-react';
 import LoginDialog from '@/components/auth/LoginDialog';
 import { useCustomSidebar } from '@/contexts/SidebarContext.js';
 import { useSelector, useDispatch } from 'react-redux';
@@ -77,17 +77,26 @@ const Header = () => {
                         <div className="text-xl lg:text-2xl font-bold">
                             BETTING
                             <div className="text-xs text-green-200">KINDRED</div>
-                        </div>
-
-                        {/* Mobile menu button */}                    </div>
-                    <div className="flex items-center space-x-2 lg:space-x-3">                        {isAuthenticated ? (
-                        // Authenticated user menu
-                        <DropdownMenu>
+                        </div>                        {/* Mobile menu button */}
+                    </div>
+                    <div className="flex items-center space-x-2 lg:space-x-3">
+                        {isAuthenticated ? (
+                            // Authenticated user menu
+                            <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button className="flex items-center space-x-3 h-auto p-2 rounded-lg transition-colors active:scale-0 focus:outline-none focus:ring-0 focus-visible:ring-0 data-[state=open]:bg-green-500/10">
-                                    <span className="hidden md:block text-sm text-gray-200">
-                                        Welcome, {user?.firstName || 'User'}
-                                    </span>
+                                <Button className="flex items-center space-x-2 h-auto p-2 rounded-lg transition-colors active:scale-0 focus:outline-none focus:ring-0 focus-visible:ring-0 data-[state=open]:bg-green-500/10">
+                                    {/* Compact balance and name display */}
+                                    <div className="hidden md:flex items-center space-x-2 text-xs">
+                                        <span className="text-gray-200">
+                                            {user?.firstName || 'User'}
+                                        </span>
+                                        <div className="flex items-center space-x-1 bg-warning/10 px-2 py-1 rounded-md">
+                                            <CircleDollarSign className="h-3 w-3 text-warning" />
+                                            <span className="text-warning font-semibold text-xs">
+                                                ${user?.balance?.toFixed(2) || '0.00'}
+                                            </span>
+                                        </div>
+                                    </div>
                                     <Avatar className="h-8 w-8">
                                         <AvatarFallback className="bg-warning text-black font-semibold">
                                             {getUserInitials(user)}
@@ -103,7 +112,11 @@ const Header = () => {
                                         </p>
                                         <p className="text-xs leading-none text-muted-foreground">
                                             {user?.email}
-                                        </p>
+                                        </p>                                        
+                                        <div className="text-xs leading-none text-base font-semibold flex items-center space-x-1">
+                                            <CircleDollarSign className="h-3 w-3" />
+                                            <span>Balance: ${user?.balance?.toFixed(2) || '0.00'}</span>
+                                        </div>
                                     </div>
                                 </div>
                                 <DropdownMenuSeparator />
@@ -114,25 +127,42 @@ const Header = () => {
                                 <DropdownMenuItem>
                                     <Settings className="mr-2 h-4 w-4" />
                                     <span>Settings</span>
-                                </DropdownMenuItem>                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={handleLogoutClick} disabled={isLoading}>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />                                <DropdownMenuItem>
+                                    <CreditCard className="mr-2 h-4 w-4" />
+                                    <span>Deposit</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link href="/transactions">
+                                        <History className="mr-2 h-4 w-4" />
+                                        <span>Transaction History</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link href="/betting-history">
+                                        <Trophy className="mr-2 h-4 w-4" />
+                                        <span>Bet History</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />                                <DropdownMenuItem onClick={handleLogoutClick} disabled={isLoading}>
                                     <LogOut className="mr-2 h-4 w-4" />
                                     <span>Log out</span>
-                                </DropdownMenuItem></DropdownMenuContent>
-                        </DropdownMenu>
-                    ) : (
-                        // Guest user buttons
-                        <>
-                            <LoginDialog>
-                                <Button variant="outline" className="text-black border-white hover:bg-gray-100 transition-all text-xs lg:text-sm px-2 lg:px-4 py-1 lg:py-2">
-                                    Log in
-                                </Button>
-                            </LoginDialog>
-                            <Link href={"/signup"} className="active:scale-[0.98] transition-all bg-warning text-black hover:bg-warning-dark text-xs lg:text-sm px-2 lg:px-4 py-1 lg:py-2 font-semibold">
-                                Register
-                            </Link>
-                        </>
-                    )}                    </div>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>                        </DropdownMenu>
+                        ) : (
+                            // Guest user buttons
+                            <>
+                                <LoginDialog>
+                                    <Button variant="outline" className="text-black border-white hover:bg-gray-100 transition-all text-xs lg:text-sm px-2 lg:px-4 py-1 lg:py-2">
+                                        Log in
+                                    </Button>
+                                </LoginDialog>
+                                <Link href={"/signup"} className="active:scale-[0.98] transition-all bg-warning text-black hover:bg-warning-dark text-xs lg:text-sm px-2 lg:px-4 py-1 lg:py-2 font-semibold">
+                                    Register
+                                </Link>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
 

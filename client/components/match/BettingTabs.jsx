@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "../ui/button"
+import { useBetting } from "@/hooks/useBetting"
 
 // Dynamic market categorization based on market types and keywords
 const categorizeMarkets = (markets, tabs) => {
@@ -404,9 +405,8 @@ const OptimizedMarketSection = ({ section }) => {
         <div className="bg-white  border border-gray-100 overflow-hidden">
             <div className="px-3 py-2 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                 <h5 className="text-xs font-medium text-gray-700">{section.title}</h5>
-            </div>
-            <div className="p-2">
-                <BettingOptionsTable options={section.options} />
+            </div>            <div className="p-2">
+                <BettingOptionsTable options={section.options} section={section} />
             </div>
         </div>
     );
@@ -439,18 +439,16 @@ const BettingMarketCard = ({ section }) => {
             {/* Market Header */}
             <div className=" px-4 py-2.5 ">
                 <h3 className="text-sm font-semibold text-gray-800">{section.title}</h3>
-            </div>
-
-            {/* Betting Options - Table-like Layout */}
+            </div>            {/* Betting Options - Table-like Layout */}
             <div className="p-3">
-                <BettingOptionsTable options={section.options} />
+                <BettingOptionsTable options={section.options} section={section} />
             </div>
         </div>
     )
 }
 
 // Optimized betting options table with memoization
-const BettingOptionsTable = ({ options }) => {
+const BettingOptionsTable = ({ options, section }) => {
     // Memoize the grid layout calculation
     const { gridClass, isThreeWay } = useMemo(() => {
         const isThreeWayMarket = options.length === 3 &&
@@ -472,25 +470,39 @@ const BettingOptionsTable = ({ options }) => {
         return { gridClass, isThreeWay: false };
     }, [options]);
 
-    return (
-        <div className={`grid ${gridClass} gap-1`}>
-            {options.map((option, index) => (
-                <BettingOptionCompact
-                    key={`${option.label}-${index}`}
-                    label={option.label}
-                    odds={option.odds}
-                />
-            ))}
-        </div>
+    return (<div className={`grid ${gridClass} gap-1`}>
+        {options.map((option, index) => (
+            <BettingOptionCompact
+                key={`${option.label}-${index}`}
+                label={option.label}
+                odds={option.odds}
+                section={section}
+            />
+        ))}
+    </div>
     );
 };
 
 // Compact Betting Option - Professional and Sleek
-const BettingOptionCompact = ({ label, odds }) => {
+const BettingOptionCompact = ({ label, odds, section }) => {
+    const { createBetHandler } = useBetting();
+
+    // Create a mock match object for the betting system
+    const mockMatch = {
+        id: section?.id || 'betting-option',
+        team1: section?.title || 'Selection',
+        team2: '',
+        competition: 'Betting Market',
+        time: 'Live'
+    };
+
     return (
-        <Button className="group relative  px-2 py-1 text-center transition-all duration-200 active:scale-[0.98] ">
+        <Button
+            className="group relative px-2 py-1 text-center transition-all duration-200 active:scale-[0.98] betting-button"
+            onClick={createBetHandler(mockMatch, label, odds, section?.type || 'market')}
+        >
             {/* Content */}
-            <div className="relative w-full flex justify-between py-1  z-10">
+            <div className="relative w-full flex justify-between py-1 z-10">
                 <div className="text-[12px] text-white font-medium mb-0.5 transition-colors duration-200 leading-tight">
                     {label}
                 </div>

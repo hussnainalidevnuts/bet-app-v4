@@ -172,9 +172,9 @@ export default function UserManagement() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          onClick={() => handleStatusChange(user._id, !user.isActive)}
+                        //   onClick={() => handleStatusChange(user._id, !user.isActive)}
                         >
-                          {user.isActive ? 'Deactivate' : 'Activate'} User
+                           View Betting History
                         </DropdownMenuItem>
                         <DropdownMenuItem
                         //   onClick={() => console.log("user id is",user._id)}

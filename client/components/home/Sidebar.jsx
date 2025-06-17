@@ -24,6 +24,11 @@ const Sidebar = () => {
             icon: Users
         },
         {
+            title: 'Bet Management',
+            href: '/admin/bet-management',
+            icon: ChevronRight
+        },
+        {
             title: 'Settings',
             href: '/admin/settings',
             icon: Settings

@@ -6,11 +6,16 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/a
 // Async thunks for API calls
 export const fetchUsers = createAsyncThunk(
   "adminUsers/fetchUsers",
-  async ({ page = 1, limit = 10 }, { rejectWithValue }) => {
+  async ({ page = 1, limit = 10 } = { page: 1, limit: 10 }, { rejectWithValue }) => {
     try {
       console.log('Fetching users with params:', { page, limit });
+      
+      // When requesting a larger limit, we're likely doing it for client-side filtering
+      // In this case, we want to get as many users as possible
+      const isForFiltering = limit > 20;
+      
       const response = await fetch(
-        `${API_BASE_URL}/users?page=${page}&limit=${limit}`,
+        `${API_BASE_URL}/users?page=${page}&limit=${isForFiltering ? 100 : limit}`,
         {
           method: "GET",
           headers: {
@@ -26,6 +31,17 @@ export const fetchUsers = createAsyncThunk(
       if (!response.ok) {
         console.error('Users API error:', data);
         return rejectWithValue(data);
+      }
+
+      // Ensure pagination data is always properly structured
+      if (!data.pagination) {
+        data.pagination = {
+          currentPage: page,
+          totalPages: 1,
+          totalUsers: data.users?.length || 0,
+          hasNextPage: false,
+          hasPrevPage: false
+        };
       }
 
       return data;
@@ -44,6 +60,11 @@ export const searchUsers = createAsyncThunk(
   "adminUsers/searchUsers",
   async (searchQuery, { rejectWithValue }) => {
     try {
+      // If search query is less than 2 characters, return empty results without API call
+      if (!searchQuery || searchQuery.trim().length < 2) {
+        return { users: [], success: true };
+      }
+      
       const response = await fetch(
         `${API_BASE_URL}/users/search?name=${searchQuery}`,
         {
@@ -319,21 +340,29 @@ const adminUserSlice = createSlice({
   initialState,
   reducers: {
     clearError: (state) => {
+      console.log("Clearing error state in Redux");
       state.error = null;
     },
     clearMessage: (state) => {
+      console.log("Clearing message state in Redux");
       state.message = null;
     },
     clearSelectedUser: (state) => {
       state.selectedUser = null;
     },
+    resetErrorState: (state) => {
+      console.log("Resetting all error states");
+      state.error = null;
+      state.isLoading = false;
+    }
   },
   extraReducers: (builder) => {
     builder
       // Fetch users cases
       .addCase(fetchUsers.pending, (state) => {
         state.isLoading = true;
-        state.error = null;
+        state.error = null; // Clear error on pending
+        console.log("fetchUsers.pending - cleared error state");
       })
       .addCase(fetchUsers.fulfilled, (state, action) => {
         console.log('Fetch users fulfilled:', action.payload);
@@ -346,26 +375,32 @@ const adminUserSlice = createSlice({
           hasNextPage: false,
           hasPrevPage: false
         };
-        state.error = null;
+        state.error = null; // Ensure error is cleared on successful fetch
+        console.log("fetchUsers.fulfilled - cleared error state");
       })
       .addCase(fetchUsers.rejected, (state, action) => {
+        console.error('Fetch users rejected:', action.payload || action.error);
         state.isLoading = false;
-        state.error = action.payload?.message || "Failed to fetch users";
+        state.error = action.payload?.message || action.error?.message || "Failed to fetch users";
       })
 
       // Search users cases
       .addCase(searchUsers.pending, (state) => {
         state.isLoading = true;
-        state.error = null;
+        state.error = null; // Clear error on pending
+        console.log("searchUsers.pending - cleared error state");
       })
       .addCase(searchUsers.fulfilled, (state, action) => {
+        console.log('Search users fulfilled:', action.payload);
         state.isLoading = false;
-        state.users = action.payload.users;
-        state.error = null;
+        state.users = action.payload.users || [];
+        state.error = null; // Ensure error is cleared on successful search
+        console.log("searchUsers.fulfilled - cleared error state");
       })
       .addCase(searchUsers.rejected, (state, action) => {
+        console.error('Search users rejected:', action.payload || action.error);
         state.isLoading = false;
-        state.error = action.payload?.message || "Failed to search users";
+        state.error = action.payload?.message || action.error?.message || "Failed to search users";
       })
 
       // Update user status cases
@@ -518,7 +553,7 @@ const adminUserSlice = createSlice({
   },
 });
 
-export const { clearError, clearMessage, clearSelectedUser } = adminUserSlice.actions;
+export const { clearError, clearMessage, clearSelectedUser, resetErrorState } = adminUserSlice.actions;
 
 // Selectors
 export const selectAdminUsers = (state) => state.adminUsers.users;

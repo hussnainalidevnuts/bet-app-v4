@@ -48,6 +48,7 @@ import {
   UserPlus,
   User,
   ArrowUpDown,
+  Wallet,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -69,8 +70,12 @@ import {
   selectIsLoading,
   selectError,
   selectMessage,
+  clearError,
+  clearMessage,
+  resetErrorState,
 } from "@/lib/features/admin/adminUserSlice";
 import CreateUserDialog from "./CreateUserDialog";
+import TransactionDialog from "./TransactionDialog";
 import { useRouter } from "next/navigation";
 
 export default function UserManagement({ searchQuery = "", statusFilter = "all", roleFilter = "all" }) {
@@ -86,20 +91,69 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
   const [showCreateUserDialog, setShowCreateUserDialog] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+  const [localSearch, setLocalSearch] = useState("");
+  
+  // Add new state for transaction dialog
+  const [showTransactionDialog, setShowTransactionDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  
+  // Clear error on mount
+  useEffect(() => {
+    dispatch(resetErrorState());
+    dispatch(clearMessage());
+    
+    return () => {
+      dispatch(resetErrorState());
+    };
+  }, [dispatch]);
 
   // Initial load
   useEffect(() => {
-    dispatch(fetchUsers({ page: 1, limit: 10 }));
+    dispatch(resetErrorState());
+    
+    dispatch(fetchUsers({ page: 1, limit: 10 }))
+      .unwrap()
+      .then(() => {
+        dispatch(resetErrorState());
+      })
+      .catch(() => {
+        setTimeout(() => dispatch(resetErrorState()), 100);
+      });
   }, [dispatch]);
 
   // Effect to handle search query changes from parent
   useEffect(() => {
-    if (searchQuery.trim()) {
-      dispatch(searchUsers(searchQuery));
-    } else if (searchQuery === "") {
-      dispatch(fetchUsers());
+    // Clear any existing errors first
+    dispatch(resetErrorState());
+    
+    // Only perform search if query is at least 3 characters
+    if (searchQuery && searchQuery.trim() && searchQuery.trim().length >= 3) {
+      setLocalSearch(searchQuery);
+      
+      // Use client-side filtering instead of API call
+      // This avoids server errors and provides instant results
+      if (users && users.length > 0) {
+        // We already have users loaded, just filter them in the component
+        // No need to make an API call
+      } else {
+        // If we don't have users yet, fetch them first
+        dispatch(fetchUsers({ page: 1, limit: 50 }))
+          .unwrap()
+          .then(() => dispatch(resetErrorState()))
+          .catch(() => setTimeout(() => dispatch(resetErrorState()), 100));
+      }
+    } 
+    // When search is cleared, reset to initial state if needed
+    else if (searchQuery === "" && localSearch !== "") {
+      setLocalSearch("");
+      
+      // Fetch first page of users when search is cleared
+      dispatch(fetchUsers({ page: 1, limit: 10 }))
+        .unwrap()
+        .then(() => dispatch(resetErrorState()))
+        .catch(() => setTimeout(() => dispatch(resetErrorState()), 100));
     }
-  }, [searchQuery, dispatch]);
+  }, [searchQuery, dispatch, localSearch, users]);
   
   // Handlers
   const handleStatusChange = (userId, newStatus) => {
@@ -119,7 +173,7 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
         setUserToDelete(null);
         dispatch(fetchUsers({ page: 1, limit: 10 }));
       } catch (error) {
-        console.error("Failed to delete user:", error);
+        setTimeout(() => dispatch(resetErrorState()), 100);
       }
     }
   };
@@ -127,6 +181,12 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
   const cancelDeleteUser = () => {
     setDeleteDialogOpen(false);
     setUserToDelete(null);
+  };
+  
+  // Add new handler for transaction button
+  const handleTransactionClick = (user) => {
+    setSelectedUser(user);
+    setShowTransactionDialog(true);
   };
   
   // Filter users
@@ -140,14 +200,17 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
     // Filter by role
     if (roleFilter !== "all" && user.role !== roleFilter) return false;
     
-    // Filter by search query
-    if (searchQuery.trim() !== "") {
-      const query = searchQuery.toLowerCase();
+    // Filter by search query (client-side filtering)
+    if (searchQuery && searchQuery.trim() !== "") {
+      const query = searchQuery.toLowerCase().trim();
       const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+      const email = user.email ? user.email.toLowerCase() : "";
+      const phone = user.phoneNumber || "";
+      
       return (
         fullName.includes(query) ||
-        user.email.toLowerCase().includes(query) ||
-        (user.phoneNumber && user.phoneNumber.includes(query))
+        email.includes(query) ||
+        phone.includes(query)
       );
     }
     
@@ -176,6 +239,14 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
       {error && (
         <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700 border-l-4 border-red-500 mb-6">
           {error}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => dispatch(resetErrorState())}
+            className="ml-4"
+          >
+            Dismiss
+          </Button>
         </div>
       )}
       
@@ -183,6 +254,14 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
       {message && (
         <div className="rounded-lg bg-green-50 p-4 text-sm text-green-700 border-l-4 border-green-500 mb-6">
           {message}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => dispatch(clearMessage())}
+            className="ml-4"
+          >
+            Dismiss
+          </Button>
         </div>
       )}
       
@@ -276,6 +355,12 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
+                              onClick={() => handleTransactionClick(user)}
+                            >
+                              <Wallet className="h-4 w-4 mr-2" />
+                              Deposit/Withdraw
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
                               onClick= {()=>{router.push("/betting-history")}}
                             >
                               <History className="h-4 w-4 mr-2" />
@@ -308,42 +393,61 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
         </CardContent>
         
         {/* Pagination */}
-        {filteredUsers.length > 0 && (
+        {filteredUsers.length > 0 && pagination && (
           <div className="flex justify-between items-center mt-4 pt-4 border-t">
             <div className="text-sm text-gray-600">
-              Showing {filteredUsers.length} of {pagination.totalUsers} users
+              Showing {filteredUsers.length} of {pagination?.totalUsers || filteredUsers.length} users
             </div>
             <div className="flex items-center space-x-1">
               <Button
                 variant="outline"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => dispatch(fetchUsers({ page: pagination.currentPage - 1, limit: 10 }))}
-                disabled={pagination.currentPage === 1}
+                onClick={() => {
+                  dispatch(resetErrorState());
+                  dispatch(fetchUsers({ page: (pagination?.currentPage || 1) - 1, limit: 10 }))
+                    .unwrap()
+                    .then(() => dispatch(resetErrorState()))
+                    .catch(() => {
+                      setTimeout(() => dispatch(resetErrorState()), 100);
+                    });
+                }}
+                disabled={(pagination?.currentPage || 1) === 1}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               
               <div className="flex items-center">
-                {Array.from({ length: Math.min(pagination.totalPages || 1, 5) }).map((_, i) => {
+                {Array.from({ length: Math.min((pagination?.totalPages || 1), 5) }).map((_, i) => {
+                  const currentPage = pagination?.currentPage || 1;
+                  const totalPages = pagination?.totalPages || 1;
+                  
                   let pageNum;
-                  if (pagination.totalPages <= 5) {
+                  if (totalPages <= 5) {
                     pageNum = i + 1;
-                  } else if (pagination.currentPage <= 3) {
+                  } else if (currentPage <= 3) {
                     pageNum = i + 1;
-                  } else if (pagination.currentPage >= pagination.totalPages - 2) {
-                    pageNum = pagination.totalPages - 4 + i;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
                   } else {
-                    pageNum = pagination.currentPage - 2 + i;
+                    pageNum = currentPage - 2 + i;
                   }
                   
                   return (
                     <Button
                       key={i}
-                      variant={pagination.currentPage === pageNum ? "default" : "outline"}
+                      variant={currentPage === pageNum ? "default" : "outline"}
                       size="icon"
                       className="h-8 w-8 mx-0.5"
-                      onClick={() => dispatch(fetchUsers({ page: pageNum, limit: 10 }))}
+                      onClick={() => {
+                        dispatch(resetErrorState());
+                        dispatch(fetchUsers({ page: pageNum, limit: 10 }))
+                          .unwrap()
+                          .then(() => dispatch(resetErrorState()))
+                          .catch(() => {
+                            setTimeout(() => dispatch(resetErrorState()), 100);
+                          });
+                      }}
                     >
                       {pageNum}
                     </Button>
@@ -355,8 +459,16 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
                 variant="outline"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => dispatch(fetchUsers({ page: pagination.currentPage + 1, limit: 10 }))}
-                disabled={pagination.currentPage === pagination.totalPages}
+                onClick={() => {
+                  dispatch(resetErrorState());
+                  dispatch(fetchUsers({ page: (pagination?.currentPage || 1) + 1, limit: 10 }))
+                    .unwrap()
+                    .then(() => dispatch(resetErrorState()))
+                    .catch(() => {
+                      setTimeout(() => dispatch(resetErrorState()), 100);
+                    });
+                }}
+                disabled={(pagination?.currentPage || 1) === (pagination?.totalPages || 1)}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -369,6 +481,13 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
       <CreateUserDialog
         isOpen={showCreateUserDialog}
         onClose={() => setShowCreateUserDialog(false)}
+      />
+      
+      {/* Transaction Dialog */}
+      <TransactionDialog
+        isOpen={showTransactionDialog}
+        onClose={() => setShowTransactionDialog(false)}
+        user={selectedUser}
       />
       
       {/* Delete Confirmation Dialog */}

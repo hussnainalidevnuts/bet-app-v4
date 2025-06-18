@@ -22,11 +22,11 @@ const createUserSchema = z.object({
     email: z.string().min(1, "Email is required").email("Please enter a valid email address"),
     phoneNumber: z.string()
         .min(1, "Phone number is required")
-        .regex(/^[\+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number"),    password: z.string()
-        .min(1, "Password is required")
-        .min(8, "Password must be at least 8 characters")
-        .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-            "Password must contain at least 1 lowercase letter, 1 uppercase letter, 1 number, and 1 special character"),
+        .regex(/^[\+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number"), password: z.string()
+            .min(1, "Password is required")
+            .min(8, "Password must be at least 8 characters")
+            .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+                "Password must contain at least 1 lowercase letter, 1 uppercase letter, 1 number, and 1 special character"),
     gender: z.string().min(1, "Gender is required"),
     role: z.string().min(1, "Role is required"),
     isActive: z.boolean(),
@@ -42,7 +42,7 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
     const message = useSelector(selectMessage)
 
     const form = useForm({
-        resolver: zodResolver(createUserSchema),        defaultValues: {
+        resolver: zodResolver(createUserSchema), defaultValues: {
             firstName: "",
             lastName: "",
             email: "",
@@ -78,7 +78,8 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
             await dispatch(createUser(data)).unwrap()
         } catch (error) {
             console.error("Create user error:", error)
-            toast.error("Failed to create user")        }
+            toast.error("Failed to create user")
+        }
     }
 
     const togglePasswordVisibility = () => {
@@ -120,6 +121,7 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
                                             <Input
                                                 type="text"
                                                 placeholder="First name"
+                                                className="border border-gray-200 rounded-none w-full"
                                                 {...field}
                                             />
                                         </FormControl>
@@ -140,6 +142,7 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
                                             <Input
                                                 type="text"
                                                 placeholder="Last name"
+                                                className="border border-gray-200 rounded-none w-full"
                                                 {...field}
                                             />
                                         </FormControl>
@@ -162,6 +165,7 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
                                         <Input
                                             type="email"
                                             placeholder="user@email.com"
+                                            className="border border-gray-200 rounded-none w-full"
                                             {...field}
                                         />
                                     </FormControl>
@@ -183,6 +187,7 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
                                         <Input
                                             type="tel"
                                             placeholder="+1234567890"
+                                            className="border border-gray-200 rounded-none w-full"
                                             {...field}
                                         />
                                     </FormControl>
@@ -205,6 +210,7 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
                                             <Input
                                                 type={showPassword ? "text" : "password"}
                                                 placeholder="••••••••"
+                                                className="border border-gray-200 rounded-none w-full"
                                                 {...field}
                                             />
                                             <button
@@ -222,7 +228,7 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
                                     </div>
                                     <FormMessage className="text-xs" />
                                 </FormItem>
-                            )}                        />
+                            )} />
 
                         {/* Gender Field */}
                         <FormField
@@ -235,10 +241,10 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
                                     </FormLabel>
                                     <FormControl>
                                         <Select value={field.value} onValueChange={field.onChange}>
-                                            <SelectTrigger className="w-full">
+                                            <SelectTrigger className="w-full rounded-none">
                                                 <SelectValue placeholder="Select a gender" />
                                             </SelectTrigger>
-                                            <SelectContent>
+                                            <SelectContent className="rounded-none">
                                                 {genders.map((gender) => (
                                                     <SelectItem key={gender.value} value={gender.value}>
                                                         {gender.label}
@@ -263,10 +269,10 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
                                     </FormLabel>
                                     <FormControl>
                                         <Select value={field.value} onValueChange={field.onChange}>
-                                            <SelectTrigger className="w-full">
+                                            <SelectTrigger className="w-full rounded-none">
                                                 <SelectValue placeholder="Select a role" />
                                             </SelectTrigger>
-                                            <SelectContent>
+                                            <SelectContent className="rounded-none">
                                                 {roles.map((role) => (
                                                     <SelectItem key={role.value} value={role.value}>
                                                         {role.label}
@@ -281,7 +287,7 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
                         />
 
                         {/* Active Status Field */}
-                        <FormField
+                        {/* <FormField
                             control={form.control}
                             name="isActive"
                             render={({ field }) => (
@@ -290,7 +296,7 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
                                         Account Status <span className="text-red-500">*</span>
                                     </FormLabel>
                                     <FormControl>
-                                        <Select value={field.value ? "true" : "false"} onValueChange={(value) => field.onChange(value === "true")}>
+                                        <Select value={field.value ? "true" : "false"} onValueChange={(value) => field.onChange(value === "true")} className="rounded-none" >
                                             <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Select account status" />
                                             </SelectTrigger>
@@ -303,7 +309,34 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
                                     <FormMessage className="text-xs" />
                                 </FormItem>
                             )}
+                        /> */}
+                        <FormField
+                            control={form.control}
+                            name="isActive"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-sm font-medium text-gray-700">
+                                        Account Status <span className="text-red-500">*</span>
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Select
+                                            value={field.value ? "true" : "false"}
+                                            onValueChange={(value) => field.onChange(value === "true")}
+                                        >
+                                            <SelectTrigger className="w-full rounded-none">
+                                                <SelectValue placeholder="Select account status" />
+                                            </SelectTrigger>
+                                            <SelectContent className="rounded-none">
+                                                <SelectItem value="true">Active</SelectItem>
+                                                <SelectItem value="false">Inactive</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </FormControl>
+                                    <FormMessage className="text-xs" />
+                                </FormItem>
+                            )}
                         />
+
 
                         {/* Action Buttons */}
                         <div className="flex justify-end space-x-3 pt-4">

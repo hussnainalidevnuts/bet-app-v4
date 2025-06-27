@@ -8,6 +8,7 @@ import betSlipReducer from "./features/betSlip/betSlipSlice";
 import transactionsReducer from "./features/transactions/transactionsSlice";
 import financeReducer from "./features/finance/financeSlice";
 import homeReducer from "./features/home/homeSlice";
+import betsReducer from "./features/bets/betsSlice";
 
 export const store = configureStore({
   reducer: {
@@ -20,5 +21,6 @@ export const store = configureStore({
     transactions: transactionsReducer,
     finance: financeReducer,
     adminUsers: adminUserReducer,
+    bets: betsReducer,
   },
 });

@@ -9,31 +9,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Calendar, Filter, Download, Loader2, ArrowUpDown, TrendingUp, TrendingDown } from 'lucide-react';
-import { 
-  fetchBettingHistory, 
-  setFilters, 
-  resetFilters,
-  clearError 
-} from '@/lib/features/transactions/transactionsSlice';
+import {
+  fetchUserBets,
+  selectBets,
+  selectBetsLoading,
+  selectBetsError,
+  clearBetsError,
+} from '@/lib/features/bets/betsSlice';
 
 const BettingHistoryPage = () => {
   const dispatch = useDispatch();
-  const { 
-    bettingHistory, 
-    loading, 
-    error, 
-    filters, 
-    total 
-  } = useSelector((state) => state.transactions);
+  const bets = useSelector(selectBets);
+  const loading = useSelector(selectBetsLoading);
+  const error = useSelector(selectBetsError);
 
-  const [sortConfig, setSortConfig] = useState({ key: 'dateTime', direction: 'desc' });
+  // Keep filters for date range, but not bet type
+  const [filters, setFilters] = useState({ dateFrom: '', dateTo: '', status: '' });
+  const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
 
   useEffect(() => {
-    dispatch(fetchBettingHistory(filters));
+    dispatch(fetchUserBets(filters));
   }, [dispatch, filters]);
 
   const handleFilterChange = (key, value) => {
-    dispatch(setFilters({ [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSort = (key) => {
@@ -56,29 +55,16 @@ const BettingHistoryPage = () => {
   const formatDateTime = (dateTime) => {
     const date = new Date(dateTime);
     return {
-      date: date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
+      date: date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
       }),
-      time: date.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      })
+      time: date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
     };
-  };
-
-  const getTypeIcon = (type) => {
-    switch (type) {
-      case 'single':
-        return <TrendingDown className="h-4 w-4 text-blue-600" />;
-      case 'accumulator':
-        return <TrendingDown className="h-4 w-4 text-purple-600" />;
-      case 'system':
-        return <TrendingDown className="h-4 w-4 text-orange-600" />;
-      default:
-        return <ArrowUpDown className="h-4 w-4 text-gray-600" />;
-    }
   };
 
   const getStatusBadge = (status) => {
@@ -87,7 +73,6 @@ const BettingHistoryPage = () => {
       lost: 'bg-red-100 text-red-800 hover:bg-red-100',
       pending: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100',
     };
-
     return (
       <Badge className={colors[status]}>
         {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -95,39 +80,48 @@ const BettingHistoryPage = () => {
     );
   };
 
+  // Filter bets by date range and status if set
+  const filteredBets = React.useMemo(() => {
+    return bets.filter((bet) => {
+      // Normalize bet date to YYYY-MM-DD for comparison
+      const betDateStr = new Date(bet.createdAt).toISOString().slice(0, 10);
+      const from = filters.dateFrom;
+      const to = filters.dateTo;
+      if (from && betDateStr < from) return false;
+      if (to && betDateStr > to) return false;
+      if (filters.status && filters.status !== 'all' && bet.status !== filters.status) return false;
+      return true;
+    });
+  }, [bets, filters]);
+
   const sortedData = React.useMemo(() => {
-    const data = bettingHistory;
+    const data = filteredBets;
     if (!sortConfig.key) return data;
-
     return [...data].sort((a, b) => {
-      if (sortConfig.key === 'amount') {
-        const aVal = Math.abs(a.amount);
-        const bVal = Math.abs(b.amount);
+      if (sortConfig.key === 'stake') {
+        const aVal = Math.abs(a.stake);
+        const bVal = Math.abs(b.stake);
         return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
       }
-      
-      if (sortConfig.key === 'dateTime') {
-        const aVal = new Date(a.dateTime);
-        const bVal = new Date(b.dateTime);
+      if (sortConfig.key === 'createdAt') {
+        const aVal = new Date(a.createdAt);
+        const bVal = new Date(b.createdAt);
         return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
       }
-
       if (sortConfig.key === 'odds') {
         const aVal = parseFloat(a.odds) || 0;
         const bVal = parseFloat(b.odds) || 0;
         return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
       }
-
       const aVal = a[sortConfig.key]?.toString().toLowerCase() || '';
       const bVal = b[sortConfig.key]?.toString().toLowerCase() || '';
-      
       if (sortConfig.direction === 'asc') {
         return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
       } else {
         return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
       }
     });
-  }, [bettingHistory, sortConfig]);
+  }, [filteredBets, sortConfig]);
 
   if (error) {
     return (
@@ -136,7 +130,7 @@ const BettingHistoryPage = () => {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-red-600 mb-4">{error}</p>
-              <Button onClick={() => dispatch(clearError())} variant="outline">
+              <Button onClick={() => dispatch(clearBetsError())} variant="outline">
                 Try Again
               </Button>
             </div>
@@ -155,7 +149,7 @@ const BettingHistoryPage = () => {
             <h1 className="text-2xl font-bold text-gray-900">Betting History</h1>
             <p className="text-gray-600 mt-1 text-sm">View all your betting activity</p>
           </div>
-        </div>        
+        </div>
         {/* Filters */}
         <Card className={"rounded-none shadow-none py-3 text-xs"}>
           <CardHeader>
@@ -167,7 +161,7 @@ const BettingHistoryPage = () => {
               <Button
                 className={"py-1 px-4"}
                 variant="outline"
-                onClick={() => dispatch(resetFilters())}
+                onClick={() => setFilters({ dateFrom: '', dateTo: '', status: 'all' })}
               >
                 Clear Filters
               </Button>
@@ -175,26 +169,6 @@ const BettingHistoryPage = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Type Filter */}
-              <div className="space-y-2">
-                <label className="font-medium ml-1 mt-1 text-gray-700">Bet Type</label>
-                <Select value={filters.type} 
-                
-                onValueChange={(value) => handleFilterChange('type', value)}
-                
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All types" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" >All Types</SelectItem>
-                    <SelectItem value="single">Single Bet</SelectItem>
-                    <SelectItem value="accumulator">Accumulator</SelectItem>
-                    <SelectItem value="system">System Bet</SelectItem>
-                  </SelectContent>
-                </Select>              
-                </div>
-
               {/* Date Range */}
               <div className="space-y-2">
                 <label className=" font-medium text-gray-700">Date From</label>
@@ -205,7 +179,6 @@ const BettingHistoryPage = () => {
                   className={"h-9"}
                 />
               </div>
-
               <div className="space-y-2">
                 <label className=" font-medium text-gray-700">Date To</label>
                 <Input
@@ -214,17 +187,30 @@ const BettingHistoryPage = () => {
                   onChange={(e) => handleFilterChange('dateTo', e.target.value)}
                   className={"h-9 "}
                 />
-              </div>            
               </div>
-            
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <label className=" font-medium text-gray-700">Status</label>
+                <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="won">Won</SelectItem>
+                    <SelectItem value="lost">Lost</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div className="flex justify-start items-center mt-4 pt-4 border-t">
               <div className=" text-gray-600">
-                Showing {sortedData.length} of {total} bets
+                Showing {sortedData.length} bets
               </div>
             </div>
           </CardContent>
         </Card>
-
         {/* Data Table */}
         <Card className={"rounded-none shadow-none px-2 py-2"}>
           <CardContent className="p-1">
@@ -244,7 +230,7 @@ const BettingHistoryPage = () => {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50 text-[13px]">
-                      <TableHead 
+                      <TableHead
                         className="cursor-pointer select-none"
                         onClick={() => handleSort('id')}
                       >
@@ -253,25 +239,16 @@ const BettingHistoryPage = () => {
                           <ArrowUpDown className="h-4 w-4" />
                         </div>
                       </TableHead>
-                      <TableHead 
+                      <TableHead
                         className="cursor-pointer select-none"
-                        onClick={() => handleSort('type')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Type
-                          <ArrowUpDown className="h-4 w-4" />
-                        </div>
-                      </TableHead>
-                      <TableHead 
-                        className="cursor-pointer select-none"
-                        onClick={() => handleSort('amount')}
+                        onClick={() => handleSort('stake')}
                       >
                         <div className="flex items-center gap-2">
                           Stake
                           <ArrowUpDown className="h-4 w-4" />
                         </div>
                       </TableHead>
-                      <TableHead 
+                      <TableHead
                         className="cursor-pointer select-none"
                         onClick={() => handleSort('odds')}
                       >
@@ -280,14 +257,15 @@ const BettingHistoryPage = () => {
                           <ArrowUpDown className="h-4 w-4" />
                         </div>
                       </TableHead>
-                      <TableHead 
+                      <TableHead
                         className="cursor-pointer select-none"
-                        onClick={() => handleSort('dateTime')}
+                        onClick={() => handleSort('createdAt')}
                       >
                         <div className="flex items-center gap-2">
                           Date & Time
                           <ArrowUpDown className="h-4 w-4" />
-                        </div>                      </TableHead>
+                        </div>
+                      </TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Match</TableHead>
                       <TableHead>Selection</TableHead>
@@ -296,30 +274,22 @@ const BettingHistoryPage = () => {
                   </TableHeader>
                   <TableBody>
                     {sortedData.map((item) => {
-                      const { date, time } = formatDateTime(item.dateTime);
+                      const { date, time } = formatDateTime(item.createdAt);
                       return (
-                        <TableRow key={item.id} className="hover:bg-gray-50 text-[13px]">
-                          <TableCell className="font-mono ">{item.id}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {getTypeIcon(item.type)}
-                              <span className="capitalize">{item.type}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>{formatAmount(item.amount)}</TableCell>
+                        <TableRow key={item._id} className="hover:bg-gray-50 text-[13px]">
+                          <TableCell className="font-mono ">{item._id}</TableCell>
+                          <TableCell>{formatAmount(item.stake)}</TableCell>
                           <TableCell className="">{item.odds}</TableCell>
                           <TableCell>
                             <div className="">
                               <div className="">{date}</div>
-                              <div className="text-gray-500">{time}
-
-                              </div>
-                            </div>                          
-                            </TableCell>
+                              <div className="text-gray-500">{time}</div>
+                            </div>
+                          </TableCell>
                           <TableCell>{getStatusBadge(item.status)}</TableCell>
                           <TableCell className="max-w-48">
-                            <div className="truncate" title={item.match}>
-                              {item.match}
+                            <div className="truncate" title={item.teams}>
+                              {item.teams}
                             </div>
                           </TableCell>
                           <TableCell className="max-w-48">
@@ -330,7 +300,7 @@ const BettingHistoryPage = () => {
                           <TableCell>
                             {item.status === 'won' ? (
                               <span className="font-medium text-green-600">
-                                +${item.payout.toFixed(2)}
+                                +${(item.stake * item.odds).toFixed(2)}
                               </span>
                             ) : item.status === 'pending' ? (
                               <span className="text-gray-500">Pending</span>

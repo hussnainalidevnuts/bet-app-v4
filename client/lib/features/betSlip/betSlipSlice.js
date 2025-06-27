@@ -1,7 +1,9 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import apiClient from "@/config/axios";
 
 const betSlipSlice = createSlice({
-  name: "betSlip",  initialState: {
+  name: "betSlip",
+  initialState: {
     bets: [],
     isOpen: false,
     isExpanded: false, // New state for expanded/collapsed
@@ -17,7 +19,15 @@ const betSlipSlice = createSlice({
   },
   reducers: {
     addBet: (state, action) => {
-      const { match, selection, odds, type = "1x2" } = action.payload;
+      const {
+        match,
+        selection,
+        odds,
+        type = "1x2",
+        oddId = null,
+      } = action.payload;
+
+      console.log(action.payload);
 
       // Check if bet already exists
       const existingBetIndex = state.bets.findIndex(
@@ -38,6 +48,7 @@ const betSlipSlice = createSlice({
         odds: parseFloat(odds),
         type,
         stake: 0,
+        oddId, // Store oddId if provided
       };
 
       if (existingBetIndex >= 0) {
@@ -46,7 +57,7 @@ const betSlipSlice = createSlice({
       } else {
         // Add new bet
         state.bets.push(newBet);
-      }      // Auto-open bet slip when bet is added
+      } // Auto-open bet slip when bet is added
       state.isOpen = true;
       state.isExpanded = false; // Start collapsed when new bet is added
 
@@ -59,7 +70,8 @@ const betSlipSlice = createSlice({
           state.activeTab = "combination";
         }
       }
-    },    removeBet: (state, action) => {
+    },
+    removeBet: (state, action) => {
       state.bets = state.bets.filter((bet) => bet.id !== action.payload);
 
       // Update state based on remaining bets
@@ -69,7 +81,8 @@ const betSlipSlice = createSlice({
       } else if (state.bets.length === 1) {
         state.activeTab = "singles";
       }
-    },    clearAllBets: (state) => {
+    },
+    clearAllBets: (state) => {
       state.bets = [];
       state.isOpen = false;
       state.isExpanded = false;
@@ -197,5 +210,50 @@ export const selectBetSlipExpanded = (state) => state.betSlip.isExpanded;
 export const selectActiveTab = (state) => state.betSlip.activeTab;
 export const selectTotalStake = (state) => state.betSlip.totalStake;
 export const selectPotentialReturn = (state) => state.betSlip.potentialReturn;
+
+// Thunk to place bets (API integration placeholder)
+export const placeBetThunk = createAsyncThunk(
+  "betSlip/placeBet",
+  async (_, { getState, rejectWithValue, dispatch }) => {
+    const state = getState().betSlip;
+    const bets = state.bets;
+    const stakes = state.stake.singles;
+    // Only support singles for now
+    try {
+      const results = [];
+      console.log("This is bets: ", bets);
+
+      for (const bet of bets) {
+        console.log(bet.id);
+
+        const stake = stakes[bet.id] || 0;
+        if (!bet.match.id || !bet.oddId || !stake) {
+          continue; // skip invalid
+        }
+        const payload = {
+          matchId: bet.match.id,
+          oddId: bet.oddId,
+          stake,
+          betOption: bet.selection,
+        };
+        console.log("This is the payload" + payload);
+
+        const response = await apiClient.post("/bet/place-bet", payload);
+        results.push(response.data);
+      }
+      console.log(results);
+      dispatch(clearAllBets());
+      return results;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || {
+          success: false,
+          message: "Failed to place bet",
+          error: error.message,
+        }
+      );
+    }
+  }
+);
 
 export default betSlipSlice.reducer;

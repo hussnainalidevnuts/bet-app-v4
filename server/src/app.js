@@ -16,6 +16,7 @@ import fixturesRouter from "./routes/fixtures.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import financeRoutes from "./routes/finance.routes.js";
+import betRoutes from "./routes/bet.routes.js";
 const app = express();
 const PORT = process.env.PORT || 4000;
 
@@ -56,6 +57,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/sportsmonk", sportsMonkRouter);
 app.use("/api/fixtures", fixturesRouter);
 app.use("/api/finance", authenticateToken, requireAdmin, financeRoutes);
+app.use("/api/bet", betRoutes);
 
 // 404 handler - must be after all routes
 app.use(notFound);

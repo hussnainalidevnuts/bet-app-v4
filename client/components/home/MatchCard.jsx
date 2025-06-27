@@ -31,35 +31,36 @@ const MatchCard = ({ match }) => {
                             </div>
                             <div>{match.time}</div>
                         </div>
-                    </div>                    <div className="flex gap-1">
+                    </div>
+                    <div className="flex gap-1">
                         {match.odds['1'] && (
                             <Button
                                 size={"sm"}
                                 className="flex-1 flex justify-between py-2 gap-0 betting-button"
-                                onClick={createBetHandler(match, '1', match.odds['1'])}
+                                onClick={createBetHandler(match, `Win - ${match.team1}`, match.odds['1'].value, '1x2', match.odds['1'].oddId)}
                             >
                                 <div className="text-[11px]">1</div>
-                                <div className='text-[13px]  font-bold'>{match.odds['1']}</div>
+                                <div className='text-[13px]  font-bold'>{match.odds['1'].value}</div>
                             </Button>
                         )}
                         {match.odds['X'] && (
                             <Button
                                 className="flex-1 flex justify-between py-2  gap-0 betting-button"
                                 size={"sm"}
-                                onClick={createBetHandler(match, 'X', match.odds['X'])}
+                                onClick={createBetHandler(match, `Draw - ${match.team1} vs ${match.team2} `, match.odds['X'].value, '1x2', match.odds['X'].oddId)}
                             >
                                 <div className="text-[11px]">X</div>
-                                <div className='text-[13px] font-bold'>{match.odds['X']}</div>
+                                <div className='text-[13px] font-bold'>{match.odds['X'].value}</div>
                             </Button>
                         )}
                         {match.odds['2'] && (
                             <Button
                                 size={"sm"}
                                 className="flex-1 flex justify-between py-2  gap-0 betting-button"
-                                onClick={createBetHandler(match, '2', match.odds['2'])}
+                                onClick={createBetHandler(match, `Win - ${match.team2}`, match.odds['2'].value, '1x2', match.odds['2'].oddId)}
                             >
                                 <div className="text-[11px]">2</div>
-                                <div className='text-[13px] font-bold'>{match.odds['2']}</div>
+                                <div className='text-[13px] font-bold'>{match.odds['2'].value}</div>
                             </Button>
                         )}
                     </div>

@@ -55,16 +55,16 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["user", "admin"],
       default: "user",
-    },    balance:{
+    },
+    balance: {
       type: Number,
       default: 1000,
-      
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: false, // Optional field for tracking admin who created the user
-    }
+    },
   },
   {
     timestamps: true,

@@ -682,16 +682,26 @@ class FixtureOptimizationService {
 
       const oddsObj = {};
       if (homeOdd?.value && !isNaN(parseFloat(homeOdd.value))) {
-        oddsObj.home = parseFloat(homeOdd.value);
+        oddsObj.home = {
+          value: parseFloat(homeOdd.value),
+          oddId: homeOdd.id,
+        };
       }
       if (drawOdd?.value && !isNaN(parseFloat(drawOdd.value))) {
-        oddsObj.draw = parseFloat(drawOdd.value);
+        oddsObj.draw = {
+          value: parseFloat(drawOdd.value),
+          oddId: drawOdd.id,
+        };
       }
       if (awayOdd?.value && !isNaN(parseFloat(awayOdd.value))) {
-        oddsObj.away = parseFloat(awayOdd.value);
+        oddsObj.away = {
+          value: parseFloat(awayOdd.value),
+          oddId: awayOdd.id,
+        };
       }
 
       transformedMatch.odds = oddsObj;
+      console.log(oddsObj);
     } else if (match.odds && typeof match.odds === "object") {
       // If odds is already an object, standardize the structure
       const oddsObj = {};

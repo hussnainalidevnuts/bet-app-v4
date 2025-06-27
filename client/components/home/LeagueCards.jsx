@@ -26,7 +26,8 @@ const LeagueCard = ({ league, isInPlay = false, viewAllText = null }) => {
                         {isInPlay ? league.day : league.day}
                     </div>
                 </div>
-            </div>            {/* Odds Header */}
+            </div>
+            {/* Odds Header */}
             <div className="flex items-center px-4 py-2 bg-gray-100 border-b border-gray-200 flex-shrink-0">
                 <div className="flex-1 text-xs">{isInPlay ? 'Today' : 'Today'}</div>
                 <div className="flex gap-1">
@@ -35,91 +36,85 @@ const LeagueCard = ({ league, isInPlay = false, viewAllText = null }) => {
                     <div className="w-14 text-center text-xs text-gray-600 font-medium">2</div>
                 </div>
             </div>
-
             {/* Matches */}
             <div className="p-4 py-0 flex-1 overflow-y-auto">
-                {league.matches.slice(0, 4).map((match, index) => (<div key={match.id}>
-                    <div className='flex justify-between mt-2  '>
-                        <div className=" text-xs text-gray-600">
-                            {isInPlay ? (match.liveTime || '45:32') : match.time}
+                {league.matches.slice(0, 4).map((match, index) => (
+                    <div key={match.id}>
+                        <div className='flex justify-between mt-2'>
+                            <div className="text-xs text-gray-600">
+                                {isInPlay ? (match.liveTime || '45:32') : match.time}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                                {isInPlay ? '' : '+358'}
+                            </div>
                         </div>
-                        <div className=" text-xs text-gray-500">
-                            {isInPlay ? '' : '+358'}
-                        </div>
-                    </div>
-                    <Link href={`/matches/${match.id}`}>
-                        <div className="cursor-pointer hover:bg-gray-50 -mx-4 px-4 py-1 rounded">
-                            <div className="flex items-center justify-between">
-                                <div className="flex-1">
-                                    <div className="text-[12px] mb-1 flex items-center gap-2" title={match.team1}>
-                                        {isInPlay && (
-                                            <span className="text-xs font-bold text-gray-900 min-w-[16px]">
-                                                {match.score?.team1 || '0'}
-                                            </span>
-                                        )}
-                                        <span>
-                                            {match.team1.length > 6 ? `${match.team1.slice(0, 18)}...` : match.team1}
-                                        </span>
-                                    </div>
-                                    <div className="text-[12px] flex items-center gap-2" title={match.team2}>
-                                        {isInPlay && (
-                                            <span className="text-xs font-bold text-gray-900 min-w-[16px]">
-                                                {match.score?.team2 || '0'}
-                                            </span>
-                                        )}
-                                        <span>
-                                            {match.team2.length > 6 ? `${match.team2.slice(0, 18)}...` : match.team2}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center  flex-shrink-0">
-                                    {/* <div className="text-right text-xs text-gray-500">
-                                            <div className="flex items-center gap-1">
-                                                {match.clock && <span>⏰</span>}
-                                                <span>{match.time}</span>
-                                            </div>
-                                            {match.isLive && (
-                                                <div className="text-red-500 font-medium">LIVE</div>
+                        <Link href={`/matches/${match.id}`}>
+                            <div className="cursor-pointer hover:bg-gray-50 -mx-4 px-4 py-1 rounded">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex-1">
+                                        <div className="text-[12px] mb-1 flex items-center gap-2" title={match.team1}>
+                                            {isInPlay && (
+                                                <span className="text-xs font-bold text-gray-900 min-w-[16px]">
+                                                    {match.score?.team1 || '0'}
+                                                </span>
                                             )}
-                                        </div> */}                                    <div className="flex gap-1">
-                                        {match.odds['1'] && (
-                                            <Button
-                                                size={"sm"}
-                                                className="w-14 h-8 p-0 text-xs font-bold betting-button"
-                                                onClick={createBetHandler(match, '1', match.odds['1'])}
-                                            >
-                                                {match.odds['1']}
-                                            </Button>
-                                        )}
-                                        {match.odds['X'] && (
-                                            <Button
-                                                className="w-14 h-8 p-0 text-xs font-bold betting-button"
-                                                size={"sm"}
-                                                onClick={createBetHandler(match, 'X', match.odds['X'])}
-                                            >
-                                                {match.odds['X']}
-                                            </Button>
-                                        )}
-                                        {match.odds['2'] && (
-                                            <Button
-                                                size={"sm"}
-                                                className="w-14 h-8 p-0 text-xs font-bold betting-button"
-                                                onClick={createBetHandler(match, '2', match.odds['2'])}
-                                            >
-                                                {match.odds['2']}
-                                            </Button>
-                                        )}
+                                            <span>
+                                                {match.team1.length > 6 ? `${match.team1.slice(0, 18)}...` : match.team1}
+                                            </span>
+                                        </div>
+                                        <div className="text-[12px] flex items-center gap-2" title={match.team2}>
+                                            {isInPlay && (
+                                                <span className="text-xs font-bold text-gray-900 min-w-[16px]">
+                                                    {match.score?.team2 || '0'}
+                                                </span>
+                                            )}
+                                            <span>
+                                                {match.team2.length > 6 ? `${match.team2.slice(0, 18)}...` : match.team2}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center flex-shrink-0">
+                                        <div className="flex gap-1">
+                                            {match.odds['1'] && (
+                                                <Button
+                                                    size="sm"
+                                                    className="w-14 h-8 p-0 text-xs font-bold betting-button"
+                                                    onClick={createBetHandler(match, '1', match.odds['1'].value, '1x2', match.odds['1'].oddId)}
+                                                >
+                                                    {match.odds['1'].value}
+                                                </Button>
+                                            )}
+                                            {match.odds['X'] && (
+                                                <Button
+                                                    size="sm"
+                                                    className="w-14 h-8 p-0 text-xs font-bold betting-button"
+                                                    onClick={createBetHandler(match, 'X', match.odds['X'].value, '1x2', match.odds['X'].oddId)}
+                                                >
+                                                    {match.odds['X'].value}
+                                                </Button>
+                                            )}
+                                            {match.odds['2'] && (
+                                                <Button
+                                                    size="sm"
+                                                    className="w-14 h-8 p-0 text-xs font-bold betting-button"
+                                                    onClick={createBetHandler(match, '2', match.odds['2'].value, '1x2', match.odds['2'].oddId)}
+                                                >
+                                                    {match.odds['2'].value}
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>                        </Link>
-                    {index < Math.min(league.matches.length, 4) - 1 && (
-                        <div className="border-b border-gray-300 mx-0 my-2"></div>
-                    )}
-                </div>
+                        </Link>
+                        {index < Math.min(league.matches.length, 4) - 1 && (
+                            <div className="border-b border-gray-300 mx-0 my-2"></div>
+                        )}
+                    </div>
                 ))}
-            </div>            {/* More Button */}            <div className="p-4 py-3 flex items-center justify-center font-medium border-t border-gray-200  flex-shrink-0">
+            </div>
+            {/* More Button */}
+            <div className="p-4 py-3 flex items-center justify-center font-medium border-t border-gray-200 flex-shrink-0">
                 <Link href={isInPlay ? `/inplay` : `/leagues/${league.id}`}
                     variant="outline"
                     size="sm"
@@ -158,18 +153,18 @@ const LeagueCards = ({
 
                 if (match.odds) {
                     if (typeof match.odds === 'object' && !Array.isArray(match.odds)) {
-                        // New backend format: {"home": 2.00, "draw": 3.25, "away": 3.90}
-                        if (match.odds.home && !isNaN(match.odds.home)) odds['1'] = match.odds.home.toFixed(2);
-                        if (match.odds.draw && !isNaN(match.odds.draw)) odds['X'] = match.odds.draw.toFixed(2);
-                        if (match.odds.away && !isNaN(match.odds.away)) odds['2'] = match.odds.away.toFixed(2);
+                        // New backend format: { home: { value, oddId }, draw: { value, oddId }, away: { value, oddId } }
+                        if (match.odds.home && !isNaN(match.odds.home.value)) odds['1'] = { value: match.odds.home.value.toFixed(2), oddId: match.odds.home.oddId };
+                        if (match.odds.draw && !isNaN(match.odds.draw.value)) odds['X'] = { value: match.odds.draw.value.toFixed(2), oddId: match.odds.draw.oddId };
+                        if (match.odds.away && !isNaN(match.odds.away.value)) odds['2'] = { value: match.odds.away.value.toFixed(2), oddId: match.odds.away.oddId };
                     } else if (Array.isArray(match.odds)) {
                         // Legacy array format (if still present)
                         match.odds.forEach(odd => {
                             const value = parseFloat(odd.value);
                             if (!isNaN(value)) {
-                                if (odd.label === '1' || odd.label === 'Home' || odd.name === 'Home') odds['1'] = value.toFixed(2);
-                                if (odd.label === 'X' || odd.label === 'Draw' || odd.name === 'Draw') odds['X'] = value.toFixed(2);
-                                if (odd.label === '2' || odd.label === 'Away' || odd.name === 'Away') odds['2'] = value.toFixed(2);
+                                if (odd.label === '1' || odd.label === 'Home' || odd.name === 'Home') odds['1'] = { value: value.toFixed(2), oddId: odd.oddId };
+                                if (odd.label === 'X' || odd.label === 'Draw' || odd.name === 'Draw') odds['X'] = { value: value.toFixed(2), oddId: odd.oddId };
+                                if (odd.label === '2' || odd.label === 'Away' || odd.name === 'Away') odds['2'] = { value: value.toFixed(2), oddId: odd.oddId };
                             }
                         });
                     }
@@ -232,8 +227,6 @@ const LeagueCards = ({
         return null;
     }
 
-
-
     const scrollLeft = () => {
         if (scrollRef.current) {
             scrollRef.current.scrollBy({ left: -320, behavior: 'smooth' });
@@ -244,7 +237,9 @@ const LeagueCards = ({
         if (scrollRef.current) {
             scrollRef.current.scrollBy({ left: 320, behavior: 'smooth' });
         }
-    }; return (
+    };
+
+    return (
         <div className="mb-8">
             {title && (
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">{title}</h2>
@@ -268,7 +263,8 @@ const LeagueCards = ({
                         Tomorrow
                     </Button>
                 </div>
-            )}{/* Carousel Navigation */}
+            )}
+            {/* Carousel Navigation */}
             <div className="relative group">
                 <Button
                     variant="outline"
@@ -292,15 +288,16 @@ const LeagueCards = ({
                 <div
                     ref={scrollRef}
                     className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide"
-                >                    {displayData.map((league) => (
-                    <div key={league.id} className="flex-shrink-0 w-96">
-                        <LeagueCard
-                            league={league}
-                            isInPlay={isInPlay}
-                            viewAllText={viewAllText}
-                        />
-                    </div>
-                ))}
+                >
+                    {displayData.map((league) => (
+                        <div key={league.id} className="flex-shrink-0 w-96">
+                            <LeagueCard
+                                league={league}
+                                isInPlay={isInPlay}
+                                viewAllText={viewAllText}
+                            />
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>

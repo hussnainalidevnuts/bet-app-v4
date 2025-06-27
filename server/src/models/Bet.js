@@ -1,60 +1,65 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const betSchema = new mongoose.Schema({
+const betSchema = new mongoose.Schema(
+  {
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "User ID is required"],
     },
-    event: {
-        type: String,
-        required: true
+    matchId: {
+      type: String,
+      required: [true, "Match ID is required"],
     },
-    selection: {
-        type: String,
-        required: true
+    oddId: {
+      type: String,
+      required: [true, "Odd ID is required"],
     },
-    stake: {
-        type: Number,
-        required: true,
-        min: 0
+    betOption: {
+      type: String,
+      required: [true, "Bet option is required"],
+      trim: true,
     },
     odds: {
-        type: Number,
-        required: true,
-        min: 1
+      type: Number,
+      required: [true, "Odds are required"],
+      min: [1.01, "Odds must be greater than 1.01"],
+    },
+    stake: {
+      type: Number,
+      required: [true, "Stake is required"],
+      min: [1, "Stake must be at least 1"],
+    },
+    payout: {
+      type: Number,
+      required: true,
+      default: 0,
     },
     status: {
-        type: String,
-        enum: ['pending', 'won', 'lost', 'cancelled'],
-        default: 'pending'
+      type: String,
+      enum: ["pending", "won", "lost", "canceled"],
+      default: "pending",
     },
-    result: {
-        type: String,
-        enum: ['win', 'loss', 'push', 'cancelled'],
-        default: null
+    matchDate: {
+      type: Date,
+      required: [true, "Match date is required"],
     },
-    settledAt: {
-        type: Date,
-        default: null
+    teams: {
+      type: String,
+      required: [true, "Teams are required"],
+      trim: true,
     },
-    createdAt: {
-        type: Date,
-        default: Date.now
+    selection: {
+      type: String,
+      required: [true, "Selection is required"],
+      trim: true,
     },
-    updatedAt: {
-        type: Date,
-        default: Date.now
-    }
-}, {
-    timestamps: true
-});
+  },
+  {
+    timestamps: true,
+  }
+);
 
-// Add indexes for better query performance
-betSchema.index({ userId: 1, createdAt: -1 });
-betSchema.index({ status: 1 });
-betSchema.index({ event: 'text', selection: 'text' });
+const Bet = mongoose.model("Bet", betSchema);
 
-const Bet = mongoose.model('Bet', betSchema);
-
-export default Bet; 
+export default Bet;

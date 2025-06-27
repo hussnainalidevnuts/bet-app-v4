@@ -169,27 +169,27 @@ const MatchListPage = ({ config }) => {
                                                                 <Button
                                                                     size="sm"
                                                                     className="w-12 h-8 md:w-14 p-0 text-xs font-bold betting-button"
-                                                                    onClick={createBetHandler(match, '1', match.odds['1'])}
+                                                                    onClick={createBetHandler(match, '1', match.odds['1'].value, '1x2', match.odds['1'].oddId)}
                                                                 >
-                                                                    {match.odds['1']}
+                                                                    {match.odds['1'].value}
                                                                 </Button>
                                                             )}
                                                             {match.odds && match.odds['X'] && (
                                                                 <Button
                                                                     size="sm"
                                                                     className="w-12 h-8 md:w-14 p-0 text-xs font-bold betting-button"
-                                                                    onClick={createBetHandler(match, 'X', match.odds['X'])}
+                                                                    onClick={createBetHandler(match, 'X', match.odds['X'].value, '1x2', match.odds['X'].oddId)}
                                                                 >
-                                                                    {match.odds['X']}
+                                                                    {match.odds['X'].value}
                                                                 </Button>
                                                             )}
                                                             {match.odds && match.odds['2'] && (
                                                                 <Button
                                                                     size="sm"
                                                                     className="w-12 h-8 md:w-14 p-0 text-xs font-bold betting-button"
-                                                                    onClick={createBetHandler(match, '2', match.odds['2'])}
+                                                                    onClick={createBetHandler(match, '2', match.odds['2'].value, '1x2', match.odds['2'].oddId)}
                                                                 >
-                                                                    {match.odds['2']}
+                                                                    {match.odds['2'].value}
                                                                 </Button>
                                                             )}
                                                         </div>

@@ -11,31 +11,26 @@ const transformMatchData = (apiMatch, leagueName) => {
     // Extract team names from the match name (e.g., "Hammarby vs Halmstad")
     const teamNames = apiMatch.name?.split(' vs ') || ['Team A', 'Team B'];
 
-    // Extract main odds (1, X, 2) from the odds array
+    // Extract main odds (1, X, 2) from the odds data
     const odds = {};
-    if (apiMatch.odds && Array.isArray(apiMatch.odds)) {
-        apiMatch.odds.forEach(odd => {
-            // Handle different label formats from the API
-            const label = odd.label?.toString().toLowerCase();
-            const name = odd.name?.toString().toLowerCase();
-
-            if (label === '1' || label === 'home' || name === 'home') {
-                odds['1'] = odd.value?.toFixed(2);
-            }
-            if (label === 'x' || label === 'draw' || name === 'draw') {
-                odds['X'] = odd.value?.toFixed(2);
-            }
-            if (label === '2' || label === 'away' || name === 'away') {
-                odds['2'] = odd.value?.toFixed(2);
-            }
-        });
-    }
-
-    // If no odds found in array format, check if odds is an object
-    if (Object.keys(odds).length === 0 && apiMatch.odds && typeof apiMatch.odds === 'object' && !Array.isArray(apiMatch.odds)) {
-        if (apiMatch.odds.home) odds['1'] = apiMatch.odds.home.toFixed(2);
-        if (apiMatch.odds.draw) odds['X'] = apiMatch.odds.draw.toFixed(2);
-        if (apiMatch.odds.away) odds['2'] = apiMatch.odds.away.toFixed(2);
+    if (apiMatch.odds) {
+        if (typeof apiMatch.odds === 'object' && !Array.isArray(apiMatch.odds)) {
+            if (apiMatch.odds.home && !isNaN(apiMatch.odds.home.value)) odds['1'] = { value: apiMatch.odds.home.value.toFixed(2), oddId: apiMatch.odds.home.oddId };
+            if (apiMatch.odds.draw && !isNaN(apiMatch.odds.draw.value)) odds['X'] = { value: apiMatch.odds.draw.value.toFixed(2), oddId: apiMatch.odds.draw.oddId };
+            if (apiMatch.odds.away && !isNaN(apiMatch.odds.away.value)) odds['2'] = { value: apiMatch.odds.away.value.toFixed(2), oddId: apiMatch.odds.away.oddId };
+        } else if (Array.isArray(apiMatch.odds)) {
+            // Legacy array format (if still present)
+            apiMatch.odds.forEach(odd => {
+                const label = odd.label?.toString().toLowerCase();
+                const name = odd.name?.toString().toLowerCase();
+                const value = parseFloat(odd.value);
+                if (!isNaN(value)) {
+                    if (label === '1' || label === 'home' || name === 'home') odds['1'] = { value: value.toFixed(2), oddId: odd.oddId };
+                    if (label === 'x' || label === 'draw' || name === 'draw') odds['X'] = { value: value.toFixed(2), oddId: odd.oddId };
+                    if (label === '2' || label === 'away' || name === 'away') odds['2'] = { value: value.toFixed(2), oddId: odd.oddId };
+                }
+            });
+        }
     }
 
     // Format date and time

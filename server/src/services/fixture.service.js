@@ -105,8 +105,12 @@ class FixtureOptimizationService {
   }) {
     const params = {
       page,
-      per_page: 50,
+      per_page: 50, // Ensure limit doesn't exceed API max
+      sort: "starting_at", // Sort by start time
+      order: "asc", // Ascending order for closest matches first
     };
+    console.log("DATE TO: ", dateTo);
+    console.log("DATE FROM: ", dateFrom);
 
     // Build filters array for v3 API format
     const filters = [];
@@ -118,8 +122,6 @@ class FixtureOptimizationService {
     if (leagues && leagues.length > 0) {
       filters.push(`leagueIds:${leagues.join(",")}`);
     }
-    // Note: Removed fixtureStartingAtFrom and fixtureStartingAtTo to avoid syntax error
-    // Date filtering should be handled via endpoint or client-side
 
     // Add bookmaker filter only if odds are included
     if (includeOdds) {
@@ -137,6 +139,14 @@ class FixtureOptimizationService {
       includes.push("odds");
     }
     params.include = includes.join(";");
+
+    // Return params and endpoint for date filtering
+    let endpoint = "/football/fixtures";
+    if (dateFrom && dateTo) {
+      const formattedDateFrom = new Date(dateFrom).toISOString().split("T")[0];
+      const formattedDateTo = new Date(dateTo).toISOString().split("T")[0];
+      endpoint = `/football/fixtures/between/date/${formattedDateFrom}/${formattedDateTo}`;
+    }
 
     return params;
   }
@@ -1024,49 +1034,84 @@ class FixtureOptimizationService {
   // Periodic job to fetch and cache matches starting in next 6 hours
   async refreshUpcomingMatchesCache() {
     const now = new Date();
-    const sixHoursLater = new Date(now.getTime() + 6 * 60 * 60 * 1000);
-    const apiParams = this.buildOptimizedApiParams({
-      dateFrom: now.toISOString(),
-      dateTo: sixHoursLater.toISOString(),
-      states: [2], // Not started
-      includeOdds: false,
-      per_page: 100,
-      includeOdds: false,
-    });
+    const todayStr = now.toISOString().split("T")[0];
     let matches = [];
     try {
-      const response = await sportsMonksService.getOptimizedFixtures(apiParams);
-      matches = Array.isArray(response.data)
-        ? response.data
-        : response.data?.data || [];
+      //INFO: Fetch page 1
+      const response1 = await sportsMonksService.client.get(
+        `/football/fixtures/date/${todayStr}`,
+        { params: { page: 1 } }
+      );
+      const page1 = Array.isArray(response1.data?.data)
+        ? response1.data.data
+        : [];
+      //INFO: Fetch page 2
+      const response2 = await sportsMonksService.client.get(
+        `/football/fixtures/date/${todayStr}`,
+        { params: { page: 2 } }
+      );
+      const page2 = Array.isArray(response2.data?.data)
+        ? response2.data.data
+        : [];
+      matches = [...page1, ...page2];
     } catch (err) {
       console.error(
-        "[UpcomingMatchesCache] Error fetching upcoming matches:",
+        "[UpcomingMatchesCache] Error fetching today's fixtures:",
         err
       );
       matches = [];
     }
-    // Only store id, starting_at, league
-    const minimalMatches = matches.map((m) => ({
-      id: m.id,
-      starting_at: m.starting_at,
-      league: m.league,
-    }));
+    // Only keep matches where result_info is null
+    matches = matches.filter((m) => m.result_info == null);
+    // Enrich each match with league details from the leagueCache
+    let leagues = this.leagueCache.get("leagues");
+    if (!Array.isArray(leagues) || leagues.length === 0) {
+      // Fetch leagues if not present in cache
+      try {
+        leagues = await sportsMonksService.getLeagues();
+        this.leagueCache.set("leagues", leagues, 60 * 60 * 24); // Cache for 1 day
+      } catch (err) {
+        console.error("[UpcomingMatchesCache] Error fetching leagues:", err);
+        leagues = [];
+      }
+    }
+    const minimalMatches = matches.map((m) => {
+      let league = null;
+      if (m.league_id && Array.isArray(leagues)) {
+        league = leagues.find((l) => l.id === m.league_id) || null;
+        if (league && league.country) {
+          // Remove the country property
+          const { country, ...rest } = league;
+          league = rest;
+        }
+      }
+      return {
+        id: m.id,
+        starting_at: m.starting_at,
+        league,
+      };
+    });
     this.upcomingMatchesCache.flushAll();
     minimalMatches.forEach((m) => this.upcomingMatchesCache.set(m.id, m));
     console.log(
-      `[UpcomingMatchesCache] Cached ${minimalMatches.length} matches for next 6 hours`
+      `[UpcomingMatchesCache] Cached ${minimalMatches.length} matches for today (result_info=null) with league details`
     );
   }
 
-  // Return matches that are currently 'active' (start time <= now)
   getActiveMatchesFromCache() {
-    const now = new Date();
+    const nowUTC = Date.now();
     const active = [];
     this.upcomingMatchesCache.keys().forEach((matchId) => {
       const match = this.upcomingMatchesCache.get(matchId);
-      if (match && new Date(match.starting_at) <= now) {
+      if (!match) return;
+      // Parse starting_at as UTC
+      const startUTC = Date.parse(match.starting_at + 'Z');
+      const diffMins = (nowUTC - startUTC) / (60 * 1000);
+      if (nowUTC >= startUTC && diffMins <= 125) {
         active.push(match);
+      } else if (diffMins > 125) {
+        // Remove old matches from cache
+        this.upcomingMatchesCache.del(matchId);
       }
     });
     return active;

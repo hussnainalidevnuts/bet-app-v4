@@ -7,6 +7,7 @@ import {
   getHomepageFixtures,
   getMatchById,
   getMatchesByLeague,
+  getLiveMatchesFromCache,
 } from "../controllers/fixtures.controller.js";
 
 import { authenticateToken, requireAdmin } from "../middlewares/auth.js";
@@ -19,10 +20,10 @@ fixturesRouter.get("/homepage", getHomepageFixtures);
 fixturesRouter.get("/today", getTodaysFixtures);
 fixturesRouter.get("/upcoming", getUpcomingFixtures);
 fixturesRouter.get("/leagues/popular", getPopularLeagues);
-
+fixturesRouter.get("/live", getLiveMatchesFromCache);
 // Test endpoint to compare optimization
-fixturesRouter.get("/:matchId", getMatchById);
 fixturesRouter.get("/upcoming", getUpcomingFixtures);
+fixturesRouter.get("/:matchId", getMatchById);
 
 // Add new route for matches by league
 fixturesRouter.get("/league/:leagueId", getMatchesByLeague);

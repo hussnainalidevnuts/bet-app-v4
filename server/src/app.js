@@ -94,7 +94,6 @@ agenda.define("refreshUpcomingMatchesCache", async () => {
   await agenda.start();
   console.log("[Agenda] Started and polling for jobs.");
   await agenda.every("6 hours", "refreshUpcomingMatchesCache");
-  // Add any other recurring jobs here
 })();
 
 agenda.on("ready", () => {

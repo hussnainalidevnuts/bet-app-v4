@@ -15,16 +15,26 @@ export const getOptimizedFixtures = asyncHandler(async (req, res) => {
     priority,
   } = req.query;
 
+  // Default dateFrom = today, dateTo = 20 days later if not provided
+  let _dateFrom = dateFrom;
+  let _dateTo = dateTo;
+  if (!dateFrom || !dateTo) {
+    const today = new Date();
+    _dateFrom = today.toISOString().split("T")[0];
+    const future = new Date(today.getTime() + 20 * 24 * 60 * 60 * 1000);
+    _dateTo = future.toISOString().split("T")[0];
+  }
+
   // Parse query parameters
   const options = {
     page: parseInt(page),
-    limit: Math.min(parseInt(limit), 100), // Limit to prevent abuse
     leagues: leagues ? leagues.split(",").map((id) => parseInt(id)) : [],
-    dateFrom,
-    dateTo,
+    dateFrom: _dateFrom,
+    dateTo: _dateTo,
     states: states ? states.split(",").map((id) => parseInt(id)) : [1],
-    includeOdds: includeOdds === "true",
+    includeOdds: true,
     priority,
+    per_page:50
   };
 
   const fixtures = await fixtureOptimizationService.getOptimizedFixtures(
@@ -198,6 +208,20 @@ export const getMatchesByLeague = asyncHandler(async (req, res) => {
     data: fixtures,
     league: league,
     count: fixtures.length,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+export const getLiveMatchesFromCache = asyncHandler(async (req, res) => {
+  const liveMatches = fixtureOptimizationService.getActiveMatchesFromCache();
+  res.status(200).json({
+    success: true,
+    message:
+      liveMatches.length > 0
+        ? "Live matches fetched successfully"
+        : "No live matches at this time",
+    data: liveMatches,
+    count: liveMatches.length,
     timestamp: new Date().toISOString(),
   });
 });

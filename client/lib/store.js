@@ -9,6 +9,7 @@ import transactionsReducer from "./features/transactions/transactionsSlice";
 import financeReducer from "./features/finance/financeSlice";
 import homeReducer from "./features/home/homeSlice";
 import betsReducer from "./features/bets/betsSlice";
+import liveMatchesReducer from "./features/matches/liveMatchesSlice";
 
 export const store = configureStore({
   reducer: {
@@ -22,5 +23,6 @@ export const store = configureStore({
     finance: financeReducer,
     adminUsers: adminUserReducer,
     bets: betsReducer,
+    liveMatches: liveMatchesReducer,
   },
 });

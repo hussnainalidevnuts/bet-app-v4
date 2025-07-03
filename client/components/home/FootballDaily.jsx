@@ -7,7 +7,7 @@ import MatchCard from './MatchCard';
 import { selectFootballDaily } from '@/lib/features/home/homeSlice';
 
 // Helper function to transform API match data to MatchCard format
-const transformMatchData = (apiMatch, leagueName) => {
+const transformMatchData = (apiMatch, league) => {
     // Extract team names from the match name (e.g., "Hammarby vs Halmstad")
     const teamNames = apiMatch.name?.split(' vs ') || ['Team A', 'Team B'];
 
@@ -50,7 +50,10 @@ const transformMatchData = (apiMatch, leagueName) => {
 
     return {
         id: apiMatch.id,
-        tournament: leagueName,
+        league: {
+            name: league.name,
+            imageUrl: league.imageUrl
+        },
         team1: teamNames[0],
         team2: teamNames[1],
         date: dateStr,
@@ -86,7 +89,7 @@ const FootballDaily = () => {
 
             {footballDaily.map((leagueData) => {
                 const transformedMatches = leagueData.matches.map(match =>
-                    transformMatchData(match, leagueData.league.name)
+                    transformMatchData(match, leagueData.league)
                 );
 
                 return (

@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import TopPicks from './TopPicks';
 import LeagueCards from './LeagueCards';
 import { fetchHomepageData, selectHomeLoading, selectHomeError, selectFootballDaily } from '@/lib/features/home/homeSlice';
+import { fetchLiveMatches, selectLiveMatches, selectLiveMatchesLoading, selectLiveMatchesError } from '@/lib/features/matches/liveMatchesSlice';
 
 const HomePage = () => {
     const dispatch = useDispatch();
@@ -12,9 +13,16 @@ const HomePage = () => {
     const error = useSelector(selectHomeError);
     const footballDaily = useSelector(selectFootballDaily);
 
+    // Live matches state
+    const liveMatches = useSelector(selectLiveMatches);
+    const liveLoading = useSelector(selectLiveMatchesLoading);
+    const liveError = useSelector(selectLiveMatchesError);
+
     useEffect(() => {
         // Fetch homepage data when component mounts
         dispatch(fetchHomepageData());
+        // Fetch live matches separately
+        dispatch(fetchLiveMatches());
     }, [dispatch]);
 
     if (loading) {
@@ -60,12 +68,16 @@ const HomePage = () => {
                             viewAllText="View All Football Daily"
                         />
 
-                        {/* In-Play Section - keep existing for now */}
+                        {/* In-Play Section - using live matches from Redux */}
                         <LeagueCards
                             title="In-Play"
                             isInPlay={true}
                             showDayTabs={false}
                             viewAllText="View All Live Football"
+                            useReduxData={true}
+                            reduxData={liveMatches.data}
+                            loading={liveLoading}
+                            error={liveError}
                         />
                     </div>
 

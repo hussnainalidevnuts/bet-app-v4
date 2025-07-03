@@ -3,7 +3,7 @@ import axios from 'axios';
 // Create axios instance with default configuration
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api',
-  timeout: 15000, // 15 seconds timeout
+  timeout: 45000, // 45 seconds timeout
   withCredentials: true, // Include cookies in requests
   headers: {
     'Content-Type': 'application/json',

@@ -7,7 +7,7 @@ import MatchCard from './MatchCard';
 import { selectTopPicks } from '@/lib/features/home/homeSlice';
 
 // Helper function to transform API data to MatchCard format
-const transformMatchData = (apiMatch) => {
+const transformMatchData = (apiMatch, league) => {
     // Extract team names from the match name (e.g., "Hammarby vs Halmstad")
     const teamNames = apiMatch.name?.split(' vs ') || ['Team A', 'Team B'];
 
@@ -51,7 +51,8 @@ const transformMatchData = (apiMatch) => {
     return {
         id: apiMatch.id,
         league: {
-            name: apiMatch.league?.name, imageUrl: apiMatch.league?.image_path
+            name: league.name,
+            imageUrl: league.imageUrl
         },
         team1: teamNames[0],
         team2: teamNames[1],
@@ -67,7 +68,7 @@ const TopPicks = () => {
 
     // Transform API data to MatchCard format and filter out matches without odds
     const transformedMatches = topPicks
-        .map(transformMatchData)
+        .map(match => transformMatchData(match, match.league))
         .filter(match => match.odds && Object.keys(match.odds).length > 0);
 
     if (transformedMatches.length === 0) {

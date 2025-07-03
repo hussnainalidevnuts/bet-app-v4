@@ -170,6 +170,8 @@ const MatchListPage = ({ config }) => {
                                 // Skip leagues without matches or with invalid data
                                 if (!league || !Array.isArray(league.matches)) return null;
                                 
+                                
+                                
                                 return (
                                     <AccordionItem
                                         key={league.id || `league-${Math.random()}`}
@@ -179,7 +181,11 @@ const MatchListPage = ({ config }) => {
                                         <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-gray-50/50 transition-colors duration-200 [&[data-state=open]]:bg-gray-50/80">
                                             <div className="flex items-center justify-between w-full">
                                                 <div className="flex items-center gap-3">
-                                                    <span className="text-xl">{league.icon || "⚽"}</span>
+                                                    {league.matches && league.matches[0] && league.matches[0].league && league.matches[0].league.imageUrl ? (
+                                                        <img src={league.matches[0].league.imageUrl} alt={league.name} className="w-6 h-6 rounded-full" />
+                                                    ) : (
+                                                        <span className="text-xl">{league.icon || "⚽"}</span>
+                                                    )}
                                                     <div className="text-left">
                                                         <p className="text-[13px]">{league.name || "Unknown League"}</p>
                                                         <p className="text-xs text-gray-500 font-normal">

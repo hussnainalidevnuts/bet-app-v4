@@ -74,6 +74,8 @@ app.listen(PORT, () => {
 
 global.fixtureOptimizationService = fixtureOptimizationService;
 
+
+//INFO: checking the bet outcome of a bet at a scheduled time
 agenda.define("checkBetOutcome", async (job) => {
   const { betId, matchId } = job.attrs.data;
   try {
@@ -86,15 +88,10 @@ agenda.define("checkBetOutcome", async (job) => {
   }
 });
 
-agenda.define("refreshUpcomingMatchesCache", async () => {
-  await fixtureOptimizationService.refreshUpcomingMatchesCache();
-});
 
-(async () => {
-  await agenda.start();
-  console.log("[Agenda] Started and polling for jobs.");
-  await agenda.every("6 hours", "refreshUpcomingMatchesCache");
-})();
+
+
+agenda.start();
 
 agenda.on("ready", () => {
   console.log("[Agenda] Ready and connected to MongoDB");

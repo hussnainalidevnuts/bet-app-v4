@@ -48,8 +48,8 @@ const LeagueHeader = ({ league }) => {
                             onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); toggleDropdown(); } }}
                         >
                             <div className="flex items-center space-x-3">
-                                {league?.image_path && (
-                                    <img src={league.image_path} alt={league?.name} className="text-2xl h-7 w-7" />
+                                {league?.imageUrl && (
+                                    <img src={league.imageUrl} alt={league?.name} className="text-2xl h-7 w-7" />
                                 )}
                                 <span className="text-lg font-medium">{league?.name}</span>
                             </div>

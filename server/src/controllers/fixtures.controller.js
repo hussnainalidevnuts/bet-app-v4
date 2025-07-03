@@ -1,5 +1,7 @@
 import fixtureOptimizationService from "../services/fixture.service.js";
 import { asyncHandler } from "../utils/customErrors.js";
+import FixtureOptimizationService from "../services/fixture.service.js";
+import LiveFixturesService from "../services/LiveFixtures.service.js";
 
 // Get optimized fixtures with pagination and filtering
 
@@ -37,9 +39,7 @@ export const getOptimizedFixtures = asyncHandler(async (req, res) => {
     per_page:50
   };
 
-  const fixtures = await fixtureOptimizationService.getOptimizedFixtures(
-    options
-  );
+  const fixtures = await fixtureOptimizationService.getOptimizedFixtures();
 
   res.status(200).json({
     success: true,
@@ -213,7 +213,9 @@ export const getMatchesByLeague = asyncHandler(async (req, res) => {
 });
 
 export const getLiveMatchesFromCache = asyncHandler(async (req, res) => {
-  const liveMatches = fixtureOptimizationService.getActiveMatchesFromCache();
+  // Use the fixtureCache from the main service to avoid duplicate caches
+  const liveFixturesService = new LiveFixturesService(FixtureOptimizationService.fixtureCache);
+  const liveMatches = liveFixturesService.getLiveMatchesFromCache();
   res.status(200).json({
     success: true,
     message:

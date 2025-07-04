@@ -5,6 +5,7 @@ import { CalendarDays } from "lucide-react";
 import MatchListPage from "@/components/shared/MatchListPage";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUpcomingMatches, selectUpcomingMatches, selectUpcomingMatchesLoading, selectUpcomingMatchesError } from "@/lib/features/matches/matchesSlice";
+import { formatToLocalTime } from '@/lib/utils';
 
 const UpcomingMatchesPage = () => {
   const upcomingMatches = useSelector(selectUpcomingMatches);
@@ -18,19 +19,7 @@ const UpcomingMatchesPage = () => {
 
   const formatUpcomingTime = (startTime, match) => {
     if (!startTime) return "TBD";
-
-    // Extract time from ISO string if it's in that format
-    if (typeof startTime === 'string' && startTime.includes('T')) {
-      const date = new Date(startTime);
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    
-    // If it's already in a time format like "14:30:00", extract just HH:MM
-    if (typeof startTime === 'string' && startTime.includes(':')) {
-      return startTime.split(':').slice(0, 2).join(':');
-    }
-
-    return startTime;
+    return formatToLocalTime(startTime, { format: 'timeOnly' });
   };
 
   const upcomingConfig = {

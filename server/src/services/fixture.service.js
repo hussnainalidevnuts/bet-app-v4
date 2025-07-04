@@ -7,6 +7,7 @@ import {
 } from "../utils/oddsClassification.js";
 import cron from "node-cron";
 import LiveFixturesService from "./LiveFixtures.service.js";
+import League from '../models/League.js';
 
 class FixtureOptimizationService {
   constructor() {
@@ -67,6 +68,7 @@ class FixtureOptimizationService {
         const pagination = response.data?.pagination;
         if (pagination && pagination.has_more && pagination.next_page) {
           page++;
+          pageUrl = null;
         } else {
           pageUrl = null;
         }
@@ -163,8 +165,11 @@ class FixtureOptimizationService {
     const cached = this.leagueCache.get(cacheKey);
 
     if (cached) {
+      console.log("📦 Returning cached popular leagues");
       return cached;
     }
+
+    console.log("🔍 Cache miss - fetching fresh popular leagues from API");
 
     try {
       // Make API call to get actual leagues
@@ -175,52 +180,44 @@ class FixtureOptimizationService {
       console.log(`📊 API Calls made: ${this.apiCallCount}`);
 
       if (response && response.length > 0) {
-        // Define popular league names for prioritization
-        const popularLeagueNames = [
-          "Premier League",
-          "Champions League",
-          "La Liga",
-          "Serie A",
-          "Bundesliga",
-          "Ligue 1",
-          "Europa League",
-          "World Cup",
-          "European Championship",
-          "Copa America",
-          "NBA",
-          "NHL",
-        ];
+        // Get popular leagues from MongoDB
+        console.log("🔍 Fetching popular leagues from MongoDB...");
+        const popularLeaguesInDb = await League.find({}).lean();
+        console.log("📊 Popular leagues in DB:", popularLeaguesInDb);
+        
+        const popularLeaguesMap = new Map(
+          popularLeaguesInDb.map(league => [league.leagueId, league])
+        );
 
-        // Sort leagues by popularity (known popular leagues first)
-        const sortedLeagues = response.sort((a, b) => {
-          const aPopular = popularLeagueNames.some((name) =>
-            a.name.toLowerCase().includes(name.toLowerCase())
-          );
-          const bPopular = popularLeagueNames.some((name) =>
-            b.name.toLowerCase().includes(name.toLowerCase())
-          );
+        // Enhance leagues with popularity status and order
+        const enhancedLeagues = response.map(league => {
+          const dbLeague = popularLeaguesMap.get(league.id);
+          return {
+            ...league,
+            isPopular: dbLeague ? dbLeague.isPopular : false, // Check the isPopular field specifically
+            popularOrder: dbLeague?.order || 0
+          };
+        });
 
-          if (aPopular && !bPopular) return -1;
-          if (!aPopular && bPopular) return 1;
+        // Sort leagues: popular first (by order), then others
+        const sortedLeagues = enhancedLeagues.sort((a, b) => {
+          if (a.isPopular && !b.isPopular) return -1;
+          if (!a.isPopular && b.isPopular) return 1;
+          if (a.isPopular && b.isPopular) return a.popularOrder - b.popularOrder;
           return 0;
         });
 
-        // Take the specified limit (default 10)
-        const popularLeagues = sortedLeagues;
-        this.leagueCache.set(cacheKey, popularLeagues);
-        console.log(`✅ Fetched ${popularLeagues.length} leagues from API `);
-        return popularLeagues;
+        console.log("📊 Enhanced and sorted leagues:", sortedLeagues.filter(l => l.isPopular));
+        
+        this.leagueCache.set(cacheKey, sortedLeagues);
+        console.log(`✅ Fetched ${sortedLeagues.length} leagues from API`);
+        return sortedLeagues;
       } else {
         throw new Error("No leagues found from API");
       }
     } catch (error) {
       console.error("❌ Error fetching leagues from API:", error);
-
-      // Fallback to hardcoded popular leagues if API fails
-      console.log("🔄 Falling back to hardcoded leagues...");
-
-      // this.leagueCache.set(cacheKey, fallbackLeagues);
-      return {};
+      return [];
     }
   }
 
@@ -377,7 +374,8 @@ class FixtureOptimizationService {
           // Only keep main odds for homepage
           return { ...this.transformMatchOdds(match), league, odds: this.extractMainOddsObject(match.odds) };
         })
-        .filter((match) => match.odds && Object.keys(match.odds).length > 0);
+        .filter((match) => match.odds && Object.keys(match.odds).length > 0)
+        .sort((a, b) => new Date(a.starting_at) - new Date(b.starting_at)); // Sort by start time
 
       // 2. Generate Football Daily (matches from all leagues for 20 days) - transform odds and filter out matches without odds
       let footballDaily = this.generateFootballDaily(
@@ -394,7 +392,8 @@ class FixtureOptimizationService {
             }))
             .filter(
               (match) => match.odds && Object.keys(match.odds).length > 0
-            ),
+            )
+            .sort((a, b) => new Date(a.starting_at) - new Date(b.starting_at)), // Sort matches by start time
         }))
         .filter((league) => league.matches.length > 0); // Filter out leagues with no matches
 
@@ -454,8 +453,8 @@ class FixtureOptimizationService {
 
           // Prefer matches where odds are between 1.5 and 3.5 (competitive)
           const avgOdds = (homeNum + awayNum) / 2;
-          if (avgOdds >= 1.5 && avgOdds <= 3.5) score += 30;
-          else if (avgOdds >= 1.2 && avgOdds <= 5.0) score += 15;
+          if (avgOdds >= 1.5 && avgOdds <= 3.5) score += 20; // Reduced from 30
+          else if (avgOdds >= 1.2 && avgOdds <= 5.0) score += 10; // Reduced from 15
         }
       }
 
@@ -478,18 +477,20 @@ class FixtureOptimizationService {
           fixture.league.name.toLowerCase().includes(name.toLowerCase())
         )
       ) {
-        score += 25;
+        score += 15; // Reduced from 25
       }
 
-      // Prefer matches happening soon (today gets highest priority)
+      // Give MUCH higher priority to matches happening soon (near future gets highest priority)
       const now = new Date();
       const matchTime = new Date(fixture.starting_at);
       const hoursUntilMatch = (matchTime - now) / (1000 * 60 * 60);
 
-      if (hoursUntilMatch >= 0 && hoursUntilMatch <= 24) score += 20; // Today
-      else if (hoursUntilMatch > 24 && hoursUntilMatch <= 48)
-        score += 15; // Tomorrow
-      else if (hoursUntilMatch > 48 && hoursUntilMatch <= 72) score += 10; // Day after
+      if (hoursUntilMatch >= 0 && hoursUntilMatch <= 6) score += 50; // Next 6 hours - highest priority
+      else if (hoursUntilMatch > 6 && hoursUntilMatch <= 12) score += 40; // Next 12 hours
+      else if (hoursUntilMatch > 12 && hoursUntilMatch <= 24) score += 35; // Next 24 hours
+      else if (hoursUntilMatch > 24 && hoursUntilMatch <= 48) score += 25; // Next 48 hours
+      else if (hoursUntilMatch > 48 && hoursUntilMatch <= 72) score += 15; // Next 72 hours
+      else if (hoursUntilMatch > 72 && hoursUntilMatch <= 168) score += 5; // Next week
 
       // Prefer matches with recognizable teams (heuristic: longer team names often = bigger clubs)
       const homeTeamLength =
@@ -502,7 +503,7 @@ class FixtureOptimizationService {
         fixture.participants?.find((p) => p.meta?.location === "away")?.name
           ?.length ||
         0;
-      if (homeTeamLength > 8 || awayTeamLength > 8) score += 10;
+      if (homeTeamLength > 8 || awayTeamLength > 8) score += 5; // Reduced from 10
 
       // Attach league data from cache
       const league = this.getLeagueById(fixture.league_id);
@@ -510,9 +511,16 @@ class FixtureOptimizationService {
       return { ...fixture, topPickScore: score, league };
     });
 
-    // Sort by score and return top picks (removing score from result)
+    // Sort by score first, then by start time for matches with similar scores
     return scoredFixtures
-      .sort((a, b) => b.topPickScore - a.topPickScore)
+      .sort((a, b) => {
+        // First sort by score (descending)
+        if (b.topPickScore !== a.topPickScore) {
+          return b.topPickScore - a.topPickScore;
+        }
+        // If scores are equal, sort by start time (ascending - earlier matches first)
+        return new Date(a.starting_at) - new Date(b.starting_at);
+      })
       .slice(0, limit)
       .map(({ topPickScore, ...fixture }) => fixture); // Remove score from final result
   }
@@ -1054,6 +1062,63 @@ class FixtureOptimizationService {
     }
     if (Array.isArray(fixturesMap)) return fixturesMap;
     return [];
+  }
+
+  // Update league popularity status (single or multiple)
+  async updateLeaguePopularity(leagues) {
+    console.log("🔧 updateLeaguePopularity service called with:", leagues);
+    
+    if (!Array.isArray(leagues)) {
+      throw new Error("Leagues must be an array");
+    }
+
+    const results = [];
+    
+    // Handle empty array case (when all popular leagues are removed)
+    if (leagues.length === 0) {
+      console.log("📭 No leagues to update - this may be clearing all popular leagues");
+      // Clear cache to force refresh even when no updates
+      this.clearCache('leagues');
+      return results;
+    }
+    
+    for (const leagueData of leagues) {
+      const { leagueId, name, isPopular, order } = leagueData;
+      
+      console.log(`🔄 Processing league: ${leagueId} - ${name} - isPopular: ${isPopular} - order: ${order}`);
+      
+      if (!leagueId) {
+        throw new Error("League ID is required for each league");
+      }
+
+      try {
+        // Update or create league document
+        const league = await League.findOneAndUpdate(
+          { leagueId },
+          { 
+            leagueId,
+            name,
+            isPopular,
+            order: isPopular ? (order || 0) : 0,
+            updatedAt: new Date()
+          },
+          { upsert: true, new: true }
+        );
+
+        console.log(`✅ Updated league ${leagueId}:`, league);
+        results.push(league);
+      } catch (error) {
+        console.error(`❌ Error updating league ${leagueId}:`, error);
+        throw new Error(`Failed to update league ${leagueId}: ${error.message}`);
+      }
+    }
+
+    // Clear cache to force refresh
+    console.log("🧹 Clearing league cache...");
+    this.clearCache('leagues');
+
+    console.log("🎉 updateLeaguePopularity completed successfully");
+    return results;
   }
 }
 

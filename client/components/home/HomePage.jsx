@@ -75,7 +75,7 @@ const HomePage = () => {
                             showDayTabs={false}
                             viewAllText="View All Live Football"
                             useReduxData={true}
-                            reduxData={liveMatches.data}
+                            reduxData={liveMatches}
                             loading={liveLoading}
                             error={liveError}
                         />

@@ -5,10 +5,24 @@ import MatchVisualization from "./MatchVisualization"
 import { useCustomSidebar } from "@/contexts/SidebarContext.js"
 import { useSelector, useDispatch } from "react-redux"
 import { fetchMatchById, clearError } from "@/lib/features/matches/matchesSlice"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Loader2, AlertCircle, RefreshCw, ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import axios from "axios"
+
+const isMatchLive = (match) => {
+    if (!match || !match.starting_at) return false;
+    const now = new Date();
+    let matchTime;
+    if (match.starting_at.includes('T')) {
+        matchTime = new Date(match.starting_at.endsWith('Z') ? match.starting_at : match.starting_at + 'Z');
+    } else {
+        matchTime = new Date(match.starting_at.replace(' ', 'T') + 'Z');
+    }
+    const matchEnd = new Date(matchTime.getTime() + 120 * 60 * 1000);
+    return matchTime <= now && now < matchEnd;
+};
 
 const MatchDetailPage = ({ matchId }) => {
     const dispatch = useDispatch();
@@ -20,11 +34,37 @@ const MatchDetailPage = ({ matchId }) => {
 
     const matchData = matchDetails[matchId];
 
+    // State for all odds for this match
+    const [allOdds, setAllOdds] = useState([]);
+
     useEffect(() => {
         if (matchId && !matchData) {
             dispatch(fetchMatchById(matchId));
         }
     }, [matchId, matchData, dispatch]);
+
+    // Poll for all odds if match is live
+    useEffect(() => {
+        if (!matchId || !matchData) return;
+        if (!isMatchLive(matchData)) return;
+
+        // Fetch odds immediately
+        const fetchAllOdds = async () => {
+            try {
+                const res = await axios.get("/fixtures/live/odds");
+                if (res.data && res.data[matchId]) {
+                    setAllOdds(res.data[matchId]);
+                }
+            } catch (err) {
+                console.log("ERROR IN FETCHING LIVE ODDS", err);
+                
+                // Optionally handle error
+            }
+        };
+        fetchAllOdds();
+        const interval = setInterval(fetchAllOdds, 180000); // 3 minutes
+        return () => clearInterval(interval);
+    }, [matchId, matchData]);
 
     const handleRetry = () => {
         dispatch(clearError());
@@ -114,13 +154,16 @@ const MatchDetailPage = ({ matchId }) => {
         );
     }
 
+    // Determine which betting_data to use
+    const bettingData = isMatchLive(matchData) && allOdds.length > 0 ? allOdds : matchData?.betting_data || [];
+
     return (
         <div className="bg-slate-100 min-h-screen relative">
             {/* Main content - adjusts width when sidebar expands */}
             <div className="lg:mr-80 xl:mr-96">
                 <div className="p-2 sm:p-3 md:p-4">
                     <MatchHeader matchData={matchData} />
-                    <BettingTabs matchData={matchData} />
+                    <BettingTabs matchData={{ ...matchData, betting_data: bettingData }} />
                 </div>
             </div>
 

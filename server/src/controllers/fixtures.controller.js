@@ -212,18 +212,74 @@ export const getMatchesByLeague = asyncHandler(async (req, res) => {
   });
 });
 
-export const getLiveMatchesFromCache = asyncHandler(async (req, res) => {
-  // Use the fixtureCache from the main service to avoid duplicate caches
-  const liveFixturesService = new LiveFixturesService(FixtureOptimizationService.fixtureCache);
+const liveFixturesService = new LiveFixturesService(fixtureOptimizationService.fixtureCache);
+
+export const getLiveMatchesFromCache = async (req, res) => {
+  console.log("🎯 getLiveMatchesFromCache controller called");
+  
+  // First, update live odds to ensure we have fresh data
+  try {
+    console.log("🔄 Starting live odds update...");
+    await liveFixturesService.updateAllLiveOdds();
+    console.log("✅ Live odds update completed");
+  } catch (error) {
+    console.error("❌ Error updating live odds:", error);
+  }
+  
+  console.log("📊 Getting live matches from cache...");
   const liveMatches = liveFixturesService.getLiveMatchesFromCache();
-  res.status(200).json({
-    success: true,
-    message:
-      liveMatches.length > 0
-        ? "Live matches fetched successfully"
-        : "No live matches at this time",
-    data: liveMatches,
-    count: liveMatches.length,
-    timestamp: new Date().toISOString(),
+  
+  console.log(`📊 Found ${liveMatches.length} live match groups`);
+  
+  // Add live odds to each match and filter out matches with no odds
+  liveMatches.forEach(group => {
+    group.matches = group.matches.map(match => {
+      const odds = liveFixturesService.getLiveOdds(match.id);
+      match.odds = liveFixturesService.extractMainOdds(odds);
+      return match;
+    }).filter(match => {
+      // Only keep matches with at least one odds value
+      return match.odds && (match.odds.home || match.odds.draw || match.odds.away);
+    });
   });
+  // Remove league groups with no matches
+  const filteredLiveMatches = liveMatches.filter(group => group.matches.length > 0);
+  res.json(filteredLiveMatches);
+};
+
+// Update league popularity status (single or multiple)
+export const updateLeaguePopularity = asyncHandler(async (req, res) => {
+  const { leagues } = req.body;
+
+  if (!leagues || !Array.isArray(leagues)) {
+    return res.status(400).json({
+      success: false,
+      message: "Leagues array is required",
+      error: "INVALID_REQUEST"
+    });
+  }
+
+  try {
+    const results = await fixtureOptimizationService.updateLeaguePopularity(leagues);
+    
+    res.status(200).json({
+      success: true,
+      message: "League popularity updated successfully",
+      data: results,
+      updated_count: results.length,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Error updating league popularity:', error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update league popularity",
+      error: error.message
+    });
+  }
+});
+
+export const getAllLiveOddsMap = asyncHandler(async (req, res) => {
+  const oddsMap = liveFixturesService.getAllLiveOddsMap();
+  res.json(oddsMap);
 });

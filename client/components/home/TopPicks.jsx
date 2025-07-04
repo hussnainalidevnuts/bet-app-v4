@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import MatchCard from './MatchCard';
 import { selectTopPicks } from '@/lib/features/home/homeSlice';
+import { formatMatchTime } from '@/lib/utils';
 
 // Helper function to transform API data to MatchCard format
 const transformMatchData = (apiMatch, league) => {
@@ -33,19 +34,15 @@ const transformMatchData = (apiMatch, league) => {
         }
     }
 
-    // Format date and time
-    const startDate = new Date(apiMatch.starting_at);
-    const now = new Date();
-    const isToday = startDate.toDateString() === now.toDateString();
-    const isTomorrow = startDate.toDateString() === new Date(now.getTime() + 24 * 60 * 60 * 1000).toDateString();
+    // Use the new timezone helper with 12-hour format
+    const { date: dateStr, time: timeStr, isToday, isTomorrow } = formatMatchTime(apiMatch?.starting_at || null);
 
-    let dateStr = startDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-    let timeStr = startDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-
+    // Combine date and time for display
+    let displayTime = timeStr;
     if (isToday) {
-        timeStr = `Today ${timeStr}`;
+        displayTime = `Today ${timeStr}`;
     } else if (isTomorrow) {
-        timeStr = `Tomorrow ${timeStr}`;
+        displayTime = `Tomorrow ${timeStr}`;
     }
 
     return {
@@ -57,7 +54,7 @@ const transformMatchData = (apiMatch, league) => {
         team1: teamNames[0],
         team2: teamNames[1],
         date: dateStr,
-        time: timeStr,
+        time: displayTime,
         odds: odds,
         clock: true
     };

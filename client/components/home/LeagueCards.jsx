@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useBetting } from '@/hooks/useBetting';
 import leaguesData, { getLiveLeagues } from '@/data/dummayLeagues';
+import { formatToLocalTime } from '@/lib/utils';
 // League Card Component
 const LeagueCard = ({ league, isInPlay = false, viewAllText = null }) => {
     const { createBetHandler } = useBetting();
@@ -141,6 +142,8 @@ const LeagueCards = ({
 }) => {
     const scrollRef = useRef(null);
 
+    console.log("LeagueCards received reduxData:", reduxData);
+
     // Transform Redux data to match the expected format
     const transformReduxData = (data) => {
         
@@ -160,9 +163,9 @@ const LeagueCards = ({
                     if (match.odds) {
                         if (typeof match.odds === 'object' && !Array.isArray(match.odds)) {
                             // New backend format: { home: { value, oddId }, draw: { value, oddId }, away: { value, oddId } }
-                            if (match.odds.home && !isNaN(match.odds.home.value)) odds['1'] = { value: match.odds.home.value.toFixed(2), oddId: match.odds.home.oddId };
-                            if (match.odds.draw && !isNaN(match.odds.draw.value)) odds['X'] = { value: match.odds.draw.value.toFixed(2), oddId: match.odds.draw.oddId };
-                            if (match.odds.away && !isNaN(match.odds.away.value)) odds['2'] = { value: match.odds.away.value.toFixed(2), oddId: match.odds.away.oddId };
+                            if (match.odds.home && !isNaN(match.odds.home.value)) odds['1'] = { value: Number(match.odds.home.value).toFixed(2), oddId: match.odds.home.oddId };
+                            if (match.odds.draw && !isNaN(match.odds.draw.value)) odds['X'] = { value: Number(match.odds.draw.value).toFixed(2), oddId: match.odds.draw.oddId };
+                            if (match.odds.away && !isNaN(match.odds.away.value)) odds['2'] = { value: Number(match.odds.away.value).toFixed(2), oddId: match.odds.away.oddId };
                         } else if (Array.isArray(match.odds)) {
                             // Legacy array format (if still present)
                             match.odds.forEach(odd => {
@@ -183,13 +186,9 @@ const LeagueCards = ({
                     }
     
                     // Format the actual match time
-                    let displayTime = '21:00'; // Default
+                    let displayTime = 'TBD'; // Default
                     if (match.starting_at) {
-                        const matchDate = new Date(match.starting_at);
-                        displayTime = matchDate.toLocaleTimeString('en-GB', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
+                        displayTime = formatToLocalTime(match.starting_at, { format: 'timeOnly' });
                     }
     
     
@@ -219,10 +218,15 @@ const LeagueCards = ({
      
     };
 
+    const transformed = transformReduxData(reduxData);
+    console.log("Transformed leagues for LeagueCards:", transformed);
+
+    if (!transformed || transformed.length === 0) return null;
+
     // Get appropriate data based on mode
     let displayData;
     if (useReduxData && reduxData) {
-        displayData = transformReduxData(reduxData);
+        displayData = transformed;
     } else {
         displayData = isInPlay ? getLiveLeagues() : leaguesData;
     }
@@ -294,7 +298,7 @@ const LeagueCards = ({
                     ref={scrollRef}
                     className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide"
                 >
-                    {displayData.map((league) => (
+                    {transformed.map(league => (
                         <div key={league.id} className="flex-shrink-0 w-96">
                             <LeagueCard
                                 league={league}

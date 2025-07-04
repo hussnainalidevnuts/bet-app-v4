@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { X, ChevronLeft } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchPopularLeagues, fetchMatchesByLeague, selectPopularLeagues, selectMatchesByLeague, selectMatchesLoading, selectMatchesError } from '@/lib/features/leagues/leaguesSlice';
+import { formatToLocalTime } from '@/lib/utils';
 
 // Jersey Image Component
 const JerseyImage = ({ src, alt, className = "w-12 h-12" }) => {
@@ -185,7 +186,7 @@ const MatchDropdown = ({ isOpen, onClose, currentMatchId, triggerRef, currentLea
                                         </div>
                                         <div className="text-center flex-shrink-0 px-4">
                                             <div className="text-white font-bold text-sm">
-                                                {match.starting_at ? new Date(match.starting_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                                {match.starting_at ? formatToLocalTime(match.starting_at, { format: 'timeOnly' }) : ''}
                                             </div>
                                         </div>
                                         <div className="flex flex-col items-center flex-1">

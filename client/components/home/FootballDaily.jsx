@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import MatchCard from './MatchCard';
 import { selectFootballDaily } from '@/lib/features/home/homeSlice';
+import { formatMatchTime } from '@/lib/utils';
 
-// Helper function to transform API match data to MatchCard format
-const transformMatchData = (apiMatch, league) => {
+// Helper function to transform API data to MatchCard format
+const transformApiMatchToDisplayFormat = (apiMatch, league) => {
     // Extract team names from the match name (e.g., "Hammarby vs Halmstad")
     const teamNames = apiMatch.name?.split(' vs ') || ['Team A', 'Team B'];
 
@@ -33,19 +34,15 @@ const transformMatchData = (apiMatch, league) => {
         }
     }
 
-    // Format date and time
-    const startDate = new Date(apiMatch.starting_at);
-    const now = new Date();
-    const isToday = startDate.toDateString() === now.toDateString();
-    const isTomorrow = startDate.toDateString() === new Date(now.getTime() + 24 * 60 * 60 * 1000).toDateString();
+    // Use the new timezone helper with 12-hour format
+    const { date: dateStr, time: timeStr, isToday, isTomorrow } = formatMatchTime(apiMatch?.starting_at || null);
 
-    let dateStr = startDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-    let timeStr = startDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-
+    // Combine date and time for display
+    let displayTime = timeStr;
     if (isToday) {
-        timeStr = `Today ${timeStr}`;
+        displayTime = `Today ${timeStr}`;
     } else if (isTomorrow) {
-        timeStr = `Tomorrow ${timeStr}`;
+        displayTime = `Tomorrow ${timeStr}`;
     }
 
     return {
@@ -57,7 +54,7 @@ const transformMatchData = (apiMatch, league) => {
         team1: teamNames[0],
         team2: teamNames[1],
         date: dateStr,
-        time: timeStr,
+        time: displayTime,
         odds: odds,
         clock: true
     };
@@ -66,7 +63,7 @@ const transformMatchData = (apiMatch, league) => {
 const FootballDaily = () => {
     const footballDaily = useSelector(selectFootballDaily);
 
-    if (footballDaily.length === 0) {
+    if (!footballDaily || footballDaily.length === 0) {
         return (
             <div className="mb-8">
                 <div className="flex justify-between items-center mb-4">
@@ -87,53 +84,31 @@ const FootballDaily = () => {
                 <Link href="#" className="text-green-600 hover:underline text-sm">View All</Link>
             </div>
 
-            {footballDaily.map((leagueData) => {
-                const transformedMatches = leagueData.matches.map(match =>
-                    transformMatchData(match, leagueData.league)
-                );
-
-                return (
-                    <div key={leagueData.league.id} className="mb-6">
-                        {/* League Header */}
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                                <span className="text-lg">⚽</span>
-                                <h3 className="font-medium text-lg text-gray-800">
-                                    {leagueData.league.name}
-                                </h3>
-                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                    {leagueData.match_count} matches
-                                </span>
-                            </div>
-                            <Link
-                                href={`/leagues/${leagueData.league.id}`}
-                                className="text-green-600 hover:underline text-sm"
-                            >
-                                More {leagueData.league.name}
-                            </Link>
-                        </div>
-
-                        {/* Matches Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                            {transformedMatches.slice(0, 4).map((match) => (
-                                <MatchCard key={match.id} match={match} />
-                            ))}
-                        </div>
-
-                        {/* Show more matches if available */}
-                        {leagueData.matches.length > 4 && (
-                            <div className="text-center">
-                                <Link
-                                    href={`/leagues/${leagueData.league.id}`}
-                                    className="text-green-600 hover:underline text-sm"
-                                >
-                                    Show {leagueData.matches.length - 4} more matches
-                                </Link>
-                            </div>
+            {footballDaily.map((leagueGroup, index) => (
+                <div key={leagueGroup.league?.id || index} className="mb-6">
+                    <div className="flex items-center mb-3">
+                        {leagueGroup.league?.imageUrl && (
+                            <img
+                                src={leagueGroup.league.imageUrl}
+                                alt={leagueGroup.league.name}
+                                className="w-6 h-6 mr-2 object-contain"
+                            />
                         )}
+                        <h3 className="text-lg font-semibold text-gray-700">
+                            {leagueGroup.league?.name || 'Unknown League'}
+                        </h3>
+                        <span className="ml-2 text-sm text-gray-500">
+                            ({leagueGroup.matches?.length || 0} matches)
+                        </span>
                     </div>
-                );
-            })}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {leagueGroup.matches?.slice(0, 4).map((match) => (
+                            <MatchCard key={match.id} match={transformApiMatchToDisplayFormat(match, leagueGroup.league)} />
+                        ))}
+                    </div>
+                </div>
+            ))}
         </div>
     );
 };

@@ -20,6 +20,7 @@ import betRoutes from "./routes/bet.routes.js";
 import agenda from "./config/agenda.js";
 import BetService from "./services/bet.service.js";
 import fixtureOptimizationService from "./services/fixture.service.js";
+import LiveFixturesService from "./services/LiveFixtures.service.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -74,6 +75,7 @@ app.listen(PORT, () => {
 
 global.fixtureOptimizationService = fixtureOptimizationService;
 
+const liveFixturesService = new LiveFixturesService(fixtureOptimizationService.fixtureCache);
 
 //INFO: checking the bet outcome of a bet at a scheduled time
 agenda.define("checkBetOutcome", async (job) => {
@@ -88,10 +90,21 @@ agenda.define("checkBetOutcome", async (job) => {
   }
 });
 
+// Define the Agenda job for updating live odds
+agenda.define("updateLiveOdds", async (job) => {
+  try {
+    await liveFixturesService.updateAllLiveOdds();
+    console.log(`[Agenda] Live odds updated at ${new Date().toISOString()}`);
+  } catch (error) {
+    console.error("[Agenda] Error updating live odds:", error);
+  }
+});
 
-
-
-agenda.start();
+// Schedule the job every 3 minutes
+(async function () {
+  await agenda.start();
+  await agenda.every("3 minutes", "updateLiveOdds");
+})();
 
 agenda.on("ready", () => {
   console.log("[Agenda] Ready and connected to MongoDB");

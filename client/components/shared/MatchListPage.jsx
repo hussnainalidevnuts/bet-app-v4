@@ -11,6 +11,7 @@ import {
     AccordionItem,
     AccordionTrigger
 } from '@/components/ui/accordion';
+import { formatToLocalTime } from '@/lib/utils';
 
 const MatchListPage = ({ config }) => {
     const {
@@ -62,8 +63,7 @@ const MatchListPage = ({ config }) => {
     const defaultMatchTimeFormatter = (timeValue, match) => {
         if (match && match.liveTime) return timeValue || '--:--'; // For live matches
         if (match && match.startTime) { // For upcoming matches
-            const date = new Date(timeValue);
-            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + date.toLocaleDateString();
+            return formatToLocalTime(timeValue, { format: 'timeOnly' });
         }
         return timeValue || 'Not Available';
     };

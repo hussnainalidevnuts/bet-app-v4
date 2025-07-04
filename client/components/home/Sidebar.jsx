@@ -15,20 +15,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
 
-const POPULAR_LEAGUE_NAMES = [
-    'Premier League',
-    'Champions League',
-    'La Liga',
-    'Serie A',
-    'Bundesliga',
-    'Ligue 1',
-    'Europa League',
-    'World Cup',
-    'Copa America',
-    'MLS',
-    'Eredivisie',
-    'Liga Portugal',
-];
+
 
 const Sidebar = () => {
     const context = useCustomSidebar();
@@ -73,7 +60,7 @@ const Sidebar = () => {
                 groups[countryId] = {
                     name: countryName,
                     id: countryId,
-                    flag: league.country?.image,
+                    flag: league.country?.image_path,
                     leagues: []
                 };
             }
@@ -91,12 +78,7 @@ const Sidebar = () => {
         });
     }, [groupedLeagues]);
 
-    const popularLeaguesFiltered = useMemo(() => {
-        if (!popularLeagues || !Array.isArray(popularLeagues)) return [];
-        return popularLeagues.filter(l =>
-            POPULAR_LEAGUE_NAMES.some(name => l.name.toLowerCase().includes(name.toLowerCase()))
-        );
-    }, [popularLeagues]);
+    const popularLeaguesFiltered = []
 
     const adminMenuItems = [
         {
@@ -171,6 +153,16 @@ const Sidebar = () => {
         if (!popularLeagues || !Array.isArray(popularLeagues)) return [];
         return popularLeagues.filter(l => l.name.toLowerCase().includes(search.toLowerCase()));
     }, [search, popularLeagues]);
+
+    const [activeTab, setActiveTab] = useState('all');
+    const { leagues } = useSelector(state => state.leagues);
+
+    const filteredLeagues = useMemo(() => {
+        if (activeTab === 'popular') {
+            return leagues.filter(league => league.isPopular);
+        }
+        return leagues;
+    }, [leagues, activeTab]);
 
     return (
         <div

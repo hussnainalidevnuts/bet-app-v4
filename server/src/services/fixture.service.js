@@ -147,6 +147,7 @@ class FixtureOptimizationService {
               winning: odd.winning,
               probability: odd.probability,
               handicap: odd.handicap,
+              total:odd.total
             }))
           : [],
       };

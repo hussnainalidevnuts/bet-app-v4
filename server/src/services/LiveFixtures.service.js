@@ -209,7 +209,7 @@ class LiveFixturesService {
         totalMatches++;
         try {
           // Use the inplay odds endpoint
-          const url = `https://api.sportmonks.com/v3/football/odds/inplay/fixtures/${match.id}?api_token=${apiToken}&include=odds&filters=bookmakers:2`;
+          const url = `https://api.sportmonks.com/v3/football/odds/inplay/fixtures/${match.id}?api_token=${apiToken}&filters=bookmakers:2`;
           
           const response = await axios.get(url);
           const odds = response.data?.data || [];
@@ -224,8 +224,15 @@ class LiveFixturesService {
           }
           const classified = classifyOdds({ odds_by_market });
           const betting_data = transformToBettingData(classified, match);
-          // Cache only betting_data
-          this.liveOddsCache.set(match.id, betting_data);
+          
+          // Store both betting_data and odds_classification
+          const result = {
+            betting_data: betting_data,
+            odds_classification: classified
+          };
+          
+          // Cache the result
+          this.liveOddsCache.set(match.id, result);
           successfulUpdates++;
         } catch (err) {
           console.error(`❌ Failed to update betting_data for match ${match.id}:`, err.message);
@@ -239,8 +246,26 @@ class LiveFixturesService {
 
   // Get latest betting_data for a match (from cache)
   getLiveOdds(matchId) {
-    // Now returns betting_data array
-    return this.liveOddsCache.get(matchId) || [];
+    // Return betting_data from cached result
+    const cached = this.liveOddsCache.get(matchId);
+    if (cached && cached.betting_data) {
+      return cached.betting_data;
+    }
+    return [];
+  }
+
+  // Get latest odds classification for a match (from cache)
+  getLiveOddsClassification(matchId) {
+    // Return odds_classification from cached result
+    const cached = this.liveOddsCache.get(matchId);
+    if (cached && cached.odds_classification) {
+      return cached.odds_classification;
+    }
+    return {
+      categories: [{ id: 'all', label: 'All', odds_count: 0 }],
+      classified_odds: {},
+      stats: { total_categories: 0, total_odds: 0 }
+    };
   }
 
   // Ensure we have live odds for a specific match
@@ -258,7 +283,7 @@ class LiveFixturesService {
     }
 
     try {
-      const url = `https://api.sportmonks.com/v3/football/odds/inplay/fixtures/${matchId}?api_token=${apiToken}&include=odds&filters=bookmakers:2`;
+      const url = `https://api.sportmonks.com/v3/football/odds/inplay/fixtures/${matchId}?api_token=${apiToken}&filters=bookmakers:2`;
       const response = await axios.get(url);
       const oddsData = response.data?.data || [];
 
@@ -287,11 +312,40 @@ class LiveFixturesService {
       }
 
       const classified = classifyOdds({ odds_by_market });
-      const betting_data = transformToBettingData(classified);
+      
+      // Get match data to pass to transformToBettingData for team names
+      let matchData = null;
+      const cacheKeys = this.fixtureCache.keys();
+      for (const key of cacheKeys) {
+        if (key.startsWith("fixtures_")) {
+          const cachedData = this.fixtureCache.get(key);
+          let fixtures = [];
+          if (Array.isArray(cachedData)) {
+            fixtures = cachedData;
+          } else if (cachedData && Array.isArray(cachedData.data)) {
+            fixtures = cachedData.data;
+          } else if (cachedData instanceof Map) {
+            fixtures = Array.from(cachedData.values());
+          } else {
+            continue;
+          }
+          
+          matchData = fixtures.find(m => m.id == matchId || m.id === parseInt(matchId));
+          if (matchData) break;
+        }
+      }
+      
+      const betting_data = transformToBettingData(classified, matchData);
 
-      // Cache the betting data
-      this.liveOddsCache.set(matchId, betting_data);
-      return betting_data;
+      // Return both betting_data and odds_classification structure
+      const result = {
+        betting_data: betting_data,
+        odds_classification: classified
+      };
+
+      // Cache the result
+      this.liveOddsCache.set(matchId, result);
+      return result;
     } catch (err) {
       console.error('Error fetching live odds:', err);
       throw new CustomError("Failed to fetch live odds", 500, "LIVE_ODDS_FETCH_ERROR");
@@ -400,7 +454,26 @@ class LiveFixturesService {
     // Build the betting_data map
     const bettingDataMap = {};
     for (const matchId of liveMatchIds) {
-      bettingDataMap[matchId] = this.liveOddsCache.get(matchId) || [];
+      const cached = this.liveOddsCache.get(matchId);
+      if (cached) {
+        bettingDataMap[matchId] = {
+          betting_data: cached.betting_data || [],
+          odds_classification: cached.odds_classification || {
+            categories: [{ id: 'all', label: 'All', odds_count: 0 }],
+            classified_odds: {},
+            stats: { total_categories: 0, total_odds: 0 }
+          }
+        };
+      } else {
+        bettingDataMap[matchId] = {
+          betting_data: [],
+          odds_classification: {
+            categories: [{ id: 'all', label: 'All', odds_count: 0 }],
+            classified_odds: {},
+            stats: { total_categories: 0, total_odds: 0 }
+          }
+        };
+      }
     }
     
     console.log(`[LiveFixtures] getAllLiveOddsMap found ${liveMatchIds.length} live matches`);

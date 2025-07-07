@@ -11,7 +11,8 @@ import {
     selectLiveOdds,
     selectLiveOddsLoading,
     selectLiveOddsError,
-    selectLiveOddsTimestamp
+    selectLiveOddsTimestamp,
+    selectLiveOddsClassification
 } from "@/lib/features/matches/matchesSlice"
 import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
@@ -34,17 +35,20 @@ const isMatchLive = (match) => {
 const MatchDetailPage = ({ matchId }) => {
     const dispatch = useDispatch();
     const {
-        matchDetails,
-        matchDetailLoading: loading,
-        matchDetailError: error
-    } = useSelector(state => state.matches);
+        matchData,
+        loading,
+        error
+    } = useSelector((state) => ({
+        matchData: state.matches.matchDetails[matchId],
+        loading: state.matches.matchDetailLoading,
+        error: state.matches.matchDetailError,
+    }));
 
-    const liveOdds = useSelector(state => selectLiveOdds(state, matchId));
+    const liveOdds = useSelector((state) => selectLiveOdds(state, matchId));
+    const liveOddsClassification = useSelector((state) => selectLiveOddsClassification(state, matchId));
     const liveOddsLoading = useSelector(selectLiveOddsLoading);
     const liveOddsError = useSelector(selectLiveOddsError);
     const lastOddsUpdate = useSelector(state => selectLiveOddsTimestamp(state, matchId));
-
-    const matchData = matchDetails[matchId];
 
     useEffect(() => {
         if (matchId && !matchData) {
@@ -196,11 +200,19 @@ const MatchDetailPage = ({ matchId }) => {
         : matchData.betting_data || []; // Try betting_data first
 
     // Get the odds classification data
-    const oddsClassification = matchData.odds_classification || {
-        categories: [{ id: 'all', label: 'All', odds_count: 0 }],
-        classified_odds: {},
-        stats: { total_categories: 0, total_odds: 0 }
-    };
+    // For live matches, use live odds classification
+    // For non-live matches, use pre-match classification
+    const oddsClassification = isLive 
+        ? liveOddsClassification || {
+            categories: [{ id: 'all', label: 'All', odds_count: 0 }],
+            classified_odds: {},
+            stats: { total_categories: 0, total_odds: 0 }
+          }
+        : matchData.odds_classification || {
+            categories: [{ id: 'all', label: 'All', odds_count: 0 }],
+            classified_odds: {},
+            stats: { total_categories: 0, total_odds: 0 }
+          };
 
     // Show no betting options message only if there are truly no odds available
     if (!bettingData || bettingData.length === 0) {

@@ -87,7 +87,8 @@ export const fetchLiveOdds = createAsyncThunk(
       const response = await apiClient.get(`/fixtures/${matchId}/inplay-odds`);
       return {
         matchId,
-        liveOdds: response.data.data,
+        liveOdds: response.data.data.betting_data,
+        liveOddsClassification: response.data.data.odds_classification,
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
@@ -107,6 +108,7 @@ const matchesSlice = createSlice({
     upcomingMatchesError: null,
     matchDetails: {}, // individual match details by matchId
     liveOdds: {}, // live odds by matchId
+    liveOddsClassification: {}, // live odds classification by matchId
     liveOddsLoading: false,
     liveOddsError: null,
     liveOddsTimestamp: {}, // timestamp of last live odds update by matchId
@@ -192,6 +194,8 @@ const matchesSlice = createSlice({
         state.liveOdds[action.payload.matchId] = action.payload.liveOdds;
         state.liveOddsTimestamp[action.payload.matchId] =
           action.payload.timestamp;
+        state.liveOddsClassification[action.payload.matchId] =
+          action.payload.liveOddsClassification;
       })
       .addCase(fetchLiveOdds.rejected, (state, action) => {
         state.liveOddsLoading = false;
@@ -220,3 +224,5 @@ export const selectLiveOddsLoading = (state) => state.matches.liveOddsLoading;
 export const selectLiveOddsError = (state) => state.matches.liveOddsError;
 export const selectLiveOddsTimestamp = (state, matchId) =>
   state.matches.liveOddsTimestamp[matchId];
+export const selectLiveOddsClassification = (state, matchId) =>
+  state.matches.liveOddsClassification[matchId];

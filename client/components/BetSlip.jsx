@@ -312,6 +312,45 @@ const BetSlip = () => {
 
 // Singles Bets Component
 const SinglesBets = ({ bets, stakes, onStakeChange, onRemoveBet }) => {
+    // Helper to format bet label
+    const getBetLabel = (bet) => {
+        // Determine the badge value (handicap, total, threshold, etc.)
+        const badgeValue = bet.handicapValue  || bet.name || bet.total || bet.threshold || null;
+
+        // Player market: show 'Market Name - Player Name (Badge)'
+        if (bet.marketDescription && bet.name && bet.marketDescription.toLowerCase().includes('player')) {
+            return `${bet.marketDescription} - ${bet.name}${badgeValue ? ` (${badgeValue})` : ''}`;
+        }
+        // Handicap/Alternative Handicap: show 'Market Name - Team Name/Label (Badge)'
+        if (
+            bet.marketDescription &&
+            (bet.marketDescription.toLowerCase().includes('handicap') || bet.marketDescription.toLowerCase().includes('alternative')) &&
+            bet.label
+        ) {
+            if ((bet.label === '1' || bet.label === '2') && bet.name) {
+                return `${bet.marketDescription} - ${bet.name}${badgeValue ? ` (${badgeValue})` : ''}`;
+            }
+            return `${bet.marketDescription} - ${bet.label}${badgeValue ? ` (${badgeValue})` : ''}`;
+        }
+        // Over/Under and other markets with badge value
+        if (bet.marketDescription && badgeValue) {
+            if ((bet.label === '1' || bet.label === '2') && bet.name) {
+                return `${bet.marketDescription} - ${bet.name} (${badgeValue})`;
+            }
+            return `${bet.marketDescription} - ${bet.selection} (${badgeValue})`;
+        }
+        // Fallbacks
+        if (bet.marketDescription) {
+            if ((bet.label === '1' || bet.label === '2') && bet.name) {
+                return `${bet.marketDescription} - ${bet.name}`;
+            }
+            return `${bet.marketDescription} - ${bet.selection}`;
+        }
+        if ((bet.label === '1' || bet.label === '2') && bet.name) {
+            return bet.name;
+        }
+        return bet.selection;
+    };
     return (
         <div className="space-y-3">            {bets.map((bet, index) => (<div
             key={bet.id}
@@ -323,7 +362,7 @@ const SinglesBets = ({ bets, stakes, onStakeChange, onRemoveBet }) => {
                         {bet.match.team1} - {bet.match.team2}
                     </div>
                     <div className="text-sm font-medium mb-1">
-                        {bet.selection}
+                        {getBetLabel(bet)}
                     </div>
                     <div className="text-xs text-gray-400">
                         {bet.type} • {bet.match.time}

@@ -12,9 +12,24 @@ const classifyOdds = (oddsData) => {
         "prepacks",
         "combo",
         "special pack",
+
       ],
       markets: [], // Add market IDs if available
       priority: 1,
+    },
+    "even-odd": {
+      id: "even-odd",
+      label: "Even/Odd",
+      keywords: [
+        "even",
+        "odd",
+        "total even",
+        "total odd",
+        "even/odd",
+        "odd/even"
+      ],
+      markets: [],
+      priority: 3,
     },
     "full-time": {
       id: "full-time",
@@ -27,6 +42,10 @@ const classifyOdds = (oddsData) => {
         "moneyline",
         "result",
         "final result",
+        "last team to",
+        "Team total",
+        "Home Team Exact",
+        "Away Team Exact",
       ],
       markets: [1, 52, 13, 14, 80],
       priority: 2,
@@ -52,30 +71,11 @@ const classifyOdds = (oddsData) => {
       markets: [],
       priority: 5,
     },
-    "goal-scorer": {
-      id: "goal-scorer",
-      label: "Goal Scorer",
-      keywords: [
-        "goal scorer",
-        "first goal",
-        "last goal",
-        "anytime scorer",
-        "scorer",
-      ],
-      markets: [247, 11],
-      priority: 6,
-    },
-    "player-goals": {
-      id: "player-goals",
-      label: "Player Goals",
-      keywords: ["player goals", "hat trick", "goals scored"],
-      markets: [18, 19],
-      priority: 7,
-    },
     "half-time": {
       id: "half-time",
       label: "Half Time",
       keywords: [
+        "First Team to",
         "half",
         "1st half",
         "2nd half",
@@ -84,6 +84,50 @@ const classifyOdds = (oddsData) => {
         "second half",
       ],
       markets: [31, 97, 49, 28, 15, 16, 45, 124, 26],
+      priority: 6,
+    },
+    
+    "goals": {
+      id: "goals",
+      label: "Goals",
+      keywords: [
+        "total goals",
+        "hat trick",
+        "both teams to",
+      ],
+      markets: [18, 19],
+      priority: 7,
+    },
+    "team-goalscorer": {
+      id: "team-goalscorer",
+      label: "Team Goalscorer",
+      keywords: [
+        "team goalscorer"
+      ],
+      markets: [247, 11],
+      priority: 8,
+    },
+    "multi-goalscorer": {
+      id: "multi-goalscorer",
+      label: "Multi Scorers",
+      keywords: [
+        "multi scorers"
+      ],
+      markets: [247, 11],
+      priority: 9,
+    },
+    "goalscorers": {
+      id: "goalscorers",
+      label: "Goalscorers",
+      keywords: [
+        "anytime",
+        "first goalscorer",
+        "last goalscorer",
+        "first scorer",
+        "last scorer",
+        "goalscorer"
+      ],
+      markets: [247, 11],
       priority: 8,
     },
     corners: {
@@ -107,13 +151,13 @@ const classifyOdds = (oddsData) => {
       markets: [6, 26],
       priority: 11,
     },
-    specials: {
-      id: "specials",
-      label: "Specials",
-      keywords: ["odd", "even", "win to nil", "both halves", "special"],
-      markets: [44, 45, 124, 46, 40, 101, 266],
-      priority: 12,
-    },
+    // specials: {
+    //   id: "specials",
+    //   label: "Specials",
+    //   keywords: ["odd", "even", "win to nil", "both halves", "special"],
+    //   markets: [44, 45, 124, 46, 40, 101, 266],
+    //   priority: 12,
+    // },
     others: {
       id: "others",
       label: "Others",

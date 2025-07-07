@@ -120,10 +120,13 @@ class BetService {
       console.log(
         `[placeBet] Processing inplay bet for match ${matchId}, odd ${oddId}`
       );
-      const liveOdds =
+      const liveOddsResult =
         await FixtureOptimizationService.liveFixturesService.ensureLiveOdds(
           matchId
         );
+
+      // Get the betting_data array from the result
+      const liveOdds = liveOddsResult.betting_data || [];
 
       // Find the odd directly in the live odds data
       let foundOdd = null;

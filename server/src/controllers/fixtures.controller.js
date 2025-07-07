@@ -288,8 +288,15 @@ export const getAllLiveOddsMap = asyncHandler(async (req, res) => {
 export const getInplayOdds = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const liveOdds = await fixtureService.liveFixturesService.ensureLiveOdds(id);
-    res.json({ data: liveOdds });
+    const liveOddsResult = await fixtureService.liveFixturesService.ensureLiveOdds(id);
+    
+    // Return both betting_data and odds_classification
+    res.json({ 
+      data: {
+        betting_data: liveOddsResult.betting_data,
+        odds_classification: liveOddsResult.odds_classification
+      }
+    });
   } catch (error) {
     next(error);
   }

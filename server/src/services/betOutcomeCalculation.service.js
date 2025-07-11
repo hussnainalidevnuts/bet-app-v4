@@ -236,6 +236,8 @@ class BetOutcomeCalculationService {
         return this.calculateExactTotalGoals(bet,matchData);
       case "SECOND_HALF_GOALS_ODD_EVEN":
         return this.calculateSecondHalfGoalsOddEven(bet,matchData);
+      case "FIRST_HALF_GOALS_ODD_EVEN":
+        return this.calculateFirstHalfGoalsOddEven(bet,matchData);
       default:
         return this.calculateGenericOutcome(bet, matchData);
     }
@@ -1133,7 +1135,14 @@ class BetOutcomeCalculationService {
       status: isWinning ? "won" : "lost",
     };
   }
-  
+  calculateFirstHalfGoalsOddEven(bet,matchData){
+    const matchScores = this.extractFirstHalfScores(matchData);
+    const totalGoals = matchScores.homeScore + matchScores.awayScore;
+    const isWinning = totalGoals % 2 === 0;
+    return {
+      status: isWinning ? "won" : "lost",
+    };
+  }
   /**
    * Enhanced market type detection with more markets
    */
@@ -1170,6 +1179,7 @@ class BetOutcomeCalculationService {
       PLAYER_TOTAL_SHOTS: [268], // Player Total Shots
       EXACT_TOTAL_GOALS: [93], // Exact Total Goals
       SECOND_HALF_GOALS_ODD_EVEN: [124], // Second Half Goals Odd/Even
+      FIRST_HALF_GOALS_ODD_EVEN: [95], // First Half Goals Odd/Even
       ...this.marketTypes,
     };
 
@@ -1316,7 +1326,48 @@ class BetOutcomeCalculationService {
 
     return null;
   }
+  extractFirstHalfScores(matchData) {
+    if (matchData.scores && Array.isArray(matchData.scores)) {
+      // Extract 1ST_HALF scores - this is the half-time result
+      const firstHalfScores = matchData.scores.filter(
+        (score) => score.description === "1ST_HALF"
+      );
 
+      if (firstHalfScores.length > 0) {
+        let homeScore = 0;
+        let awayScore = 0;
+
+        firstHalfScores.forEach((score) => {
+          if (score.score && score.score.goals !== undefined) {
+            if (score.score.participant === "home") {
+              homeScore = score.score.goals;
+            } else if (score.score.participant === "away") {
+              awayScore = score.score.goals;
+            }
+          }
+        });
+
+        return { homeScore, awayScore };
+      }
+
+      // Fallback: try to find legacy half time scores
+      const halfTimeScore = matchData.scores.find(
+        (score) =>
+          score.description === "HT" || score.description === "HALFTIME"
+      );
+
+      if (halfTimeScore && halfTimeScore.score?.goals?.home !== undefined) {
+        return {
+          homeScore: halfTimeScore.score.goals.home || 0,
+          awayScore: halfTimeScore.score.goals.away || 0,
+        };
+      }
+    }
+
+    return null;
+  }
+
+ 
   /**
    * Extract second half scores from match data
    */

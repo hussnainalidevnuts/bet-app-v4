@@ -219,7 +219,7 @@ class BetOutcomeCalculationService {
         return this.calculateAsianHandicap(bet, matchData); // Similar calculation
 
       case "RESULT_BOTH_TEAMS_SCORE":
-        return this.calculateGenericOutcome(bet, matchData); // Complex combination bet
+        return this.calculateResultBothTeamsToScore(bet, matchData);
 
       case "HALF_TIME_GOALS":
         return this.calculateOverUnder(bet, matchData); // Similar to over/under for specific half
@@ -1265,7 +1265,7 @@ class BetOutcomeCalculationService {
       DRAW_NO_BET: [10], // Draw No Bet
       LAST_TEAM_TO_SCORE: [11], // Last Team To Score
       ODD_EVEN_GOALS: [12], // Goals Odd/Even
-      RESULT_BOTH_TEAMS_SCORE: [13], // Result / Both Teams To Score
+      // Result / Both Teams To Score
       BOTH_TEAMS_SCORE: [14], // Both Teams To Score
       BOTH_TEAMS_SCORE_1ST_HALF: [15], // Both Teams to Score in 1st Half
       BOTH_TEAMS_SCORE_2ND_HALF: [16], // Both Teams to Score in 2nd Half
@@ -1288,7 +1288,8 @@ class BetOutcomeCalculationService {
       BOTH_TEAM_TO_SCORE_1ST_HALF_2ND_HALF: [125],
       ALTERNATIVE_MATCH_GOALS:[5] ,// Both Teams to Score in 1st/2nd Half
       RESULT_TOTAL_GOALS: [37], // Result/Total Goals
-      LAST_TEAM_TO_SCORE:[11]
+      LAST_TEAM_TO_SCORE:[11],
+      RESULT_BOTH_TEAMS_SCORE: [13],
     };
 
     for (const [type, ids] of Object.entries(extendedMarketTypes)) {
@@ -1414,6 +1415,69 @@ class BetOutcomeCalculationService {
       lastScoringParticipantId: lastScoringTeamParticipantId,
       totalGoals: goalEvents.length,
       reason: `Last team to score: ${lastScoringTeamName} (${lastGoal.player_name} at ${lastGoal.minute}${lastGoal.extra_minute ? '+' + lastGoal.extra_minute : ''})`,
+    };
+  }
+
+
+  /**
+   * Calculate outcome for Result/Both Teams To Score (market_id: 13)
+   * This market combines match result (home/draw/away) with both teams to score (yes/no)
+   * betDetails.label and betDetails.name contain combinations like:
+   * "Home/Yes", "Home/No", "Draw/Yes", "Draw/No", "Away/Yes", "Away/No"
+   */
+  calculateResultBothTeamsToScore(bet, matchData) {
+    // Extract scores
+    const scores = this.extractMatchScores(matchData);
+    const { homeScore, awayScore } = scores;
+
+    // Determine actual match result
+    let actualResult;
+    if (homeScore > awayScore) {
+      actualResult = "Home";
+    } else if (homeScore < awayScore) {
+      actualResult = "Away";
+    } else {
+      actualResult = "Draw";
+    }
+
+    // Determine if both teams scored
+    const bothTeamsScored = homeScore > 0 && awayScore > 0;
+    const actualBTTS = bothTeamsScored ? "Yes" : "No";
+
+    // Parse bet selection from betDetails (prefer betDetails.label, fallback to betDetails.name)
+    const betSelection = bet.betDetails?.label || bet.betDetails?.name || bet.betOption || bet.selection || "";
+    
+    // Split the bet selection (e.g., "Away/No" -> ["Away", "No"])
+    const betParts = betSelection.split("/");
+    
+    if (betParts.length !== 2) {
+      return {
+        status: "canceled",
+        payout: bet.stake,
+        reason: "Invalid bet format for Result/Both Teams To Score",
+      };
+    }
+
+    const betResult = betParts[0].trim();
+    const betBTTS = betParts[1].trim();
+
+    // Check if both result and BTTS match
+    const resultMatch = actualResult === betResult;
+    const bttsMatch = actualBTTS === betBTTS;
+    const isWinning = resultMatch && bttsMatch;
+
+    return {
+      status: isWinning ? "won" : "lost",
+      payout: isWinning ? bet.stake * bet.odds : 0,
+      actualResult: actualResult,
+      actualBTTS: actualBTTS,
+      betResult: betResult,
+      betBTTS: betBTTS,
+      bothTeamsScored: bothTeamsScored,
+      homeScore: homeScore,
+      awayScore: awayScore,
+      betSelection: betSelection,
+      reason: `Result: ${actualResult}, BTTS: ${actualBTTS}, Bet: ${betResult}/${betBTTS}`,
     };
   }
 

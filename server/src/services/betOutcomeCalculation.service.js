@@ -243,6 +243,8 @@ class BetOutcomeCalculationService {
         return this.calculateResultTotalGoals(bet, matchData);
       case "SECOND_HALF_RESULT":
         return this.calculateSecondHalfResult(bet, matchData);
+      case "HALF_TIME_RESULT_TOTAL_GOALS":
+        return this.calculateHalfTimeResultTotalGoals(bet, matchData);
       default:
         return this.calculateGenericOutcome(bet, matchData);
     }
@@ -1293,6 +1295,7 @@ class BetOutcomeCalculationService {
       LAST_TEAM_TO_SCORE:[11],
       RESULT_BOTH_TEAMS_SCORE: [13],
       SECOND_HALF_RESULT: [97], // Second Half Result
+      HALF_TIME_RESULT_TOTAL_GOALS: [123], // Half Time Result / Total Goals
     };
 
     for (const [type, ids] of Object.entries(extendedMarketTypes)) {
@@ -2066,6 +2069,90 @@ class BetOutcomeCalculationService {
       secondHalfHomeScore: homeScore,
       secondHalfAwayScore: awayScore,
       reason: `Second Half Result: ${actualResult}, Bet: ${betSelection}`,
+    };
+  }
+
+  /**
+   * Calculate outcome for Half Time Result / Total Goals (market_id: 123)
+   * This market combines half-time result with total goals over/under
+   * betDetails.label contains combinations like: "Home/Over", "Away/Under", "Draw/Over", etc.
+   * betDetails.name contains the threshold value (e.g., "1.5", "2.5")
+   */
+  calculateHalfTimeResultTotalGoals(bet, matchData) {
+    // Extract half-time scores
+    const halfTimeScores = this.extractHalfTimeScores(matchData);
+    if (!halfTimeScores) {
+      return {
+        status: "canceled",
+        payout: bet.stake,
+        reason: "Half-time scores not available",
+      };
+    }
+
+    // Extract full match scores for total goals
+    const fullMatchScores = this.extractMatchScores(matchData);
+    const totalGoals = fullMatchScores.homeScore + fullMatchScores.awayScore;
+
+    // Determine actual half-time result
+    let actualHalfTimeResult;
+    if (halfTimeScores.homeScore > halfTimeScores.awayScore) {
+      actualHalfTimeResult = "Home";
+    } else if (halfTimeScores.homeScore < halfTimeScores.awayScore) {
+      actualHalfTimeResult = "Away";
+    } else {
+      actualHalfTimeResult = "Draw";
+    }
+
+    // Get threshold from betDetails.name and parse bet selection from betDetails.label
+    const threshold = parseFloat(bet.betDetails?.name );
+    const betSelection = bet.betDetails?.label || bet.betOption || bet.selection || "";
+    
+    // Split the bet selection (e.g., "DC United/Under" -> ["DC United", "Under"])
+    const betParts = betSelection.split("/");
+    
+    if (betParts.length !== 2) {
+      return {
+        status: "canceled",
+        payout: bet.stake,
+        reason: "Invalid bet format for Half Time Result / Total Goals",
+      };
+    }
+
+    const betHalfTimeResult = betParts[0].trim();
+    const betTotalGoals = betParts[1].trim();
+
+    // Determine actual over/under for total goals
+    const actualTotalGoals = totalGoals > threshold ? "Over" : "Under";
+
+    // Map team names to standard format
+    // Get team names from match data
+    const homeTeam = matchData.participants?.[0]?.name || "Home";
+    const awayTeam = matchData.participants?.[1]?.name || "Away";
+
+    // Normalize bet half-time result to match actual result format
+    let normalizedBetHalfTimeResult;
+    if (betHalfTimeResult.toLowerCase() === "draw") {
+      normalizedBetHalfTimeResult = "Draw";
+    } else if (betHalfTimeResult.toLowerCase() === homeTeam.toLowerCase()) {
+      normalizedBetHalfTimeResult = "Home";
+    } else if (betHalfTimeResult.toLowerCase() === awayTeam.toLowerCase()) {
+      normalizedBetHalfTimeResult = "Away";
+    } else {
+      normalizedBetHalfTimeResult = betHalfTimeResult;
+    }
+
+    // Check if both half-time result and total goals match
+    const halfTimeMatch = actualHalfTimeResult === normalizedBetHalfTimeResult;
+    const totalGoalsMatch = actualTotalGoals === betTotalGoals;
+    const isWinning = halfTimeMatch && totalGoalsMatch;
+
+    return {
+      status: isWinning ? "won" : "lost",
+      payout: isWinning ? bet.stake * bet.odds : 0,
+      actualHalfTimeResult: actualHalfTimeResult,
+      actualTotalGoals: actualTotalGoals,
+      betHalfTimeResult: normalizedBetHalfTimeResult,
+      reason: `Half Time: ${actualHalfTimeResult}, Total Goals: ${totalGoals} (${actualTotalGoals}), Bet: ${normalizedBetHalfTimeResult}/${betTotalGoals}`,
     };
   }
 }

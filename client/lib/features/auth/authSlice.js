@@ -6,9 +6,13 @@ export const login = createAsyncThunk(
   "auth/login",
   async (credentials, { rejectWithValue }) => {
     try {
+      console.log("🚀 Attempting login with credentials:", { email: credentials.email });
       const response = await apiClient.post("/auth/login", credentials);
+      console.log("📡 Login API response:", response.data);
+      console.log("🔑 Access token in response:", !!response.data.accessToken);
       return response.data;
     } catch (error) {
+      console.error("❌ Login API error:", error.response?.data || error.message);
       return rejectWithValue(
         error.response?.data || {
           success: false,
@@ -152,12 +156,18 @@ const authSlice = createSlice({
         state.message = action.payload.message;
         state.error = null;
 
+        console.log("🔍 Login response payload:", action.payload);
+        console.log("🔍 Access token present:", !!action.payload.accessToken);
+        console.log("🔍 Window available:", typeof window !== 'undefined');
+
         // Store token in localStorage as fallback for cookie issues
         if (action.payload.accessToken && typeof window !== 'undefined') {
           localStorage.setItem('accessToken', action.payload.accessToken);
+          console.log("✅ Token saved to localStorage");
+        } else {
+          console.log("❌ Token not saved - missing token or window not available");
         }
 
-        console.log(action.payload);
         console.log("User logged in:", state.user);
       })
       .addCase(login.rejected, (state, action) => {

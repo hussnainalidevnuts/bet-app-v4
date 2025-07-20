@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import UserManagement from "@/components/admin/UserManagement";
+import LoginDebug from "@/components/auth/LoginDebug";
 import {
   fetchUserStats,
   selectUserStats,
@@ -293,6 +294,11 @@ export default function AdminDashboard() {
             </div>
           </div>
         </header>
+
+        {/* Debug Component - Remove after testing */}
+        <div className="mb-8">
+          <LoginDebug />
+        </div>
 
         {/* Active Filters Display */}
         {activeFilters > 0 && (

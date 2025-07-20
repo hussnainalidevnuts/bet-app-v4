@@ -7,12 +7,17 @@ import {
 } from "../utils/jwt.js";
 
 // Set cookie options
-const getCookieOptions = () => ({
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production" && process.env.SECURE_COOKIES !== "false",
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-});
+const getCookieOptions = () => {
+  const options = {
+    httpOnly: true,
+    secure: false, // Temporarily disable secure for testing
+    sameSite: "lax", // Temporarily use lax for testing
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  };
+  
+  console.log("🍪 Cookie options generated:", options);
+  return options;
+};
 
 // @desc    Login user
 // @route   POST /api/auth/login
@@ -21,12 +26,19 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log("🔐 Login attempt for:", email);
+    console.log("🌍 Environment:", process.env.NODE_ENV);
+    console.log("🍪 Cookie options:", getCookieOptions());
+
     // Use UserService to authenticate user
     const user = await UserService.authenticateUser(email, password);
 
     // Generate tokens
     const accessToken = generateToken({ userId: user._id });
     const refreshToken = generateRefreshToken({ userId: user._id });
+
+    console.log("🔑 Generated access token:", !!accessToken);
+    console.log("🔄 Generated refresh token:", !!refreshToken);
 
     // Set cookies
     res.cookie("accessToken", accessToken, getCookieOptions());
@@ -35,12 +47,22 @@ export const login = async (req, res) => {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days for refresh token
     });
 
-    res.json({
+    const responseData = {
       success: true,
       message: "Login successful",
       user: user.toJSON(),
       accessToken,
+    };
+
+    console.log("📤 Sending response with access token:", !!responseData.accessToken);
+    console.log("📤 Full response data:", {
+      success: responseData.success,
+      message: responseData.message,
+      user: responseData.user ? "User object present" : "No user object",
+      accessToken: responseData.accessToken ? "Token present" : "No token"
     });
+
+    res.json(responseData);
   } catch (error) {
     console.error("Login error:", error);
 

@@ -8,9 +8,22 @@ import {
 } from "../utils/oddsClassification.js";
 
 class LiveFixturesService {
-  constructor(fixtureCache) {
+  constructor(fixtureCache, sharedLiveOddsCache = null) {
     this.fixtureCache = fixtureCache;
-    this.liveOddsCache = new NodeCache({ stdTTL: 180 }); // 3 minutes
+    // Use shared cache if provided, otherwise create new one
+    this.liveOddsCache = sharedLiveOddsCache || new NodeCache({ stdTTL: 180 }); // 3 minutes
+    this.matchScheduler = null; // Will be set by app.js
+  }
+
+  // Method to set the match scheduler (called from app.js)
+  setMatchScheduler(matchScheduler) {
+    this.matchScheduler = matchScheduler;
+    // Share the same cache instance to avoid inconsistency
+    if (matchScheduler && matchScheduler.liveOddsCache) {
+      this.liveOddsCache = matchScheduler.liveOddsCache;
+      console.log('[LiveFixtures] Using shared cache from match scheduler');
+    }
+    console.log('[LiveFixtures] Match scheduler connected');
   }
 
   // Helper method to properly parse starting_at field (same as in bet.service.js)
@@ -61,76 +74,77 @@ class LiveFixturesService {
 
   // Helper method to validate player odds against lineups
   validatePlayerOdds(odds, matchData) {
-    if (!matchData || !Array.isArray(matchData.lineups)) {
-      console.log(
-        `[LiveFixtures] No lineup data available for player validation`
-      );
-      return odds; // Return all odds if no lineup data
-    }
+    // Player validation temporarily disabled
+    // if (!matchData || !Array.isArray(matchData.lineups)) {
+    //   console.log(
+    //     `[LiveFixtures] No lineup data available for player validation`
+    //   );
+    //   return odds; // Return all odds if no lineup data
+    // }
 
-    // Extract player names from lineups for validation
-    const lineupPlayerNames = new Set();
-    matchData.lineups.forEach((lineup) => {
-      if (lineup.player_name) {
-        // Normalize player name for comparison (lowercase, trim spaces)
-        lineupPlayerNames.add(lineup.player_name.toLowerCase().trim());
-      }
-    });
+    // // Extract player names from lineups for validation
+    // const lineupPlayerNames = new Set();
+    // matchData.lineups.forEach((lineup) => {
+    //   if (lineup.player_name) {
+    //     // Normalize player name for comparison (lowercase, trim spaces)
+    //     lineupPlayerNames.add(lineup.player_name.toLowerCase().trim());
+    //   }
+    // });
 
-    if (lineupPlayerNames.size === 0) {
-      // Log when no players are found in match lineups for validation
-      console.log(
-        `[LiveFixtures] No players found in lineups for match ${matchData.id}`
-      );
-      return odds; // Return all odds if no players in lineups
-    }
+    // if (lineupPlayerNames.size === 0) {
+    //   // Log when no players are found in match lineups for validation
+    //   console.log(
+    //     `[LiveFixtures] No players found in lineups for match ${matchData.id}`
+    //   );
+    //   return odds; // Return all odds if no players in lineups
+    // }
 
-    // Filter odds - validate player odds for market IDs 267 and 268
-    const validatedOdds = odds.filter((odd) => {
-      // For player-related markets (267, 268), validate player is in lineups
-      if (odd.market_id === 267 || odd.market_id === 268) {
-        if (odd.name) {
-          const playerName = odd.name.toLowerCase().trim();
+    // // Filter odds - validate player odds for market IDs 267 and 268
+    // const validatedOdds = odds.filter((odd) => {
+    //   // For player-related markets (267, 268), validate player is in lineups
+    //   if (odd.market_id === 267 || odd.market_id === 268) {
+    //     if (odd.name) {
+    //       const playerName = odd.name.toLowerCase().trim();
 
-          // Check exact match first
-          if (lineupPlayerNames.has(playerName)) {
-            return true;
-          }
+    //       // Check exact match first
+    //       if (lineupPlayerNames.has(playerName)) {
+    //         return true;
+    //       }
 
-          // Check partial match (in case of name variations)
-          for (const lineupPlayer of lineupPlayerNames) {
-            // Check if odd name is contained in lineup name or vice versa
-            if (
-              lineupPlayer.includes(playerName) ||
-              playerName.includes(lineupPlayer)
-            ) {
-              return true;
-            }
-          }
+    //       // Check partial match (in case of name variations)
+    //       for (const lineupPlayer of lineupPlayerNames) {
+    //         // Check if odd name is contained in lineup name or vice versa
+    //         if (
+    //           lineupPlayer.includes(playerName) ||
+    //           playerName.includes(lineupPlayer)
+    //         ) {
+    //           return true;
+    //         }
+    //       }
 
-          // Player not found in lineups, exclude this odd
-          console.log(
-            `🚫 [LiveFixtures] Excluding player odd for "${odd.name}" - not in lineups for match ${matchData.id}`
-          );
-          return false;
-        } else {
-          // No player name in odd, exclude it
-          console.log(
-            `🚫 [LiveFixtures] Excluding player odd with no name for match ${matchData.id}`
-          );
-          return false;
-        }
-      }
+    //       // Player not found in lineups, exclude this odd
+    //       console.log(
+    //         `🚫 [LiveFixtures] Excluding player odd for "${odd.name}" - not in lineups for match ${matchData.id}`
+    //       );
+    //       return false;
+    //     } else {
+    //       // No player name in odd, exclude it
+    //       console.log(
+    //         `🚫 [LiveFixtures] Excluding player odd with no name for match ${matchData.id}`
+    //       );
+    //       return false;
+    //     }
+    //   }
 
-      // For non-player markets, include the odd
-      return true;
-    });
+    //   // For non-player markets, include the odd
+    //   return true;
+    // });
 
-    // Log player validation results showing how many odds were filtered
-    console.log(
-      `[LiveFixtures] Player validation: ${odds.length} odds → ${validatedOdds.length} validated odds for match ${matchData.id}`
-    );
-    return validatedOdds;
+    // // Log player validation results showing how many odds were filtered
+    // console.log(
+    //   `[LiveFixtures] Player validation: ${odds.length} odds → ${validatedOdds.length} validated odds for match ${matchData.id}`
+    // );
+    return odds;
   }
 
   // Helper to group matches by league using the popular leagues cache
@@ -188,6 +202,100 @@ class LiveFixturesService {
 
   // Returns matches for today that have started (live)
   getLiveMatchesFromCache() {
+    // First try to get matches from the optimized scheduler if available
+    if (this.matchScheduler) {
+      console.log('[LiveFixtures] Using optimized scheduler for live matches');
+      return this.getOptimizedLiveMatches();
+    }
+
+    // Fallback to original method if scheduler not available
+    console.log('[LiveFixtures] Using fallback method for live matches');
+    return this.getOriginalLiveMatches();
+  }
+
+  // New optimized method using MatchScheduler
+  async getOptimizedLiveMatches() {
+    try {
+      const liveMatches = [];
+      const cacheKeys = this.matchScheduler.liveMatchesCache.keys();
+      
+      for (const matchId of cacheKeys) {
+        const match = this.matchScheduler.liveMatchesCache.get(matchId);
+        if (match && match.isLive) {
+          // Get cached odds in unified format (no transformation needed)
+          let cachedOdds = this.liveOddsCache.get(match.id);
+          
+          if (!cachedOdds || !cachedOdds.betting_data) {
+            // Force refresh odds using scheduler's unified method
+            cachedOdds = await this.matchScheduler.fetchAndCacheMatchOdds(match.id);
+          }
+
+          liveMatches.push({
+            ...match,
+            // Ensure we have the timing info from scheduler
+            timing: match.timing || null,
+            // Add cache metadata for debugging
+            _cacheInfo: {
+              hasOdds: !!cachedOdds,
+              oddsSource: cachedOdds?.source || 'unknown',
+              cachedAt: cachedOdds?.cached_at || null
+            }
+          });
+        }
+      }
+
+      const grouped = this.bindLeaguesToMatches(liveMatches).map((group) => ({
+        league: group.league,
+        matches: group.matches.map((match) => {
+          // Get cached odds for this match (already in unified format)
+          const cachedOdds = this.liveOddsCache.get(match.id);
+          console.log(
+            `[getLiveMatchesFromCache] Match ${match.id} unified cache:`,
+            {
+              hasCache: !!cachedOdds,
+              hasBettingData: !!(cachedOdds && cachedOdds.betting_data),
+              bettingDataLength:
+                cachedOdds && cachedOdds.betting_data
+                  ? cachedOdds.betting_data.length
+                  : 0,
+              hasTimingInfo: !!match.timing,
+              cacheSource: cachedOdds?.source || 'unknown'
+            }
+          );
+
+          const mainOdds =
+            cachedOdds && cachedOdds.betting_data
+              ? this.extractMainOdds(cachedOdds.betting_data)
+              : {};
+
+          console.log(
+            `[getLiveMatchesFromCache] Match ${match.id} main odds:`,
+            mainOdds
+          );
+
+          return {
+            ...match,
+            odds: mainOdds, // Include the main 1X2 odds
+            // Remove debug info from response
+            _cacheInfo: undefined
+          };
+        }),
+      }));
+
+      console.log(
+        `[LiveFixtures] Returning ${grouped.length} league groups with optimized live matches (unified cache)`
+      );
+      return grouped;
+
+    } catch (error) {
+      console.error('[LiveFixtures] Error in optimized live matches:', error);
+      // Fallback to original method
+      return this.getOriginalLiveMatches();
+    }
+  }
+
+  // Original method (renamed for clarity)
+  getOriginalLiveMatches() {
     const now = new Date();
     const cacheKeys = this.fixtureCache.keys();
     let liveMatches = [];
@@ -290,7 +398,91 @@ class LiveFixturesService {
 
   // Fetch and update odds for all live matches
   async updateAllLiveOdds() {
-    const liveMatches = this.getLiveMatchesFromCache();
+    console.log('[LiveFixtures] Starting unified odds update process');
+    
+    let totalLiveMatches = 0;
+    
+    // Count live matches from scheduler
+    if (this.matchScheduler) {
+      const schedulerMatchIds = this.matchScheduler.liveMatchesCache.keys();
+      totalLiveMatches = schedulerMatchIds.length;
+      
+      // Early return if no live matches to avoid unnecessary API calls
+      if (totalLiveMatches === 0) {
+        console.log('[LiveFixtures] No live matches found in scheduler - skipping odds update to save API calls');
+        return;
+      }
+      
+      console.log(`[LiveFixtures] Found ${totalLiveMatches} live matches in scheduler - proceeding with odds update`);
+      
+      // Use the optimized scheduler for odds updating
+      await this.updateSchedulerOdds();
+      console.log('[LiveFixtures] Unified odds update completed');
+      return;
+    }
+    
+    // Fallback to original method only if scheduler is not available
+    console.log('[LiveFixtures] No scheduler available - using fallback method');
+    const fallbackMatches = this.getOriginalLiveMatches();
+    const fallbackMatchCount = fallbackMatches.reduce((count, group) => count + group.matches.length, 0);
+    
+    if (fallbackMatchCount === 0) {
+      console.log('[LiveFixtures] No live matches found in fallback - skipping odds update to save API calls');
+      return;
+    }
+    
+    console.log(`[LiveFixtures] Found ${fallbackMatchCount} live matches in fallback - proceeding with odds update`);
+    await this.updateFallbackMatchesOdds(fallbackMatches);
+    console.log('[LiveFixtures] Fallback odds update completed');
+  }
+
+  // Update odds for matches in the scheduler using unified format
+  async updateSchedulerOdds() {
+    if (!this.matchScheduler) return;
+
+    const liveMatchIds = this.matchScheduler.liveMatchesCache.keys();
+    
+    // Early return if no matches to avoid unnecessary processing
+    if (liveMatchIds.length === 0) {
+      console.log('[LiveFixtures] No scheduler matches found - skipping scheduler odds update');
+      return;
+    }
+    
+    console.log(`[LiveFixtures] Updating unified odds for ${liveMatchIds.length} scheduler matches`);
+
+    let successfulUpdates = 0;
+    for (const matchId of liveMatchIds) {
+      try {
+        // Force refresh odds using the unified method
+        const updatedOdds = await this.matchScheduler.fetchAndCacheMatchOdds(matchId);
+        if (updatedOdds && updatedOdds.betting_data) {
+          successfulUpdates++;
+          console.log(`[LiveFixtures] Updated unified odds for match ${matchId} - ${updatedOdds.betting_data.length} sections`);
+        }
+      } catch (error) {
+        console.error(`[LiveFixtures] Error updating unified odds for match ${matchId}:`, error);
+      }
+    }
+
+    console.log(`[LiveFixtures] Successfully updated ${successfulUpdates}/${liveMatchIds.length} scheduler matches with unified format`);
+  }
+
+  // Update odds for fallback matches (when scheduler is not available or as backup)
+  async updateFallbackMatchesOdds(liveMatches) {
+    // Early return if no fallback matches to avoid unnecessary API calls
+    if (!liveMatches || liveMatches.length === 0) {
+      console.log('[LiveFixtures] No fallback matches found - skipping fallback odds update');
+      return;
+    }
+    
+    const totalFallbackMatches = liveMatches.reduce((count, group) => count + group.matches.length, 0);
+    if (totalFallbackMatches === 0) {
+      console.log('[LiveFixtures] No matches in fallback groups - skipping fallback odds update');
+      return;
+    }
+    
+    console.log(`[LiveFixtures] Processing ${totalFallbackMatches} fallback matches for odds update`);
+    
     const apiToken = process.env.SPORTSMONKS_API_KEY;
 
     // Define the same allowed market IDs as in fixture.service.js
@@ -310,24 +502,26 @@ class LiveFixturesService {
     for (const group of liveMatches) {
       for (const match of group.matches) {
         totalMatches++;
+        
+        // Skip if we already have fresh odds from scheduler
+        const existingOdds = this.liveOddsCache.get(match.id);
+        if (existingOdds && existingOdds.source === 'match_scheduler' && 
+            existingOdds.cached_at && (Date.now() - existingOdds.cached_at) < 180000) { // 3 minutes
+          console.log(`[LiveFixtures] Skipping match ${match.id} - has fresh scheduler odds`);
+          continue;
+        }
+
         try {
           // Use the fixture endpoint with inplayOdds included
           const url = `https://api.sportmonks.com/v3/football/fixtures/${match.id}?api_token=${apiToken}&include=inplayOdds&filters=bookmakers:2`;
 
           const response = await axios.get(url);
           const allOdds = response.data?.data?.inplayodds || [];
-          // Log the total number of odds fetched from API for a match
-          console.log("Length of odds: ", allOdds.length);
-
+          
           // Filter odds by allowed market IDs
           let filteredOdds = allOdds.filter((odd) =>
             allowedMarketIds.includes(odd.market_id)
           );
-          // Log the number of odds after filtering for valid markets
-          console.log("Length of filtered odds: ", filteredOdds.length);
-
-          // Apply player validation for market IDs 267 and 268
-          filteredOdds = this.validatePlayerOdds(filteredOdds, match);
 
           // Group odds by market for classification
           const odds_by_market = {};
@@ -347,42 +541,32 @@ class LiveFixturesService {
           const classified = classifyOdds({ odds_by_market });
           const betting_data = transformToBettingData(classified, match);
 
-          // Store both betting_data and odds_classification
+          // Store in unified format
           const result = {
             betting_data: betting_data,
             odds_classification: classified,
+            cached_at: Date.now(),
+            source: 'fallback_update'
           };
 
-          // Cache the result
+          // Cache the result in unified format
           this.liveOddsCache.set(match.id, result);
-          // Log caching details for live match odds including betting data sections and options count
-          console.log(
-            `[updateAllLiveOdds] Cached odds for match ${match.id}:`,
-            {
-              bettingDataSections: result.betting_data.length,
-              totalOptions: result.betting_data.reduce(
-                (sum, section) => sum + (section.options?.length || 0),
-                0
-              ),
-              cacheKey: match.id,
-            }
-          );
           successfulUpdates++;
+
+          console.log(
+            `[LiveFixtures] Updated fallback odds for match ${match.id} with ${betting_data.length} betting data sections`
+          );
         } catch (err) {
           console.error(
-            `❌ Failed to update betting_data for match ${match.id}:`,
+            `❌ Failed to update fallback odds for match ${match.id}:`,
             err.message
           );
-          if (err.response) {
-            console.error(`📊 Error response:`, err.response.data);
-          }
         }
       }
     }
 
-    // Log the final update summary showing how many live matches were successfully updated
     console.log(
-      `[LiveFixtures] Updated ${successfulUpdates}/${totalMatches} live matches with player validation`
+      `[LiveFixtures] Updated fallback odds for ${successfulUpdates}/${totalMatches} matches`
     );
   }
 
@@ -412,22 +596,39 @@ class LiveFixturesService {
 
   // Ensure we have live odds for a specific match
   async ensureLiveOdds(matchId) {
-    // Check if we already have odds in cache
+    // Check if we already have odds in unified cache
     let odds = this.liveOddsCache.get(matchId);
-    console.log(`[ensureLiveOdds] Cache check for match ${matchId}:`, {
+    console.log(`[ensureLiveOdds] Unified cache check for match ${matchId}:`, {
       hasCache: !!odds,
       cacheType: typeof odds,
-      cacheStructure: odds ? Object.keys(odds) : null,
+      cacheSource: odds?.source || 'unknown',
+      hasBettingData: !!(odds && odds.betting_data),
+      cacheAge: odds?.cached_at ? Date.now() - odds.cached_at : null,
     });
 
-    if (odds && (odds.betting_data || odds.length > 0)) {
+    if (odds && odds.betting_data && odds.betting_data.length > 0) {
       console.log(
-        `[ensureLiveOdds] Returning cached odds for match ${matchId}`
+        `[ensureLiveOdds] Returning unified cached odds for match ${matchId} from ${odds.source}`
       );
       return odds;
     }
 
-    // If not in cache, fetch them
+    // If not in cache or stale, fetch using scheduler if available
+    if (this.matchScheduler) {
+      console.log(`[ensureLiveOdds] Fetching fresh odds via scheduler for match ${matchId}`);
+      const freshOdds = await this.matchScheduler.fetchAndCacheMatchOdds(matchId);
+      if (freshOdds && freshOdds.betting_data) {
+        return freshOdds;
+      }
+    }
+
+    // Fallback to direct API call with unified format
+    console.log(`[ensureLiveOdds] Fetching fresh odds via fallback API for match ${matchId}`);
+    return await this.fetchOddsDirectly(matchId);
+  }
+
+  // Direct API fetch with unified format (fallback method)
+  async fetchOddsDirectly(matchId) {
     const apiToken = process.env.SPORTSMONKS_API_KEY;
     if (!apiToken) {
       throw new CustomError("API key not configured", 500, "API_KEY_MISSING");
@@ -443,53 +644,14 @@ class LiveFixturesService {
       const url = `https://api.sportmonks.com/v3/football/fixtures/${matchId}?api_token=${apiToken}&include=inplayOdds&filters=bookmakers:2`;
       const response = await axios.get(url);
       const allOddsData = response.data?.data?.inplayodds || [];
-      console.log("Length of odds: ", allOddsData.length);
 
       // Filter odds by allowed market IDs
       let oddsData = allOddsData.filter((odd) =>
         allowedMarketIds.includes(odd.market_id)
       );
-      console.log("Length of filtered odds: ", oddsData.length);
 
-      // Get match data to pass to transformToBettingData for team names AND player validation
-      let matchData = null;
-      const cacheKeys = this.fixtureCache.keys();
-      for (const key of cacheKeys) {
-        if (key.startsWith("fixtures_")) {
-          const cachedData = this.fixtureCache.get(key);
-          let fixtures = [];
-          if (Array.isArray(cachedData)) {
-            fixtures = cachedData;
-          } else if (cachedData && Array.isArray(cachedData.data)) {
-            fixtures = cachedData.data;
-          } else if (cachedData instanceof Map) {
-            fixtures = Array.from(cachedData.values());
-          } else {
-            continue;
-          }
-
-          matchData = fixtures.find(
-            (m) => m.id == matchId || m.id === parseInt(matchId)
-          );
-          if (matchData) break;
-        }
-      }
-
-      // Apply player validation for market IDs 267 and 268
-      oddsData = this.validatePlayerOdds(oddsData, matchData);
-
-      console.log(
-        `[ensureLiveOdds] Fetched ${allOddsData.length} raw odds from API, filtered to ${oddsData.length} validated odds for match ${matchId}`
-      );
-      console.log(
-        `[ensureLiveOdds] First 3 validated odds:`,
-        oddsData.slice(0, 3).map((odd) => ({
-          id: odd.id,
-          label: odd.label,
-          value: odd.value,
-          market_id: odd.market_id,
-        }))
-      );
+      // Get match data for team names
+      let matchData = await this.getMatchDataFromCache(matchId);
 
       // Group odds by market for classification
       const odds_by_market = {};
@@ -502,68 +664,77 @@ class LiveFixturesService {
             odds: [],
           };
         }
-        // Preserve the original odd ID and other important fields
         odds_by_market[odd.market_id].odds.push({
           ...odd,
-          id: odd.id, // Ensure ID is preserved
+          id: odd.id,
           value: odd.value,
           label: odd.label,
           name: odd.name || odd.label,
           suspended: odd.suspended,
           stopped: odd.stopped,
         });
-        odds_by_market[odd.market_id].market_description =
-          odd.market_description;
+        odds_by_market[odd.market_id].market_description = odd.market_description;
       }
 
       const classified = classifyOdds({ odds_by_market });
       const betting_data = transformToBettingData(classified, matchData);
 
-      // Return both betting_data and odds_classification structure
+      // Store in unified format
       const result = {
         betting_data: betting_data,
         odds_classification: classified,
+        cached_at: Date.now(),
+        source: 'direct_fetch'
       };
 
-      // Debug: Log the final result structure
       console.log(
-        `[ensureLiveOdds] Final result structure with player validation:`,
-        {
-          bettingDataSections: result.betting_data.length,
-          totalOptions: result.betting_data.reduce(
-            (sum, section) => sum + (section.options?.length || 0),
-            0
-          ),
-        }
+        `[ensureLiveOdds] Fetched and cached ${result.betting_data.length} sections for match ${matchId}`
       );
 
-      // Debug: Log all odd IDs in the final result
-      const allOddIds = [];
-      result.betting_data.forEach((section) => {
-        section.options?.forEach((option) => {
-          allOddIds.push({
-            id: option.id,
-            label: option.label,
-            section: section.title,
-          });
-        });
-      });
-      console.log(
-        `[ensureLiveOdds] All odd IDs in final result:`,
-        allOddIds.slice(0, 10)
-      ); // Show first 10
-
-      // Cache the result
+      // Cache the result in unified format
       this.liveOddsCache.set(matchId, result);
       return result;
     } catch (err) {
-      console.error("Error fetching live odds:", err);
+      console.error("Error fetching live odds directly:", err);
       throw new CustomError(
         "Failed to fetch live odds",
         500,
         "LIVE_ODDS_FETCH_ERROR"
       );
     }
+  }
+
+  // Helper to get match data from cache
+  async getMatchDataFromCache(matchId) {
+    // First try scheduler cache
+    if (this.matchScheduler) {
+      const matchData = await this.matchScheduler.getMatchDetailsFromCache(matchId);
+      if (matchData) return matchData;
+    }
+
+    // Fallback to fixture cache
+    const cacheKeys = this.fixtureCache.keys();
+    for (const key of cacheKeys) {
+      if (key.startsWith("fixtures_")) {
+        const cachedData = this.fixtureCache.get(key);
+        let fixtures = [];
+        if (Array.isArray(cachedData)) {
+          fixtures = cachedData;
+        } else if (cachedData && Array.isArray(cachedData.data)) {
+          fixtures = cachedData.data;
+        } else if (cachedData instanceof Map) {
+          fixtures = Array.from(cachedData.values());
+        } else {
+          continue;
+        }
+
+        const matchData = fixtures.find(
+          (m) => m.id == matchId || m.id === parseInt(matchId)
+        );
+        if (matchData) return matchData;
+      }
+    }
+    return null;
   }
 
   // Extract only 1, X, 2 odds for inplay display

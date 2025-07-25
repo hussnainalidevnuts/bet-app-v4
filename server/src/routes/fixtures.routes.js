@@ -27,6 +27,7 @@ fixturesRouter.get("/upcoming", getUpcomingFixtures);
 fixturesRouter.get("/leagues/popular", getPopularLeagues);
 fixturesRouter.get("/live", getLiveMatchesFromCache);
 fixturesRouter.get("/live/odds", getAllLiveOddsMap);
+
 // Test endpoint to compare optimization
 fixturesRouter.get("/upcoming", getUpcomingFixtures);
 fixturesRouter.get("/:matchId", getMatchById);

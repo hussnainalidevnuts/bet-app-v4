@@ -21,6 +21,7 @@ import agenda from "./config/agenda.js";
 import BetService from "./services/bet.service.js";
 import fixtureOptimizationService from "./services/fixture.service.js";
 import LiveFixturesService from "./services/LiveFixtures.service.js";
+import MatchSchedulerService from "./services/MatchScheduler.service.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -81,7 +82,11 @@ app.listen(PORT, () => {
 
 global.fixtureOptimizationService = fixtureOptimizationService;
 
-const liveFixturesService = new LiveFixturesService(fixtureOptimizationService.fixtureCache);
+// Create services with shared cache for consistency
+const matchSchedulerService = new MatchSchedulerService(fixtureOptimizationService.fixtureCache);
+const liveFixturesService = new LiveFixturesService(fixtureOptimizationService.fixtureCache, matchSchedulerService.liveOddsCache);
+// Connect the services to share cache and avoid inconsistency
+liveFixturesService.setMatchScheduler(matchSchedulerService);
 
 //INFO: checking the bet outcome of a bet at a scheduled time
 agenda.define("checkBetOutcome", async (job) => {
@@ -108,22 +113,71 @@ agenda.define("updateLiveOdds", async (job) => {
   }
 });
 
-// Schedule the job every 3 minutes
-(async function () {
-  await agenda.start();
-  await agenda.every("3 minutes", "updateLiveOdds");
-})();
+// Define the new match scheduler jobs
+agenda.define("checkMatchStart", async (job) => {
+  const { matchIds, expectedStartTime, checkCount } = job.attrs.data;
+  try {
+    await matchSchedulerService.checkMatchesStarted(matchIds, expectedStartTime, checkCount);
+    console.log(`[Agenda] Checked ${matchIds.length} matches for start status at ${new Date().toISOString()}`);
+  } catch (error) {
+    console.error("[Agenda] Error checking match start:", error);
+  }
+});
 
+agenda.define("checkDelayedMatches", async (job) => {
+  try {
+    await matchSchedulerService.checkDelayedMatches();
+    console.log(`[Agenda] Checked delayed matches at ${new Date().toISOString()}`);
+  } catch (error) {
+    console.error("[Agenda] Error checking delayed matches:", error);
+  }
+});
+
+// Daily cleanup job
+agenda.define("cleanupScheduler", async (job) => {
+  try {
+    await matchSchedulerService.cleanup();
+    console.log(`[Agenda] Scheduler cleanup completed at ${new Date().toISOString()}`);
+  } catch (error) {
+    console.error("[Agenda] Error during scheduler cleanup:", error);
+  }
+});
+
+// Initialize scheduler and schedule jobs after Agenda is ready
+async function initializeScheduler() {
+  try {
+    await agenda.start();
+    console.log('[App] Agenda started successfully');
+    
+    // Now safely initialize the match scheduler
+    await matchSchedulerService.initializeScheduler();
+    
+    // Schedule recurring jobs
+    await agenda.every("3 minutes", "updateLiveOdds");
+    await agenda.every("24 hours", "cleanupScheduler"); // Daily cleanup
+    
+    console.log('[App] All scheduler jobs initialized successfully');
+  } catch (error) {
+    console.error('[App] Error initializing scheduler:', error);
+  }
+}
+
+// Schedule the jobs when agenda is ready
 agenda.on("ready", () => {
   console.log("[Agenda] Ready and connected to MongoDB");
+  // Initialize scheduler after agenda is ready
+  initializeScheduler();
 });
+
 agenda.on("error", (err) => {
   console.error("[Agenda] Error:", err);
 });
+
 // Log when agenda jobs start executing
 agenda.on("start", (job) => {
   console.log(`[Agenda] Job ${job.attrs.name} starting. Data:`, job.attrs.data);
 });
+
 agenda.on("fail", (err, job) => {
   console.error(`[Agenda] Job ${job.attrs.name} failed:`, err);
 });

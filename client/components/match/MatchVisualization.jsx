@@ -5,10 +5,17 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { getCountdownToKickoff } from '@/lib/utils';
+import LiveTimer from '@/components/home/LiveTimer';
 
 const MatchVisualization = ({ matchData }) => {
-    // Determine if the match is live
+    // Determine if the match is live - prefer timing data from backend
     const isLive = (() => {
+        // If we have timing data from the new backend structure, use it
+        if (matchData?.timing?.matchStarted) {
+            return true; // If timing data exists, match is definitely live
+        }
+        
+        // Fallback to existing logic for backward compatibility
         if (!matchData || !matchData.starting_at) return false;
         const now = new Date();
         let matchTime;
@@ -106,9 +113,17 @@ const MatchVisualization = ({ matchData }) => {
                             {/* Centered Kickoff Time Display */}
                             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg p-3 text-center shadow-lg border border-gray-200 z-10">
                                 {isLive ? (
-                                    <div className="flex items-center justify-center gap-1 mb-1">
-                                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                                        <span className="text-xs font-bold text-red-600 animate-pulse">LIVE</span>
+                                    <div>
+                                        <div className="flex items-center justify-center gap-1 mb-1">
+                                            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                                            <span className="text-xs font-bold text-red-600 animate-pulse">LIVE</span>
+                                        </div>
+                                        <div className="text-sm font-bold text-gray-800">
+                                            <LiveTimer 
+                                                startingAt={matchData.starting_at} 
+                                                timing={matchData.timing}
+                                            />
+                                        </div>
                                     </div>
                                 ) : (
                                     <>

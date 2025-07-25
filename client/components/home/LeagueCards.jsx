@@ -97,7 +97,10 @@ const LeagueCard = ({ league, isInPlay = false, viewAllText = null }) => {
                         <div className='flex justify-between mt-2'>
                             <div className="text-xs text-gray-600">
                                 {isInPlay && match.isLive ? (
-                                    <LiveTimer startingAt={match.starting_at} />
+                                    <LiveTimer 
+                                        startingAt={match.starting_at} 
+                                        timing={match.timing} 
+                                    />
                                 ) : (
                                     match.starting_at ? (
                                         <div>
@@ -109,7 +112,12 @@ const LeagueCard = ({ league, isInPlay = false, viewAllText = null }) => {
                                 )}
                             </div>
                             <div className="text-xs text-gray-500">
-                                {isInPlay && match.isLive ? 'LIVE' : ''}
+                                {isInPlay && match.isLive ? (
+                                    <span className="flex items-center gap-1">
+                                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                                        LIVE
+                                    </span>
+                                ) : ''}
                             </div>
                         </div>
                         <Link href={`/matches/${match.id}`}>
@@ -318,7 +326,8 @@ const LeagueCards = ({
                         clock: true,
                         starting_at: match.starting_at, // Add the starting_at field for live timer
                         state_id: match.state_id, // Add state_id for live determination
-                        isLive: isMatchLive // Add live flag
+                        isLive: isMatchLive, // Add live flag
+                        timing: match.timing || null // Include timing info from backend if available
                     };
                 }).filter(match => match !== null); // Filter out null matches
     

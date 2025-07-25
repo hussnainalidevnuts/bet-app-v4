@@ -76,7 +76,10 @@ const MatchListPage = ({ config }) => {
         if (matchTimeComponent) {
             // Use React component for live timer
             const MatchTimeComponent = matchTimeComponent;
-            return <MatchTimeComponent startingAt={match.starting_at} />;
+            return <MatchTimeComponent 
+                startingAt={match.starting_at} 
+                timing={match.timing}
+            />;
         } else {
             // Use formatter function
             return effectiveMatchTimeFormatter(match.liveTime || match.startTime || match.starting_at, match);

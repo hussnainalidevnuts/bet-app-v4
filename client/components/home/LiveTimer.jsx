@@ -21,58 +21,76 @@ const LiveTimer = ({ startingAt, timing }) => {
             const calculateElapsedTimeFromTiming = () => {
                 try {
                     // Use the precise timing info from backend
-                    const { currentMinute, currentSecond, period, matchStarted, cacheTime } = timing;
+                    const { currentMinute, currentSecond, period, matchStarted, cacheTime, isTicking, timeSource } = timing;
                     
-                    // If we have precise minute/second info from backend, use it
-                    if (currentMinute !== undefined && currentSecond !== undefined) {
+                    // If we have precise minute/second info from backend and it's ticking, calculate from that base
+                    if (currentMinute !== undefined && currentSecond !== undefined && isTicking && cacheTime) {
+                        // Calculate how much time has passed since the cache time
+                        const now = Date.now();
+                        const cacheAgeMs = now - cacheTime;
+                        const cacheAgeSeconds = Math.floor(cacheAgeMs / 1000);
+                        
+                        // Add the cache age to the cached time
+                        let totalSeconds = (currentMinute * 60) + currentSecond + cacheAgeSeconds;
+                        let totalMinutes = Math.floor(totalSeconds / 60);
+                        let seconds = totalSeconds % 60;
+                        
+                        // Debug logging (only log once per second to avoid spam)
+                        if (Math.random() < 0.1) { // 10% chance to log
+                            console.log(`[LiveTimer] Time calc: Backend: ${currentMinute}:${currentSecond.toString().padStart(2, '0')} (${timeSource}), Cache age: ${cacheAgeSeconds}s, Current: ${totalMinutes}:${seconds.toString().padStart(2, '0')}`);
+                        }
+                        
                         // Check for end states
-                        if (currentMinute >= 90 && period !== '2nd-half') {
+                        if (totalMinutes >= 90 && period !== '2nd-half') {
                             setElapsedTime('FT');
                             return;
                         }
                         
-                        // Display injury time for 90+ minutes
-                        if (currentMinute >= 90) {
-                            setElapsedTime('90+');
-                            return;
-                        }
+                        // Show actual time even for 90+ minutes (injury time)
+                        // No special handling needed - just show the actual time
                         
                         // Format as M:SS for display
-                        const formattedTime = `${currentMinute}:${currentSecond.toString().padStart(2, '0')}`;
+                        const formattedTime = `${totalMinutes}:${seconds.toString().padStart(2, '0')}`;
                         setElapsedTime(formattedTime);
                         return;
                     }
                     
-                    // Fallback to calculating from matchStarted timestamp with server offset correction
-                    const startTimeMs = matchStarted * 1000; // Convert Unix timestamp to milliseconds
-                    const correctedNow = getCorrectedCurrentTime(serverTimeOffset);
-                    const diffMs = correctedNow.getTime() - startTimeMs;
+                    // If not ticking or no precise timing, calculate from matchStarted timestamp
+                    if (matchStarted) {
+                        const startTimeMs = matchStarted * 1000; // Convert Unix timestamp to milliseconds
+                        const correctedNow = getCorrectedCurrentTime(serverTimeOffset);
+                        const diffMs = correctedNow.getTime() - startTimeMs;
+                        
+                        // If match hasn't started yet or negative diff
+                        if (diffMs < 0) {
+                            setElapsedTime('0:00');
+                            return;
+                        }
+
+                        // Calculate total minutes from start
+                        const totalMinutes = Math.floor(diffMs / (1000 * 60));
+                        const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+                        // If match started more than 120 minutes ago, it's likely finished
+                        if (totalMinutes > 120) {
+                            setElapsedTime('FT');
+                            return;
+                        }
+
+                        // Display 90+ for injury time
+                        if (totalMinutes >= 90) {
+                            setElapsedTime('90+');
+                            return;
+                        }
+
+                        // Format as M:SS
+                        const formattedTime = `${totalMinutes}:${seconds.toString().padStart(2, '0')}`;
+                        setElapsedTime(formattedTime);
+                        return;
+                    }
                     
-                    // If match hasn't started yet or negative diff
-                    if (diffMs < 0) {
-                        setElapsedTime('0:00');
-                        return;
-                    }
-
-                    // Calculate total minutes from start
-                    const totalMinutes = Math.floor(diffMs / (1000 * 60));
-                    const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
-
-                    // If match started more than 120 minutes ago, it's likely finished
-                    if (totalMinutes > 120) {
-                        setElapsedTime('FT');
-                        return;
-                    }
-
-                    // Display 90+ for injury time
-                    if (totalMinutes >= 90) {
-                        setElapsedTime('90+');
-                        return;
-                    }
-
-                    // Format as M:SS
-                    const formattedTime = `${totalMinutes}:${seconds.toString().padStart(2, '0')}`;
-                    setElapsedTime(formattedTime);
+                    // Fallback
+                    setElapsedTime('--');
                     
                 } catch (error) {
                     console.error('[LiveTimer] Error calculating elapsed time from timing:', error);
@@ -83,7 +101,7 @@ const LiveTimer = ({ startingAt, timing }) => {
             // Calculate immediately
             calculateElapsedTimeFromTiming();
 
-            // Update every second only if we don't have precise backend timing
+            // Always update every second for live matches to ensure smooth ticking
             const interval = setInterval(calculateElapsedTimeFromTiming, 1000);
 
             return () => {
@@ -136,11 +154,8 @@ const LiveTimer = ({ startingAt, timing }) => {
                     return;
                 }
 
-                // Cap at 90+ minutes for football matches (plus reasonable injury time)
-                if (totalMinutes >= 90) {
-                    setElapsedTime('90+');
-                    return;
-                }
+                // Show actual time even for 90+ minutes (injury time)
+                // No special handling needed - just show the actual time
 
                 // Format as MM:SS
                 const formattedTime = `${totalMinutes}:${seconds.toString().padStart(2, '0')}`;

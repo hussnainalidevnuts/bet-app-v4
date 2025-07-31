@@ -1,12 +1,35 @@
-import fixtureOptimizationService from "../services/fixture.service.js";
 import { asyncHandler } from "../utils/customErrors.js";
-import FixtureOptimizationService from "../services/fixture.service.js";
-import LiveFixturesService from "../services/LiveFixtures.service.js";
-import fixtureService from '../services/fixture.service.js';
+
+// Helper function to get services with proper error handling
+function getServices() {
+  console.log('[Controller] Accessing global services...');
+
+  if (!global.fixtureOptimizationService) {
+    console.error('[Controller] ERROR: global.fixtureOptimizationService is undefined!');
+    throw new Error('FixtureOptimizationService not initialized');
+  }
+
+  if (!global.liveFixturesService) {
+    console.error('[Controller] ERROR: global.liveFixturesService is undefined!');
+    throw new Error('LiveFixturesService not initialized');
+  }
+
+  console.log('[Controller] global.fixtureOptimizationService:', typeof global.fixtureOptimizationService);
+  console.log('[Controller] global.liveFixturesService:', typeof global.liveFixturesService);
+
+  return {
+    fixtureOptimizationService: global.fixtureOptimizationService,
+    liveFixturesService: global.liveFixturesService
+  };
+}
+
+console.log('[Controller] Module loaded successfully');
 
 // Get optimized fixtures with pagination and filtering
 
 export const getOptimizedFixtures = asyncHandler(async (req, res) => {
+  const { fixtureOptimizationService } = getServices();
+  
   const {
     page = 1,
     limit = 50,
@@ -66,6 +89,8 @@ export const getOptimizedFixtures = asyncHandler(async (req, res) => {
 
 // Get today's fixtures (optimized for homepage)
 export const getTodaysFixtures = asyncHandler(async (req, res) => {
+  const { fixtureOptimizationService } = getServices();
+  
   const { leagues } = req.query;
   const leagueIds = leagues ? leagues.split(",").map((id) => parseInt(id)) : [];
 
@@ -83,6 +108,8 @@ export const getTodaysFixtures = asyncHandler(async (req, res) => {
 
 // Get upcoming fixtures
 export const getUpcomingFixtures = asyncHandler(async (req, res) => {
+  const { fixtureOptimizationService } = getServices();
+  
   const fixtures = await fixtureOptimizationService.getUpcomingFixtures();
 
   res.status(200).json({
@@ -97,6 +124,8 @@ export const getUpcomingFixtures = asyncHandler(async (req, res) => {
 
 // Get popular leagues (cached)
 export const getPopularLeagues = asyncHandler(async (req, res) => {
+  const { fixtureOptimizationService } = getServices();
+  
   const { limit = 10 } = req.query;
   const parsedLimit = Math.min(parseInt(limit), 25); // Max 25 leagues
 
@@ -116,6 +145,8 @@ export const getPopularLeagues = asyncHandler(async (req, res) => {
 
 // Get homepage data (optimized for homepage display)
 export const getHomepageFixtures = asyncHandler(async (req, res) => {
+  const { fixtureOptimizationService } = getServices();
+  
   const homepageData = await fixtureOptimizationService.getHomepageData();
 
   res.status(200).json({
@@ -145,6 +176,8 @@ export const getHomepageFixtures = asyncHandler(async (req, res) => {
 
 // Get specific match by ID with all details
 export const getMatchById = asyncHandler(async (req, res) => {
+  const { fixtureOptimizationService } = getServices();
+  
   const { matchId } = req.params;
   const {
     includeOdds = "true",
@@ -199,6 +232,8 @@ export const getMatchById = asyncHandler(async (req, res) => {
 
 // Get matches by league ID
 export const getMatchesByLeague = asyncHandler(async (req, res) => {
+  const { fixtureOptimizationService } = getServices();
+  
   const { leagueId } = req.params;
   const { fixtures, league } =
     await fixtureOptimizationService.getMatchesByLeague(leagueId);
@@ -213,9 +248,9 @@ export const getMatchesByLeague = asyncHandler(async (req, res) => {
   });
 });
 
-const liveFixturesService = new LiveFixturesService(fixtureOptimizationService.fixtureCache);
-
 export const getLiveMatchesFromCache = async (req, res) => {
+  const { liveFixturesService } = getServices();
+  
   console.log("🎯 getLiveMatchesFromCache controller called");
   
   // First, update live odds to ensure we have fresh data
@@ -228,7 +263,7 @@ export const getLiveMatchesFromCache = async (req, res) => {
   }
   
   console.log("📊 Getting live matches from cache...");
-  const liveMatches = liveFixturesService.getLiveMatchesFromCache();
+  const liveMatches = await liveFixturesService.getLiveMatchesFromCache();
   
   console.log(`📊 Found ${liveMatches.length} live match groups`);
   
@@ -251,6 +286,8 @@ export const getLiveMatchesFromCache = async (req, res) => {
 
 // Update league popularity status (single or multiple)
 export const updateLeaguePopularity = asyncHandler(async (req, res) => {
+  const { fixtureOptimizationService } = getServices();
+  
   const { leagues } = req.body;
 
   if (!leagues || !Array.isArray(leagues)) {
@@ -282,6 +319,8 @@ export const updateLeaguePopularity = asyncHandler(async (req, res) => {
 });
 
 export const getAllLiveOddsMap = asyncHandler(async (req, res) => {
+  const { liveFixturesService } = getServices();
+  
   const oddsMap = liveFixturesService.getAllLiveOddsMap();
   res.json(oddsMap);
 });
@@ -291,8 +330,10 @@ export const getAllLiveOddsMap = asyncHandler(async (req, res) => {
 
 export const getInplayOdds = async (req, res, next) => {
   try {
+    const { liveFixturesService } = getServices();
+    
     const { id } = req.params;
-    const liveOddsResult = await fixtureService.liveFixturesService.ensureLiveOdds(id);
+    const liveOddsResult = await liveFixturesService.ensureLiveOdds(id);
     
     // Return both betting_data and odds_classification
     res.json({ 

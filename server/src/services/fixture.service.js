@@ -6,7 +6,6 @@ import {
   transformToBettingData,
 } from "../utils/oddsClassification.js";
 import cron from "node-cron";
-import LiveFixturesService from "./LiveFixtures.service.js";
 import League from "../models/League.js";
 
 class FixtureOptimizationService {
@@ -28,7 +27,7 @@ class FixtureOptimizationService {
       this.refreshAllData();
     });
 
-    this.liveFixturesService = new LiveFixturesService(this.fixtureCache);
+
   }
 
   async getOptimizedFixtures() {

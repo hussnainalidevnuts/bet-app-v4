@@ -151,7 +151,7 @@ const BettingHistoryPage = ({ userId }) => {
                       <TableCell>
                         <span className="text-gray-600">${bet.stake.toFixed(2)}</span>
                       </TableCell>
-                      <TableCell>{leg.odds}</TableCell>
+                      <TableCell>{parseFloat(leg.odds).toFixed(2)}</TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"
@@ -435,7 +435,7 @@ const BettingHistoryPage = ({ userId }) => {
                             <TableCell>
                               {formatAmount(item.stake)}
                             </TableCell>
-                            <TableCell>{item.odds}</TableCell>
+                            <TableCell>{parseFloat(item.odds).toFixed(2)}</TableCell>
                             <TableCell>
                               <div>
                                 <div>{date}</div>

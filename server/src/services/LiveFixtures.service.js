@@ -8,22 +8,13 @@ import {
 } from "../utils/oddsClassification.js";
 
 class LiveFixturesService {
-  constructor(fixtureCache, sharedLiveOddsCache = null) {
+  constructor(fixtureCache) {
     this.fixtureCache = fixtureCache;
-    // Use shared cache if provided, otherwise create new one
-    this.liveOddsCache = sharedLiveOddsCache || new NodeCache({ stdTTL: 180 }); // 3 minutes
-    this.matchScheduler = null; // Will be set by app.js
-  }
-
-  // Method to set the match scheduler (called from app.js)
-  setMatchScheduler(matchScheduler) {
-    this.matchScheduler = matchScheduler;
-    // Share the same cache instance to avoid inconsistency
-    if (matchScheduler && matchScheduler.liveOddsCache) {
-      this.liveOddsCache = matchScheduler.liveOddsCache;
-      console.log('[LiveFixtures] Using shared cache from match scheduler');
-    }
-    console.log('[LiveFixtures] Match scheduler connected');
+    this.liveOddsCache = new NodeCache({ stdTTL: 180 }); // 3 minutes
+    this.inplayMatchesCache = new NodeCache({ stdTTL: 300 }); // 5 minutes
+    this.delayedMatchesCache = new NodeCache({ stdTTL: 3600 }); // 1 hour
+    this.lastInplayUpdate = 0;
+    this.updateInterval = 5 * 60 * 1000; // 5 minutes in milliseconds
   }
 
   // Helper method to properly parse starting_at field (same as in bet.service.js)
@@ -201,96 +192,171 @@ class LiveFixturesService {
   }
 
   // Returns matches for today that have started (live)
-  getLiveMatchesFromCache() {
-    // First try to get matches from the optimized scheduler if available
-    if (this.matchScheduler) {
-      console.log('[LiveFixtures] Using optimized scheduler for live matches');
-      return this.getOptimizedLiveMatches();
+  async getLiveMatchesFromCache() {
+    console.log('[LiveFixtures] Getting live matches from cache');
+    
+    // Check if we need to update inplay matches
+    const now = Date.now();
+    if (now - this.lastInplayUpdate > this.updateInterval) {
+      console.log('[LiveFixtures] Updating inplay matches from API');
+      await this.updateInplayMatches();
+      this.lastInplayUpdate = now;
     }
+    
+    // Get inplay matches from cache
+    const inplayMatches = this.inplayMatchesCache.get('inplay_matches') || [];
+    console.log(`[LiveFixtures] Found ${inplayMatches.length} inplay matches`);
+    
+    // Group matches by league
+    const grouped = this.bindLeaguesToMatches(inplayMatches).map((group) => ({
+      league: group.league,
+      matches: group.matches.map((match) => {
+        // Get cached odds for this match
+        const cachedOdds = this.liveOddsCache.get(match.id);
+        const mainOdds = cachedOdds && cachedOdds.betting_data
+          ? this.extractMainOdds(cachedOdds.betting_data)
+          : {};
 
-    // Fallback to original method if scheduler not available
-    console.log('[LiveFixtures] Using fallback method for live matches');
-    return this.getOriginalLiveMatches();
+        return {
+          ...match,
+          odds: mainOdds,
+        };
+      }),
+    }));
+
+    console.log(`[LiveFixtures] Returning ${grouped.length} league groups with live matches`);
+    return grouped;
   }
 
-  // New optimized method using MatchScheduler
-  async getOptimizedLiveMatches() {
+  // Fetch inplay matches from SportMonks API
+  async updateInplayMatches() {
     try {
-      const liveMatches = [];
-      const cacheKeys = this.matchScheduler.liveMatchesCache.keys();
-      
-      for (const matchId of cacheKeys) {
-        const match = this.matchScheduler.liveMatchesCache.get(matchId);
-        if (match && match.isLive) {
-          // Get cached odds in unified format (no transformation needed)
-          let cachedOdds = this.liveOddsCache.get(match.id);
-          
-          if (!cachedOdds || !cachedOdds.betting_data) {
-            // Force refresh odds using scheduler's unified method
-            cachedOdds = await this.matchScheduler.fetchAndCacheMatchOdds(match.id);
-          }
-
-          liveMatches.push({
-            ...match,
-            // Ensure we have the timing info from scheduler
-            timing: match.timing || null,
-            // Add cache metadata for debugging
-            _cacheInfo: {
-              hasOdds: !!cachedOdds,
-              oddsSource: cachedOdds?.source || 'unknown',
-              cachedAt: cachedOdds?.cached_at || null
-            }
-          });
-        }
+      const apiToken = process.env.SPORTSMONKS_API_KEY;
+      if (!apiToken) {
+        console.error('[LiveFixtures] SPORTSMONKS_API_KEY is not set');
+        return;
       }
 
-      const grouped = this.bindLeaguesToMatches(liveMatches).map((group) => ({
-        league: group.league,
-        matches: group.matches.map((match) => {
-          // Get cached odds for this match (already in unified format)
-          const cachedOdds = this.liveOddsCache.get(match.id);
-          console.log(
-            `[getLiveMatchesFromCache] Match ${match.id} unified cache:`,
-            {
-              hasCache: !!cachedOdds,
-              hasBettingData: !!(cachedOdds && cachedOdds.betting_data),
-              bettingDataLength:
-                cachedOdds && cachedOdds.betting_data
-                  ? cachedOdds.betting_data.length
-                  : 0,
-              hasTimingInfo: !!match.timing,
-              cacheSource: cachedOdds?.source || 'unknown'
-            }
-          );
-
-          const mainOdds =
-            cachedOdds && cachedOdds.betting_data
-              ? this.extractMainOdds(cachedOdds.betting_data)
-              : {};
-
-          console.log(
-            `[getLiveMatchesFromCache] Match ${match.id} main odds:`,
-            mainOdds
-          );
-
-          return {
-            ...match,
-            odds: mainOdds, // Include the main 1X2 odds
-            // Remove debug info from response
-            _cacheInfo: undefined
+      const url = `https://api.sportmonks.com/v3/football/livescores/inplay?api_token=${apiToken}&include=periods;state`;
+      console.log('[LiveFixtures] Fetching inplay matches from API');
+      
+      const response = await axios.get(url);
+      const inplayData = response.data?.data || [];
+      
+      console.log(`[LiveFixtures] API returned ${inplayData.length} inplay matches`);
+      
+      // Process inplay matches
+      const processedMatches = [];
+      for (const match of inplayData) {
+        // Check if match is ticking (has active timer)
+        const isTicking = match.periods?.some(period => period.ticking) || false;
+        const hasStarted = match.state_id && [22, 23, 24].includes(match.state_id); // INPLAY states
+        
+        if (isTicking && hasStarted) {
+          // Get additional match details from fixture cache
+          const fixtureDetails = await this.getMatchDataFromCache(match.id);
+          
+          // Create timing object for frontend using ONLY SportMonks periods data
+          const currentPeriod = match.periods?.find(p => p.ticking);
+          const now = Date.now();
+          
+          // Use ONLY SportMonks periods data for timing
+          const sportMonksMinutes = currentPeriod?.minutes || 0;
+          const sportMonksSeconds = currentPeriod?.seconds || 0;
+          
+          console.log(`[LiveFixtures] Match ${match.id} timing from SportMonks: ${sportMonksMinutes}:${sportMonksSeconds.toString().padStart(2, '0')} (${currentPeriod?.description})`);
+          
+          const timing = {
+            matchStarted: match.starting_at_timestamp, // Keep for reference only
+            currentMinute: sportMonksMinutes,
+            currentSecond: sportMonksSeconds,
+            period: currentPeriod?.description || 'Unknown',
+            periodType: currentPeriod?.type_id || 0,
+            isTicking: currentPeriod?.ticking || false,
+            cacheTime: now,
+            timeSource: 'sportmonks_only'
           };
-        }),
-      }));
 
-      console.log(
-        `[LiveFixtures] Returning ${grouped.length} league groups with optimized live matches (unified cache)`
-      );
-      return grouped;
-
+          const processedMatch = {
+            ...match,
+            ...fixtureDetails,
+            isLive: true,
+            isTicking,
+            currentPeriod: currentPeriod,
+            matchState: match.state,
+            timing: timing
+          };
+          
+          processedMatches.push(processedMatch);
+          
+          // Update delayed matches cache - remove if now inplay
+          this.delayedMatchesCache.del(match.id);
+        }
+      }
+      
+      // Check for delayed matches (should have started but not in inplay)
+      await this.checkDelayedMatches();
+      
+      // Cache the processed matches
+      this.inplayMatchesCache.set('inplay_matches', processedMatches);
+      
+      console.log(`[LiveFixtures] Cached ${processedMatches.length} inplay matches`);
+      
     } catch (error) {
-      console.error('[LiveFixtures] Error in optimized live matches:', error);
-      // Fallback to original method
-      return this.getOriginalLiveMatches();
+      console.error('[LiveFixtures] Error fetching inplay matches:', error);
+    }
+  }
+
+  // Check for delayed matches that should have started
+  async checkDelayedMatches() {
+    try {
+      const now = new Date();
+      const cacheKeys = this.fixtureCache.keys();
+      
+      for (const key of cacheKeys) {
+        if (key.startsWith("fixtures_")) {
+          const cachedData = this.fixtureCache.get(key);
+          let fixtures = [];
+          
+          if (Array.isArray(cachedData)) {
+            fixtures = cachedData;
+          } else if (cachedData && Array.isArray(cachedData.data)) {
+            fixtures = cachedData.data;
+          } else if (cachedData instanceof Map) {
+            fixtures = Array.from(cachedData.values());
+          } else {
+            continue;
+          }
+
+          for (const match of fixtures) {
+            if (!match.starting_at) continue;
+            
+            const matchTime = this.parseMatchStartTime(match.starting_at);
+            if (!matchTime) continue;
+            
+            // Check if match should have started (within last 30 minutes)
+            const shouldHaveStarted = matchTime <= now && 
+              (now.getTime() - matchTime.getTime()) <= 30 * 60 * 1000; // 30 minutes
+            
+            if (shouldHaveStarted) {
+              // Check if not already in inplay cache
+              const inplayMatches = this.inplayMatchesCache.get('inplay_matches') || [];
+              const isInInplay = inplayMatches.some(m => m.id === match.id);
+              
+              if (!isInInplay) {
+                // Add to delayed matches cache
+                this.delayedMatchesCache.set(match.id, {
+                  ...match,
+                  shouldHaveStartedAt: matchTime,
+                  delayMinutes: Math.floor((now.getTime() - matchTime.getTime()) / (60 * 1000))
+                });
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[LiveFixtures] Error checking delayed matches:', error);
     }
   }
 
@@ -398,73 +464,101 @@ class LiveFixturesService {
 
   // Fetch and update odds for all live matches
   async updateAllLiveOdds() {
-    console.log('[LiveFixtures] Starting unified odds update process');
+    console.log('[LiveFixtures] Starting live odds update process');
     
-    let totalLiveMatches = 0;
+    // Get inplay matches from cache
+    const inplayMatches = this.inplayMatchesCache.get('inplay_matches') || [];
     
-    // Count live matches from scheduler
-    if (this.matchScheduler) {
-      const schedulerMatchIds = this.matchScheduler.liveMatchesCache.keys();
-      totalLiveMatches = schedulerMatchIds.length;
-      
-      // Early return if no live matches to avoid unnecessary API calls
-      if (totalLiveMatches === 0) {
-        console.log('[LiveFixtures] No live matches found in scheduler - skipping odds update to save API calls');
-        return;
-      }
-      
-      console.log(`[LiveFixtures] Found ${totalLiveMatches} live matches in scheduler - proceeding with odds update`);
-      
-      // Use the optimized scheduler for odds updating
-      await this.updateSchedulerOdds();
-      console.log('[LiveFixtures] Unified odds update completed');
+    if (inplayMatches.length === 0) {
+      console.log('[LiveFixtures] No inplay matches found - skipping odds update to save API calls');
       return;
     }
     
-    // Fallback to original method only if scheduler is not available
-    console.log('[LiveFixtures] No scheduler available - using fallback method');
-    const fallbackMatches = this.getOriginalLiveMatches();
-    const fallbackMatchCount = fallbackMatches.reduce((count, group) => count + group.matches.length, 0);
+    console.log(`[LiveFixtures] Found ${inplayMatches.length} inplay matches - proceeding with odds update`);
     
-    if (fallbackMatchCount === 0) {
-      console.log('[LiveFixtures] No live matches found in fallback - skipping odds update to save API calls');
-      return;
-    }
-    
-    console.log(`[LiveFixtures] Found ${fallbackMatchCount} live matches in fallback - proceeding with odds update`);
-    await this.updateFallbackMatchesOdds(fallbackMatches);
-    console.log('[LiveFixtures] Fallback odds update completed');
+    // Update odds for all inplay matches
+    await this.updateInplayMatchesOdds(inplayMatches);
+    console.log('[LiveFixtures] Live odds update completed');
   }
 
-  // Update odds for matches in the scheduler using unified format
-  async updateSchedulerOdds() {
-    if (!this.matchScheduler) return;
-
-    const liveMatchIds = this.matchScheduler.liveMatchesCache.keys();
-    
-    // Early return if no matches to avoid unnecessary processing
-    if (liveMatchIds.length === 0) {
-      console.log('[LiveFixtures] No scheduler matches found - skipping scheduler odds update');
+  // Update odds for inplay matches
+  async updateInplayMatchesOdds(inplayMatches) {
+    if (!inplayMatches || inplayMatches.length === 0) {
+      console.log('[LiveFixtures] No inplay matches found - skipping odds update');
       return;
     }
     
-    console.log(`[LiveFixtures] Updating unified odds for ${liveMatchIds.length} scheduler matches`);
+    console.log(`[LiveFixtures] Updating odds for ${inplayMatches.length} inplay matches`);
+
+    const apiToken = process.env.SPORTSMONKS_API_KEY;
+    if (!apiToken) {
+      console.error("❌ SPORTSMONKS_API_KEY is not set");
+      return;
+    }
+
+    // Define the same allowed market IDs as in fixture.service.js
+    const allowedMarketIds = [
+      1, 2, 267, 268, 29, 90, 93, 95, 124, 125, 10, 14, 18, 19, 44, 4, 5, 81,
+      37, 11, 97, 13, 86, 80, 60, 67, 68, 69,
+    ];
 
     let successfulUpdates = 0;
-    for (const matchId of liveMatchIds) {
+    for (const match of inplayMatches) {
       try {
-        // Force refresh odds using the unified method
-        const updatedOdds = await this.matchScheduler.fetchAndCacheMatchOdds(matchId);
-        if (updatedOdds && updatedOdds.betting_data) {
-          successfulUpdates++;
-          console.log(`[LiveFixtures] Updated unified odds for match ${matchId} - ${updatedOdds.betting_data.length} sections`);
+        // Only update odds for matches that are ticking
+        if (!match.isTicking) {
+          console.log(`[LiveFixtures] Skipping match ${match.id} - not ticking`);
+          continue;
         }
+
+        // Use the fixture endpoint with inplayOdds included
+        const url = `https://api.sportmonks.com/v3/football/fixtures/${match.id}?api_token=${apiToken}&include=inplayOdds&filters=bookmakers:2`;
+
+        const response = await axios.get(url);
+        const allOdds = response.data?.data?.inplayodds || [];
+        
+        // Filter odds by allowed market IDs
+        let filteredOdds = allOdds.filter((odd) =>
+          allowedMarketIds.includes(odd.market_id)
+        );
+
+        // Group odds by market for classification
+        const odds_by_market = {};
+        for (const odd of filteredOdds) {
+          if (!odd.market_id) continue;
+          if (!odds_by_market[odd.market_id]) {
+            odds_by_market[odd.market_id] = {
+              market_id: odd.market_id,
+              market_description: odd.market_description,
+              odds: [],
+            };
+          }
+          odds_by_market[odd.market_id].odds.push(odd);
+          odds_by_market[odd.market_id].market_description = odd.market_description;
+        }
+        
+        const classified = classifyOdds({ odds_by_market });
+        const betting_data = transformToBettingData(classified, match);
+
+        // Store in unified format
+        const result = {
+          betting_data: betting_data,
+          odds_classification: classified,
+          cached_at: Date.now(),
+          source: 'inplay_update'
+        };
+
+        // Cache the result in unified format
+        this.liveOddsCache.set(match.id, result);
+        successfulUpdates++;
+
+        console.log(`[LiveFixtures] Updated odds for match ${match.id} - ${betting_data.length} sections`);
       } catch (error) {
-        console.error(`[LiveFixtures] Error updating unified odds for match ${matchId}:`, error);
+        console.error(`[LiveFixtures] Error updating odds for match ${match.id}:`, error);
       }
     }
 
-    console.log(`[LiveFixtures] Successfully updated ${successfulUpdates}/${liveMatchIds.length} scheduler matches with unified format`);
+    console.log(`[LiveFixtures] Successfully updated ${successfulUpdates}/${inplayMatches.length} inplay matches`);
   }
 
   // Update odds for fallback matches (when scheduler is not available or as backup)
@@ -613,17 +707,8 @@ class LiveFixturesService {
       return odds;
     }
 
-    // If not in cache or stale, fetch using scheduler if available
-    if (this.matchScheduler) {
-      console.log(`[ensureLiveOdds] Fetching fresh odds via scheduler for match ${matchId}`);
-      const freshOdds = await this.matchScheduler.fetchAndCacheMatchOdds(matchId);
-      if (freshOdds && freshOdds.betting_data) {
-        return freshOdds;
-      }
-    }
-
-    // Fallback to direct API call with unified format
-    console.log(`[ensureLiveOdds] Fetching fresh odds via fallback API for match ${matchId}`);
+    // If not in cache or stale, fetch directly
+    console.log(`[ensureLiveOdds] Fetching fresh odds for match ${matchId}`);
     return await this.fetchOddsDirectly(matchId);
   }
 
@@ -706,13 +791,7 @@ class LiveFixturesService {
 
   // Helper to get match data from cache
   async getMatchDataFromCache(matchId) {
-    // First try scheduler cache
-    if (this.matchScheduler) {
-      const matchData = await this.matchScheduler.getMatchDetailsFromCache(matchId);
-      if (matchData) return matchData;
-    }
-
-    // Fallback to fixture cache
+    // Search in fixture cache
     const cacheKeys = this.fixtureCache.keys();
     for (const key of cacheKeys) {
       if (key.startsWith("fixtures_")) {

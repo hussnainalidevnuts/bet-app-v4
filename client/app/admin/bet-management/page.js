@@ -298,7 +298,7 @@ export default function BetManagement() {
                       <TableCell>
                         <span className="text-gray-600">${bet.stake.toFixed(2)}</span>
                       </TableCell>
-                      <TableCell>{leg.odds}</TableCell>
+                      <TableCell>{parseFloat(leg.odds).toFixed(2)}</TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"
@@ -1255,7 +1255,7 @@ export default function BetManagement() {
                             </TableCell>
                             <TableCell>{bet.user}</TableCell>
                             <TableCell>{formatAmount(bet.stake)}</TableCell>
-                            <TableCell>{bet.odds}</TableCell>
+                            <TableCell>{parseFloat(bet.odds).toFixed(2)}</TableCell>
                             <TableCell>
                               <div>
                                 <div>{date}</div>

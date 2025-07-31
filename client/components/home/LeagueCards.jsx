@@ -36,15 +36,27 @@ const LeagueCard = ({ league, isInPlay = false, viewAllText = null }) => {
         // Find live matches
         const liveMatches = league.matches.filter(m => m.isLive);
         if (liveMatches.length === 0) return;
-        // Poll every 1 second
+        
+        // Poll every 0.5 seconds for real-time odds updates
         const interval = setInterval(() => {
             liveMatches.forEach(match => {
-                // TODO: Replace with real API call to fetch odds for match.id
-                // Example: fetchLiveOdds(match.id).then(newOdds => ...)
-                // For now, just log or stub
-                // fetchLiveOdds(match.id).then(newOdds => setLiveOdds(prev => ({ ...prev, [match.id]: newOdds })))
+                // Fetch live odds for each live match
+                fetch(`/api/fixtures/${match.id}/inplay-odds`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.data && data.data.betting_data) {
+                            setLiveOdds(prev => ({ 
+                                ...prev, 
+                                [match.id]: data.data.betting_data 
+                            }));
+                        }
+                    })
+                    .catch(error => {
+                        console.error(`Error fetching odds for match ${match.id}:`, error);
+                    });
             });
-        }, 3000);
+        }, 500); // 0.5 seconds for real-time updates
+        
         return () => clearInterval(interval);
     }, [league.matches, isInPlay]);
 

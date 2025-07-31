@@ -21,7 +21,6 @@ import agenda from "./config/agenda.js";
 import BetService from "./services/bet.service.js";
 import fixtureOptimizationService from "./services/fixture.service.js";
 import LiveFixturesService from "./services/LiveFixtures.service.js";
-import MatchSchedulerService from "./services/MatchScheduler.service.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -60,6 +59,30 @@ morgan.token("device", (req) => {
 // Custom format: Device and Request Type
 app.use(morgan(":device made :method request to: :url"));
 
+// Initialize global services before routes
+console.log('[App] Initializing global services...');
+
+// Check if fixtureOptimizationService is properly imported
+if (!fixtureOptimizationService) {
+  console.error('[App] ERROR: fixtureOptimizationService import failed!');
+  process.exit(1);
+}
+
+console.log('[App] fixtureOptimizationService:', typeof fixtureOptimizationService);
+console.log('[App] fixtureOptimizationService.fixtureCache:', typeof fixtureOptimizationService.fixtureCache);
+
+// Set global services
+global.fixtureOptimizationService = fixtureOptimizationService;
+
+// Create LiveFixtures service
+const liveFixturesService = new LiveFixturesService(fixtureOptimizationService.fixtureCache);
+global.liveFixturesService = liveFixturesService;
+
+console.log('[App] Global services initialized successfully');
+console.log('[App] liveFixturesService:', typeof liveFixturesService);
+console.log('[App] global.fixtureOptimizationService:', typeof global.fixtureOptimizationService);
+console.log('[App] global.liveFixturesService:', typeof global.liveFixturesService);
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
@@ -79,14 +102,6 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
 });
-
-global.fixtureOptimizationService = fixtureOptimizationService;
-
-// Create services with shared cache for consistency
-const matchSchedulerService = new MatchSchedulerService(fixtureOptimizationService.fixtureCache);
-const liveFixturesService = new LiveFixturesService(fixtureOptimizationService.fixtureCache, matchSchedulerService.liveOddsCache);
-// Connect the services to share cache and avoid inconsistency
-liveFixturesService.setMatchScheduler(matchSchedulerService);
 
 //INFO: checking the bet outcome of a bet at a scheduled time
 agenda.define("checkBetOutcome", async (job) => {
@@ -113,60 +128,37 @@ agenda.define("updateLiveOdds", async (job) => {
   }
 });
 
-// Define the new match scheduler jobs
-agenda.define("checkMatchStart", async (job) => {
-  const { matchIds, expectedStartTime, checkCount } = job.attrs.data;
+// Define inplay matches update job (every 5 minutes)
+agenda.define("updateInplayMatches", async (job) => {
   try {
-    await matchSchedulerService.checkMatchesStarted(matchIds, expectedStartTime, checkCount);
-    console.log(`[Agenda] Checked ${matchIds.length} matches for start status at ${new Date().toISOString()}`);
+    await liveFixturesService.updateInplayMatches();
+    console.log(`[Agenda] Inplay matches updated at ${new Date().toISOString()}`);
   } catch (error) {
-    console.error("[Agenda] Error checking match start:", error);
+    console.error("[Agenda] Error updating inplay matches:", error);
   }
 });
 
-agenda.define("checkDelayedMatches", async (job) => {
-  try {
-    await matchSchedulerService.checkDelayedMatches();
-    console.log(`[Agenda] Checked delayed matches at ${new Date().toISOString()}`);
-  } catch (error) {
-    console.error("[Agenda] Error checking delayed matches:", error);
-  }
-});
-
-// Daily cleanup job
-agenda.define("cleanupScheduler", async (job) => {
-  try {
-    await matchSchedulerService.cleanup();
-    console.log(`[Agenda] Scheduler cleanup completed at ${new Date().toISOString()}`);
-  } catch (error) {
-    console.error("[Agenda] Error during scheduler cleanup:", error);
-  }
-});
-
-// Initialize scheduler and schedule jobs after Agenda is ready
-async function initializeScheduler() {
+// Initialize agenda jobs
+async function initializeAgenda() {
   try {
     await agenda.start();
     console.log('[App] Agenda started successfully');
     
-    // Now safely initialize the match scheduler
-    await matchSchedulerService.initializeScheduler();
-    
     // Schedule recurring jobs
-    await agenda.every("3 minutes", "updateLiveOdds");
-    await agenda.every("24 hours", "cleanupScheduler"); // Daily cleanup
+    await agenda.every("5 minutes", "updateLiveOdds"); // Update odds every 2 seconds
+    await agenda.every("5 minutes", "updateInplayMatches"); // Update inplay matches every 5 minutes
     
-    console.log('[App] All scheduler jobs initialized successfully');
+    console.log('[App] All agenda jobs initialized successfully');
   } catch (error) {
-    console.error('[App] Error initializing scheduler:', error);
+    console.error('[App] Error initializing agenda:', error);
   }
 }
 
 // Schedule the jobs when agenda is ready
 agenda.on("ready", () => {
   console.log("[Agenda] Ready and connected to MongoDB");
-  // Initialize scheduler after agenda is ready
-  initializeScheduler();
+  // Initialize agenda after agenda is ready
+  initializeAgenda();
 });
 
 agenda.on("error", (err) => {

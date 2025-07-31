@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import TopPicks from './TopPicks';
 import LeagueCards from './LeagueCards';
 import { fetchHomepageData, selectHomeLoading, selectHomeError, selectFootballDaily } from '@/lib/features/home/homeSlice';
-import { fetchLiveMatches, selectLiveMatches, selectLiveMatchesLoading, selectLiveMatchesError } from '@/lib/features/matches/liveMatchesSlice';
+import { fetchLiveMatches, silentUpdateLiveMatches, selectLiveMatches, selectLiveMatchesLoading, selectLiveMatchesError } from '@/lib/features/matches/liveMatchesSlice';
 
 const HomePage = () => {
     const dispatch = useDispatch();
@@ -27,6 +27,15 @@ const HomePage = () => {
         dispatch(fetchHomepageData());
         // Fetch live matches separately
         dispatch(fetchLiveMatches());
+    }, [dispatch]);
+
+    // Poll for live matches updates every 0.5 seconds
+    useEffect(() => {
+        const interval = setInterval(() => {
+            dispatch(silentUpdateLiveMatches());
+        }, 500); // 0.5 seconds for real-time updates
+        
+        return () => clearInterval(interval);
     }, [dispatch]);
 
     // Remove the old loading state since individual components handle their own loading

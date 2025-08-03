@@ -6,15 +6,9 @@ import { useCustomSidebar } from "@/contexts/SidebarContext.js"
 import { useSelector, useDispatch } from "react-redux"
 import { 
     fetchMatchById, 
-    fetchLiveOdds,
-    silentUpdateLiveOdds,
-    clearError,
-    selectLiveOdds,
-    selectLiveOddsLoading,
-    selectLiveOddsError,
-    selectLiveOddsTimestamp,
-    selectLiveOddsClassification
+    clearError
 } from "@/lib/features/matches/matchesSlice"
+import { selectMatchOdds, selectMatchOddsClassification } from "@/lib/features/websocket/websocketSlice"
 import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react"
@@ -45,11 +39,8 @@ const MatchDetailPage = ({ matchId }) => {
         error: state.matches.matchDetailError,
     }));
 
-    const liveOdds = useSelector((state) => selectLiveOdds(state, matchId));
-    const liveOddsClassification = useSelector((state) => selectLiveOddsClassification(state, matchId));
-    const liveOddsLoading = useSelector(selectLiveOddsLoading);
-    const liveOddsError = useSelector(selectLiveOddsError);
-    const lastOddsUpdate = useSelector(state => selectLiveOddsTimestamp(state, matchId));
+    const liveOdds = useSelector((state) => selectMatchOdds(state, matchId));
+    const liveOddsClassification = useSelector((state) => selectMatchOddsClassification(state, matchId));
 
     useEffect(() => {
         if (matchId && !matchData) {
@@ -57,20 +48,22 @@ const MatchDetailPage = ({ matchId }) => {
         }
     }, [matchId, matchData, dispatch]);
 
-    // Poll for live odds if match is live
+    // Join match room for WebSocket updates when match is live
     useEffect(() => {
         if (!matchId || !matchData || !isMatchLive(matchData)) return;
 
-        // Initial fetch (with loading state)
-        dispatch(fetchLiveOdds(matchId));
+        // Import websocketService dynamically to avoid SSR issues
+        import('@/lib/services/websocketService').then(({ default: websocketService }) => {
+            websocketService.joinMatch(matchId);
+        });
 
-        // Set up polling every 0.5 seconds for real-time odds updates
-        const interval = setInterval(() => {
-            dispatch(silentUpdateLiveOdds(matchId));
-        }, 500); // 0.5 seconds for real-time updates
-
-        return () => clearInterval(interval);
-    }, [matchId, matchData, dispatch]);
+        return () => {
+            // Leave match room when component unmounts
+            import('@/lib/services/websocketService').then(({ default: websocketService }) => {
+                websocketService.leaveMatch(matchId);
+            });
+        };
+    }, [matchId, matchData]);
 
     const handleRetry = () => {
         dispatch(clearError());
@@ -78,9 +71,8 @@ const MatchDetailPage = ({ matchId }) => {
     };
 
     const handleRefreshOdds = () => {
-        if (isMatchLive(matchData)) {
-            dispatch(fetchLiveOdds(matchId));
-        }
+        // WebSocket updates are automatic, no need to manually refresh
+        console.log('Live odds are updated automatically via WebSocket');
     };
 
     if (loading) {
@@ -147,51 +139,6 @@ const MatchDetailPage = ({ matchId }) => {
 
     const isLive = isMatchLive(matchData);
     const hasLiveOdds = liveOdds && liveOdds.length > 0;
-    
-    // For live matches, show loading state while fetching odds
-    if (isLive && liveOddsLoading) {
-        return (
-            <div className="bg-slate-100 min-h-screen relative">
-                <div className="lg:mr-80 xl:mr-96">
-                    <div className="lg:p-2 xl:p-4">
-                        <Card className="w-full">
-                            <CardContent className="flex items-center justify-center py-12">
-                                <div className="text-center">
-                                    <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-base" />
-                                    <p className="text-gray-600">Loading live odds...</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    // For live matches, show error state if live odds fetch failed
-    if (isLive && liveOddsError) {
-        return (
-            <div className="bg-slate-100 min-h-screen relative">
-                <div className="lg:mr-80 xl:mr-96">
-                    <div className="lg:p-2 xl:p-4">
-                        <Card className="w-full border-red-200">
-                            <CardContent className="flex items-center justify-center py-12">
-                                <div className="text-center">
-                                    <AlertCircle className="h-8 w-8 mx-auto mb-4 text-red-600" />
-                                    <p className="text-red-600 font-medium mb-2">Failed to load live odds</p>
-                                    <p className="text-gray-600 mb-4">{liveOddsError}</p>
-                                    <Button onClick={handleRefreshOdds} variant="outline" size="sm">
-                                        <RefreshCw className="h-4 w-4 mr-2" />
-                                        Try Again
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-            </div>
-        );
-    }
     
     // Determine which odds to show:
     // For live matches: ONLY show live odds

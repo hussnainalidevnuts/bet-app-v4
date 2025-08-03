@@ -260,13 +260,13 @@ export const getLiveMatchesFromCache = async (req, res) => {
   console.log("🎯 getLiveMatchesFromCache controller called");
   
   // First, update live odds to ensure we have fresh data
-  try {
-    console.log("🔄 Starting live odds update...");
-    await liveFixturesService.updateAllLiveOdds();
-    console.log("✅ Live odds update completed");
-  } catch (error) {
-    console.error("❌ Error updating live odds:", error);
-  }
+  // try {
+  //   console.log("🔄 Starting live odds update...");
+  //   await liveFixturesService.updateAllLiveOdds();
+  //   console.log("✅ Live odds update completed");
+  // } catch (error) {
+  //   console.error("❌ Error updating live odds:", error);
+  // }
   
   console.log("📊 Getting live matches from cache...");
   const liveMatches = await liveFixturesService.getLiveMatchesFromCache();
@@ -289,6 +289,9 @@ export const getLiveMatchesFromCache = async (req, res) => {
   const filteredLiveMatches = liveMatches.filter(group => group.matches.length > 0);
   res.json(filteredLiveMatches);
 };
+
+
+
 
 // Update league popularity status (single or multiple)
 export const updateLeaguePopularity = asyncHandler(async (req, res) => {
@@ -336,19 +339,67 @@ export const getAllLiveOddsMap = asyncHandler(async (req, res) => {
 
 export const getInplayOdds = async (req, res, next) => {
   try {
+    console.log(`[getInplayOdds] Request for match ID: ${req.params.id}`);
+    
     const { liveFixturesService } = getServices();
     
     const { id } = req.params;
-    const liveOddsResult = await liveFixturesService.ensureLiveOdds(id);
+    console.log(`[getInplayOdds] Fetching live odds for match: ${id}`);
     
-    // Return both betting_data and odds_classification
+    // Check if the match is actually live before fetching odds
+    const isLive = liveFixturesService.isMatchLive(id);
+    console.log(`[getInplayOdds] Match ${id} is live: ${isLive}`);
+    
+    if (!isLive) {
+      return res.status(404).json({
+        success: false,
+        message: "Match is not live",
+        error: "MATCH_NOT_LIVE"
+      });
+    }
+    
+    // Add timeout to prevent hanging requests
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout')), 15000); // 15 second timeout
+    });
+    
+    // Always fetch fresh odds for live matches (no caching at controller level)
+    const liveOddsResult = await Promise.race([
+      liveFixturesService.ensureLiveOdds(id),
+      timeoutPromise
+    ]);
+    
+    console.log(`[getInplayOdds] Successfully fetched odds for match ${id}:`, {
+      hasBettingData: !!(liveOddsResult && liveOddsResult.betting_data),
+      bettingDataLength: liveOddsResult?.betting_data?.length || 0,
+      source: liveOddsResult?.source || 'unknown',
+      timestamp: new Date().toISOString()
+    });
+    
+    // Return both betting_data and odds_classification with timestamp
     res.json({ 
       data: {
-        betting_data: liveOddsResult.betting_data,
-        odds_classification: liveOddsResult.odds_classification
+        betting_data: liveOddsResult.betting_data || [],
+        odds_classification: liveOddsResult.odds_classification || {
+          categories: [{ id: "all", label: "All", odds_count: 0 }],
+          classified_odds: {},
+          stats: { total_categories: 0, total_odds: 0 },
+        },
+        fetched_at: new Date().toISOString()
       }
     });
   } catch (error) {
+    console.error(`[getInplayOdds] Error for match ${req.params.id}:`, error);
+    
+    // Handle timeout errors specifically
+    if (error.message === 'Request timeout') {
+      return res.status(408).json({
+        success: false,
+        message: "Request timeout - odds fetch took too long",
+        error: "REQUEST_TIMEOUT"
+      });
+    }
+    
     next(error);
   }
 };

@@ -55,6 +55,22 @@ const LiveTimer = ({ startingAt, timing }) => {
                         return;
                     }
                     
+                    // If not ticking, just show the cached time without updating
+                    if (currentMinute !== undefined && currentSecond !== undefined && !isTicking) {
+                        console.log(`[LiveTimer] Not ticking - showing cached time: ${currentMinute}:${currentSecond.toString().padStart(2, '0')} (${period})`);
+                        
+                        // Check for end states
+                        if (currentMinute >= 90 && period !== '2nd-half') {
+                            setElapsedTime('FT');
+                            return;
+                        }
+                        
+                        // Format as M:SS for display
+                        const formattedTime = `${currentMinute}:${currentSecond.toString().padStart(2, '0')}`;
+                        setElapsedTime(formattedTime);
+                        return;
+                    }
+                    
                     // If not ticking or no precise timing, calculate from matchStarted timestamp
                     if (matchStarted) {
                         const startTimeMs = matchStarted * 1000; // Convert Unix timestamp to milliseconds
@@ -98,16 +114,26 @@ const LiveTimer = ({ startingAt, timing }) => {
                 }
             };
 
+            // Extract isTicking from timing object
+            const { isTicking } = timing;
+
             // Calculate immediately
             calculateElapsedTimeFromTiming();
 
-            // Always update every second for live matches to ensure smooth ticking
-            const interval = setInterval(calculateElapsedTimeFromTiming, 1000);
-
-            return () => {
-                console.log('[LiveTimer] Cleaning up timing-based interval');
-                clearInterval(interval);
-            };
+            // Only update every second if the match is ticking (not halftime)
+            if (isTicking) {
+                const interval = setInterval(calculateElapsedTimeFromTiming, 1000);
+                return () => {
+                    console.log('[LiveTimer] Cleaning up timing-based interval (ticking)');
+                    clearInterval(interval);
+                };
+            } else {
+                // If not ticking (halftime), just calculate once and don't update
+                console.log('[LiveTimer] Match not ticking - timer stopped');
+                return () => {
+                    console.log('[LiveTimer] No interval to clean up (not ticking)');
+                };
+            }
         }
 
         // Legacy fallback: calculate from startingAt if no timing structure available
@@ -184,8 +210,11 @@ const LiveTimer = ({ startingAt, timing }) => {
 
     return (
         <span className="text-xs text-gray-600 font-medium flex items-center gap-1">
-            {timing && timing.matchStarted && (
-                <span className="w-1.5 h-1.5 bg-green-500 rounded-full" title="Live timing from server"></span>
+            {timing && timing.matchStarted && timing.isTicking && (
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" title="Live timing from server"></span>
+            )}
+            {timing && timing.matchStarted && !timing.isTicking && (
+                <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full" title="Timer stopped (halftime)"></span>
             )}
             {elapsedTime}
         </span>

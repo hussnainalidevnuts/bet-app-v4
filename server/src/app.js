@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
+import { createServer } from "http";
 import connectDB from "./config/database.js";
 import {
   notFound,
@@ -17,12 +18,13 @@ import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import financeRoutes from "./routes/finance.routes.js";
 import betRoutes from "./routes/bet.routes.js";
-import agenda from "./config/agenda.js";
-import BetService from "./services/bet.service.js";
 import fixtureOptimizationService from "./services/fixture.service.js";
 import LiveFixturesService from "./services/LiveFixtures.service.js";
+import { initializeSocket } from "./config/socket.js";
+import { setupAgendaListeners } from "./config/agendaJobs.js";
 
 const app = express();
+const server = createServer(app);
 const PORT = process.env.PORT || 4000;
 
 // Connect to MongoDB
@@ -59,8 +61,7 @@ morgan.token("device", (req) => {
 // Custom format: Device and Request Type
 app.use(morgan(":device made :method request to: :url"));
 
-// Initialize global services before routes
-console.log('[App] Initializing global services...');
+
 
 // Check if fixtureOptimizationService is properly imported
 if (!fixtureOptimizationService) {
@@ -87,6 +88,17 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    services: {
+      fixtureOptimizationService: !!global.fixtureOptimizationService,
+      liveFixturesService: !!global.liveFixturesService
+    }
+  });
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/sportsmonk", sportsMonkRouter);
@@ -99,77 +111,24 @@ app.use(notFound);
 // Global error handler - must be last middleware
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}`);
+// Initialize Socket.IO
+const io = initializeSocket(server);
+
+// Set Socket.IO instance in LiveFixtures service
+liveFixturesService.setSocketIO(io);
+
+// Make io available to services
+app.set('io', io);
+
+// Set up Agenda listeners
+setupAgendaListeners();
+
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🌐 API URL: http://localhost:${PORT}/api`);
+  console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+  console.log(`🔌 WebSocket server ready on port ${PORT}`);
 });
 
-//INFO: checking the bet outcome of a bet at a scheduled time
-agenda.define("checkBetOutcome", async (job) => {
-  const { betId, matchId } = job.attrs.data;
-  try {
-    await BetService.checkBetOutcome(betId);
-    console.log(
-      `Bet ${betId} outcome checked by Agenda at ${new Date().toISOString()}`
-    );
-  } catch (error) {
-    console.error(`Error checking bet ${betId} outcome via Agenda:`, error);
-  }
-});
-
-// Define the Agenda job for updating live odds
-// Scheduled job to update live match odds every 3 minutes
-agenda.define("updateLiveOdds", async (job) => {
-  try {
-    await liveFixturesService.updateAllLiveOdds();
-    // Log successful completion of live odds update job
-    console.log(`[Agenda] Live odds updated at ${new Date().toISOString()}`);
-  } catch (error) {
-    console.error("[Agenda] Error updating live odds:", error);
-  }
-});
-
-// Define inplay matches update job (every 5 minutes)
-agenda.define("updateInplayMatches", async (job) => {
-  try {
-    await liveFixturesService.updateInplayMatches();
-    console.log(`[Agenda] Inplay matches updated at ${new Date().toISOString()}`);
-  } catch (error) {
-    console.error("[Agenda] Error updating inplay matches:", error);
-  }
-});
-
-// Initialize agenda jobs
-async function initializeAgenda() {
-  try {
-    await agenda.start();
-    console.log('[App] Agenda started successfully');
-    
-    // Schedule recurring jobs
-    await agenda.every("5 minutes", "updateLiveOdds"); // Update odds every 2 seconds
-    await agenda.every("5 minutes", "updateInplayMatches"); // Update inplay matches every 5 minutes
-    
-    console.log('[App] All agenda jobs initialized successfully');
-  } catch (error) {
-    console.error('[App] Error initializing agenda:', error);
-  }
-}
-
-// Schedule the jobs when agenda is ready
-agenda.on("ready", () => {
-  console.log("[Agenda] Ready and connected to MongoDB");
-  // Initialize agenda after agenda is ready
-  initializeAgenda();
-});
-
-agenda.on("error", (err) => {
-  console.error("[Agenda] Error:", err);
-});
-
-// Log when agenda jobs start executing
-agenda.on("start", (job) => {
-  console.log(`[Agenda] Job ${job.attrs.name} starting. Data:`, job.attrs.data);
-});
-
-agenda.on("fail", (err, job) => {
-  console.error(`[Agenda] Job ${job.attrs.name} failed:`, err);
-});
+// Export server instead of app for Socket.IO
+export { server as default };

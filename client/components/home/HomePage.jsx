@@ -5,7 +5,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import TopPicks from './TopPicks';
 import LeagueCards from './LeagueCards';
 import { fetchHomepageData, selectHomeLoading, selectHomeError, selectFootballDaily } from '@/lib/features/home/homeSlice';
-import { fetchLiveMatches, silentUpdateLiveMatches, selectLiveMatches, selectLiveMatchesLoading, selectLiveMatchesError } from '@/lib/features/matches/liveMatchesSlice';
+import { fetchLiveMatches, selectLiveMatches, selectLiveMatchesLoading, selectLiveMatchesError } from '@/lib/features/matches/liveMatchesSlice';
+import { selectLiveMatches as selectWebSocketLiveMatches } from '@/lib/features/websocket/websocketSlice';
 
 const HomePage = () => {
     const dispatch = useDispatch();
@@ -14,13 +15,14 @@ const HomePage = () => {
     const footballDaily = useSelector(selectFootballDaily);
     const filteredFootballDaily = footballDaily.filter(league => 
         league.matches.length > 0 && 
-        league.matches.some(match => match.odds_main && Object.keys(match.odds_main).length > 0)
+        league.matches.some(match => (match.odds_main && Object.keys(match.odds_main).length > 0) || (match.odds && (match.odds.home || match.odds.draw || match.odds.away)))
     );
-
+    
     // Live matches state
     const liveMatches = useSelector(selectLiveMatches);
     const liveLoading = useSelector(selectLiveMatchesLoading);
     const liveError = useSelector(selectLiveMatchesError);
+    const webSocketLiveMatches = useSelector(selectWebSocketLiveMatches);
 
     useEffect(() => {
         // Fetch homepage data when component mounts
@@ -29,14 +31,7 @@ const HomePage = () => {
         dispatch(fetchLiveMatches());
     }, [dispatch]);
 
-    // Poll for live matches updates every 0.5 seconds
-    useEffect(() => {
-        const interval = setInterval(() => {
-            dispatch(silentUpdateLiveMatches());
-        }, 500); // 0.5 seconds for real-time updates
-        
-        return () => clearInterval(interval);
-    }, [dispatch]);
+
 
     // Remove the old loading state since individual components handle their own loading
     // if (loading) {
@@ -90,7 +85,7 @@ const HomePage = () => {
                             showDayTabs={false}
                             viewAllText="View All Live Football"
                             useReduxData={true}
-                            reduxData={liveMatches}
+                            reduxData={webSocketLiveMatches.length > 0 ? webSocketLiveMatches : liveMatches}
                             loading={liveLoading}
                             error={liveError}
                         />

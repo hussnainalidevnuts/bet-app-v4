@@ -10,13 +10,133 @@ import leaguesData, { getLiveLeagues } from '@/data/dummayLeagues';
 import { formatToLocalTime, formatMatchTime } from '@/lib/utils';
 import LiveTimer from './LiveTimer';
 import LeagueCardsSkeleton from '../Skeletons/LeagueCardsSkeleton';
+import { useSelector } from 'react-redux';
+import { selectIsConnected } from '@/lib/features/websocket/websocketSlice';
+import { useLiveOdds } from '@/hooks/useLiveOdds';
+
+// Match Item Component
+const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButtonClass, isOddClickable }) => {
+    const liveOdds = useLiveOdds(match.id);
+    
+    return (
+        <div>
+            <div className='flex justify-between mt-2'>
+                <div className="text-xs text-gray-600">
+                    {isInPlay && match.isLive ? (
+                        <LiveTimer 
+                            startingAt={match.starting_at} 
+                            timing={match.timing} 
+                        />
+                    ) : (
+                        match.starting_at ? (
+                            <div>
+                                {formatMatchTime(match.starting_at).date} - {formatMatchTime(match.starting_at).time}
+                            </div>
+                        ) : (
+                            match.time
+                        )
+                    )}
+                </div>
+                <div className="text-xs text-gray-500">
+                    {isInPlay && match.isLive ? (
+                        <span className="flex items-center gap-1">
+                            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                            LIVE
+                        </span>
+                    ) : ''}
+                </div>
+            </div>
+            <Link href={`/matches/${match.id}`}>
+                <div className="cursor-pointer hover:bg-gray-50 -mx-4 px-4 py-1 rounded">
+                    <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                            <div className="text-[12px] mb-1 flex items-center gap-2" title={match.team1}>
+                                <span>
+                                    {match.team1.length > 6 ? `${match.team1.slice(0, 18)}...` : match.team1}
+                                </span>
+                            </div>
+                            <div className="text-[12px] flex items-center gap-2" title={match.team2}>
+                                <span>
+                                    {match.team2.length > 6 ? `${match.team2.slice(0, 18)}...` : match.team2}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="flex items-center flex-shrink-0">
+                            <div className="flex gap-1">
+                                {(() => {
+                                    // Use live odds if available, otherwise fall back to match odds
+                                    const displayOdds = (isInPlay && match.isLive && liveOdds && (liveOdds.home || liveOdds.draw || liveOdds.away)) 
+                                        ? liveOdds
+                                        : match.odds;
+                                    
+                                    const isUsingLiveOdds = isInPlay && match.isLive && liveOdds && (liveOdds.home || liveOdds.draw || liveOdds.away);
+                                    
+
+                                    
+                                    return (
+                                        <>
+                                            {/* Handle both formats: live odds (home/draw/away) and transformed odds (1/X/2) */}
+                                            {(displayOdds.home || displayOdds['1']) && (
+                                                <Button
+                                                    size="sm"
+                                                    className={getOddButtonClass({ suspended: false })}
+                                                    onClick={isOddClickable({ suspended: false })
+                                                        ? createBetHandler(match, 'Home', displayOdds.home || displayOdds['1']?.value, '1x2', null, { marketId: "1", label: "Home", name: `Win - ${match.team1 || match.participants?.[0]?.name || 'Team 1'}`, marketDescription: "Full Time Result" })
+                                                        : undefined
+                                                    }
+                                                    disabled={!isOddClickable({ suspended: false })}
+                                                >
+                                                    {displayOdds.home || displayOdds['1']?.value}
+                                                </Button>
+                                            )}
+                                            {(displayOdds.draw || displayOdds['X']) && (
+                                                <Button
+                                                    size="sm"
+                                                    className={getOddButtonClass({ suspended: false })}
+                                                    onClick={isOddClickable({ suspended: false })
+                                                        ? createBetHandler(match, 'Draw', displayOdds.draw || displayOdds['X']?.value, '1x2', null, { marketId: "1", label: "Draw", name: `Draw - ${match.team1 || match.participants?.[0]?.name || 'Team 1'} vs ${match.team2 || match.participants?.[1]?.name || 'Team 2'}`, marketDescription: "Full Time Result" })
+                                                        : undefined
+                                                    }
+                                                    disabled={!isOddClickable({ suspended: false })}
+                                                >
+                                                    {displayOdds.draw || displayOdds['X']?.value}
+                                                </Button>
+                                            )}
+                                            {(displayOdds.away || displayOdds['2']) && (
+                                                <Button
+                                                    size="sm"
+                                                    className={getOddButtonClass({ suspended: false })}
+                                                    onClick={isOddClickable({ suspended: false })
+                                                        ? createBetHandler(match, 'Away', displayOdds.away || displayOdds['2']?.value, '1x2', null, { marketId: "1", label: "Away", name: `Win - ${match.team2 || match.participants?.[1]?.name || 'Team 2'}`, marketDescription: "Full Time Result" })
+                                                        : undefined
+                                                    }
+                                                    disabled={!isOddClickable({ suspended: false })}
+                                                >
+                                                    {displayOdds.away || displayOdds['2']?.value}
+                                                </Button>
+                                            )}
+                                            {isUsingLiveOdds && (
+                                                <div className="text-xs text-green-500 ml-1">
+                                                    🔄
+                                                </div>
+                                            )}
+                                        </>
+                                    );
+                                })()}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </Link>
+        </div>
+    );
+};
 
 // League Card Component
 const LeagueCard = ({ league, isInPlay = false, viewAllText = null }) => {
     const { createBetHandler } = useBetting();
     const [buttonsReady, setButtonsReady] = useState(false);
-    // Add state for live odds if needed
-    const [liveOdds, setLiveOdds] = useState({});
+    const isConnected = useSelector(selectIsConnected);
 
     // For live matches, delay button activation to prevent premature clicking
     useEffect(() => {
@@ -29,37 +149,6 @@ const LeagueCard = ({ league, isInPlay = false, viewAllText = null }) => {
             setButtonsReady(true); // Non-live matches are immediately ready
         }
     }, [isInPlay]);
-
-    // Polling for live odds for each live match
-    useEffect(() => {
-        if (!isInPlay) return;
-        // Find live matches
-        const liveMatches = league.matches.filter(m => m.isLive);
-        if (liveMatches.length === 0) return;
-        
-        // Poll every 0.5 seconds for real-time odds updates
-        const interval = setInterval(() => {
-            liveMatches.forEach(match => {
-                // Fetch live odds for each live match
-                fetch(`/api/fixtures/${match.id}/inplay-odds`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.data && data.data.betting_data) {
-                            console.log(`🔄 Live odds updated for match ${match.id}:`, data.data.betting_data);
-                            setLiveOdds(prev => ({ 
-                                ...prev, 
-                                [match.id]: data.data.betting_data 
-                            }));
-                        }
-                    })
-                    .catch(error => {
-                        console.error(`Error fetching odds for match ${match.id}:`, error);
-                    });
-            });
-        }, 500); // 0.5 seconds for real-time updates
-        
-        return () => clearInterval(interval);
-    }, [league.matches, isInPlay]);
 
     // Helper function to extract main odds (1X2) from live odds data
     const extractMainOddsFromLiveData = (liveOddsData) => {
@@ -150,113 +239,14 @@ const LeagueCard = ({ league, isInPlay = false, viewAllText = null }) => {
             <div className="p-4 py-0 flex-1 overflow-y-auto">
                 {league.matches.slice(0, 4).map((match, index) => (
                     <div key={match.id}>
-                        <div className='flex justify-between mt-2'>
-                            <div className="text-xs text-gray-600">
-                                {isInPlay && match.isLive ? (
-                                    <LiveTimer 
-                                        startingAt={match.starting_at} 
-                                        timing={match.timing} 
-                                    />
-                                ) : (
-                                    match.starting_at ? (
-                                        <div>
-                                            {formatMatchTime(match.starting_at).date} - {formatMatchTime(match.starting_at).time}
-                                        </div>
-                                    ) : (
-                                        match.time
-                                    )
-                                )}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                                {isInPlay && match.isLive ? (
-                                    <span className="flex items-center gap-1">
-                                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                                        LIVE
-                                    </span>
-                                ) : ''}
-                            </div>
-                        </div>
-                        <Link href={`/matches/${match.id}`}>
-                            <div className="cursor-pointer hover:bg-gray-50 -mx-4 px-4 py-1 rounded">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex-1">
-                                        <div className="text-[12px] mb-1 flex items-center gap-2" title={match.team1}>
-                                          
-                                            <span>
-                                                {match.team1.length > 6 ? `${match.team1.slice(0, 18)}...` : match.team1}
-                                            </span>
-                                        </div>
-                                        <div className="text-[12px] flex items-center gap-2" title={match.team2}>
-                                           
-                                            <span>
-                                                {match.team2.length > 6 ? `${match.team2.slice(0, 18)}...` : match.team2}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center flex-shrink-0">
-                                        <div className="flex gap-1">
-                                            {(() => {
-                                                // Use live odds if available, otherwise fall back to match odds
-                                                const displayOdds = (isInPlay && match.isLive && liveOdds[match.id]) 
-                                                    ? extractMainOddsFromLiveData(liveOdds[match.id])
-                                                    : match.odds;
-                                                
-                                                const isUsingLiveOdds = isInPlay && match.isLive && liveOdds[match.id];
-                                                
-                                                return (
-                                                    <>
-                                                        {displayOdds['1'] && (
-                                                            <Button
-                                                                size="sm"
-                                                                className={getOddButtonClass(displayOdds['1'])}
-                                                                onClick={isOddClickable(displayOdds['1']) 
-                                                                    ? createBetHandler(match, 'Home', displayOdds['1'].value, '1x2', displayOdds['1'].oddId, { marketId: "1", label: "Home", name: `Win - ${match.team1 || match.participants?.[0]?.name || 'Team 1'}`, marketDescription: "Full Time Result" })
-                                                                    : undefined
-                                                                }
-                                                                disabled={!isOddClickable(displayOdds['1'])}
-                                                            >
-                                                                {displayOdds['1'].value}
-                                                            </Button>
-                                                        )}
-                                                        {displayOdds['X'] && (
-                                                            <Button
-                                                                size="sm"
-                                                                className={getOddButtonClass(displayOdds['X'])}
-                                                                onClick={isOddClickable(displayOdds['X']) 
-                                                                    ? createBetHandler(match, 'Draw', displayOdds['X'].value, '1x2', displayOdds['X'].oddId, { marketId: "1", label: "Draw", name: `Draw - ${match.team1 || match.participants?.[0]?.name || 'Team 1'} vs ${match.team2 || match.participants?.[1]?.name || 'Team 2'}`, marketDescription: "Full Time Result" })
-                                                                    : undefined
-                                                                }
-                                                                disabled={!isOddClickable(displayOdds['X'])}
-                                                            >
-                                                                {displayOdds['X'].value}
-                                                            </Button>
-                                                        )}
-                                                        {displayOdds['2'] && (
-                                                            <Button
-                                                                size="sm"
-                                                                className={getOddButtonClass(displayOdds['2'])}
-                                                                onClick={isOddClickable(displayOdds['2']) 
-                                                                    ? createBetHandler(match, 'Away', displayOdds['2'].value, '1x2', displayOdds['2'].oddId, { marketId: "1", label: "Away", name: `Win - ${match.team2 || match.participants?.[1]?.name || 'Team 2'}`, marketDescription: "Full Time Result" })
-                                                                    : undefined
-                                                                }
-                                                                disabled={!isOddClickable(displayOdds['2'])}
-                                                            >
-                                                                {displayOdds['2'].value}
-                                                            </Button>
-                                                        )}
-                                                        {isUsingLiveOdds && (
-                                                            <div className="text-xs text-green-500 ml-1">
-                                                                🔄
-                                                            </div>
-                                                        )}
-                                                    </>
-                                                );
-                                            })()}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </Link>
+                        <MatchItem 
+                            match={match}
+                            isInPlay={isInPlay}
+                            createBetHandler={createBetHandler}
+                            buttonsReady={buttonsReady}
+                            getOddButtonClass={getOddButtonClass}
+                            isOddClickable={isOddClickable}
+                        />
                         {index < Math.min(league.matches.length, 4) - 1 && (
                             <div className="border-b border-gray-300 mx-0 my-2"></div>
                         )}
@@ -306,33 +296,74 @@ const LeagueCards = ({
                     // Extract odds - handle the new object format from backend
                     const odds = {};
     
-                    if (match.odds) {
-                        if (typeof match.odds === 'object' && !Array.isArray(match.odds)) {
-                            // New backend format: { home: { value, oddId, suspended }, draw: { value, oddId, suspended }, away: { value, oddId, suspended } }
-                            if (match.odds.home && !isNaN(match.odds.home.value)) {
-                                odds['1'] = { 
-                                    value: Number(match.odds.home.value).toFixed(2), 
-                                    oddId: match.odds.home.oddId,
-                                    suspended: match.odds.home.suspended || false
-                                };
+
+    
+                    // Check for odds in different possible locations
+                    // Football Daily uses odds_main, In-Play uses odds
+                    const oddsData = match.odds_main || match.odds || {};
+                    
+
+                    
+                    if (oddsData && Object.keys(oddsData).length > 0) {
+                        if (typeof oddsData === 'object' && !Array.isArray(oddsData)) {
+                            // Handle different odds formats
+                            if (oddsData.home) {
+                                // Handle both formats: { home: value } and { home: { value, oddId } }
+                                if (typeof oddsData.home === 'object' && oddsData.home.value !== undefined) {
+                                    // Object format: { home: { value, oddId } }
+                                    odds['1'] = { 
+                                        value: Number(oddsData.home.value).toFixed(2), 
+                                        oddId: oddsData.home.oddId || null,
+                                        suspended: oddsData.home.suspended || false
+                                    };
+                                } else if (typeof oddsData.home === 'number') {
+                                    // Simple format: { home: value }
+                                    odds['1'] = { 
+                                        value: Number(oddsData.home).toFixed(2), 
+                                        oddId: null,
+                                        suspended: false
+                                    };
+                                }
                             }
-                            if (match.odds.draw && !isNaN(match.odds.draw.value)) {
-                                odds['X'] = { 
-                                    value: Number(match.odds.draw.value).toFixed(2), 
-                                    oddId: match.odds.draw.oddId,
-                                    suspended: match.odds.draw.suspended || false
-                                };
+                            if (oddsData.draw) {
+                                // Handle both formats: { draw: value } and { draw: { value, oddId } }
+                                if (typeof oddsData.draw === 'object' && oddsData.draw.value !== undefined) {
+                                    // Object format: { draw: { value, oddId } }
+                                    odds['X'] = { 
+                                        value: Number(oddsData.draw.value).toFixed(2), 
+                                        oddId: oddsData.draw.oddId || null,
+                                        suspended: oddsData.draw.suspended || false
+                                    };
+                                } else if (typeof oddsData.draw === 'number') {
+                                    // Simple format: { draw: value }
+                                    odds['X'] = { 
+                                        value: Number(oddsData.draw).toFixed(2), 
+                                        oddId: null,
+                                        suspended: false
+                                    };
+                                }
                             }
-                            if (match.odds.away && !isNaN(match.odds.away.value)) {
-                                odds['2'] = { 
-                                    value: Number(match.odds.away.value).toFixed(2), 
-                                    oddId: match.odds.away.oddId,
-                                    suspended: match.odds.away.suspended || false
-                                };
+                            if (oddsData.away) {
+                                // Handle both formats: { away: value } and { away: { value, oddId } }
+                                if (typeof oddsData.away === 'object' && oddsData.away.value !== undefined) {
+                                    // Object format: { away: { value, oddId } }
+                                    odds['2'] = { 
+                                        value: Number(oddsData.away.value).toFixed(2), 
+                                        oddId: oddsData.away.oddId || null,
+                                        suspended: oddsData.away.suspended || false
+                                    };
+                                } else if (typeof oddsData.away === 'number') {
+                                    // Simple format: { away: value }
+                                    odds['2'] = { 
+                                        value: Number(oddsData.away).toFixed(2), 
+                                        oddId: null,
+                                        suspended: false
+                                    };
+                                }
                             }
-                        } else if (Array.isArray(match.odds)) {
+                        } else if (Array.isArray(oddsData)) {
                             // Legacy array format (if still present)
-                            match.odds.forEach(odd => {
+                            oddsData.forEach(odd => {
                                 const value = parseFloat(odd.value);
                                 if (!isNaN(value)) {
                                     if (odd.label === '1' || odd.label === 'Home' || odd.name === 'Home') {
@@ -363,7 +394,6 @@ const LeagueCards = ({
     
                     // Skip match if no odds are available
                     if (Object.keys(odds).length === 0) {
-    
                         return null; // Don't include this match
                     }                    // Format the actual match time and determine if it's live
                     let displayTime = 'TBD'; // Default
@@ -372,9 +402,9 @@ const LeagueCards = ({
                     if (match.starting_at) {
                         if (isInPlay) {
                             // For in-play section, check if match is actually live
-                            // Common live state IDs: 1 (inplay), 22 (inplay), etc.
-                            // You should verify these state IDs with your API documentation
-                            const liveStateIds = [1, 22, 5, 6, 7, 8, 9, 10, 11, 12]; // Add more as needed
+                            // Common live state IDs: 2 (live), 3 (halftime), 4 (extra time), 22 (2nd half), 23 (2nd half HT), 24 (extra time)
+                            // Based on SportMonks API documentation
+                            const liveStateIds = [2, 3, 4, 22, 23, 24]; // Live match states
                             const now = new Date();
                             const startTime = new Date(match.starting_at + (match.starting_at.includes('Z') ? '' : ' UTC'));
                             const timeSinceStart = now.getTime() - startTime.getTime();
@@ -382,9 +412,13 @@ const LeagueCards = ({
                             
                             // Consider match live if:
                             
-                            // 1. Match started within last 120 minutes (reasonable match duration)
-                            isMatchLive = 
-                                         (timeSinceStart > 0 && minutesSinceStart <= 120);
+                            // 1. Match has a live state_id (2=live, 3=halftime, 4=extra time)
+                            const hasLiveState = match.state_id && liveStateIds.includes(match.state_id);
+                            
+                            // 2. Match started within last 120 minutes (reasonable match duration)
+                            const isWithinTimeWindow = (timeSinceStart > 0 && minutesSinceStart <= 120);
+                            
+                            isMatchLive = hasLiveState || isWithinTimeWindow;
                         }
                         
                         if (!isInPlay || !isMatchLive) {

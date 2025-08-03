@@ -10,6 +10,7 @@ import financeReducer from "./features/finance/financeSlice";
 import homeReducer from "./features/home/homeSlice";
 import betsReducer from "./features/bets/betsSlice";
 import liveMatchesReducer from "./features/matches/liveMatchesSlice";
+import websocketReducer from "./features/websocket/websocketSlice";
 
 export const store = configureStore({
   reducer: {
@@ -24,5 +25,6 @@ export const store = configureStore({
     adminUsers: adminUserReducer,
     bets: betsReducer,
     liveMatches: liveMatchesReducer,
+    websocket: websocketReducer,
   },
 });

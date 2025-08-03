@@ -11,7 +11,7 @@ import League from "../models/League.js";
 class FixtureOptimizationService {
   constructor() {
     // INFO: Cache for 24 hours + 20 minutes (87200 seconds)
-    this.liveCache = new NodeCache({ stdTTL: 600 });
+    this.liveCache = new NodeCache({ stdTTL: 1 }); // 1 second for live data
     this.fixtureCache = new NodeCache({ stdTTL: 87200 }); // 24h + 20min
     this.leagueCache = new NodeCache({ stdTTL: 87200 }); // 24h + 20min
 
@@ -1396,6 +1396,8 @@ class FixtureOptimizationService {
       cachedMatch.betting_data = [];
       // Add a flag to indicate this match has started
       cachedMatch.isStarted = true;
+      // Clear any cached live data to force fresh fetch
+      this.liveCache.del(`match_${matchId}`);
     } else {
       console.log(`⏰ Match ${matchId} has not started yet (${cachedMatch.starting_at}), keeping pre-match odds`);
       // Only process odds for matches that haven't started yet

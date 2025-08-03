@@ -10,6 +10,8 @@ import { metadata } from "./metadata";
 import Header from "@/components/Header";
 import SidebarWrapper from "@/components/SidebarWrapper";
 import ContentWrapper from "@/components/ContentWrapper";
+import WebSocketInitializer from "@/components/WebSocketInitializer";
+import WebSocketDebugger from "@/components/WebSocketDebugger";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,6 +22,8 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className="antialiased h-screen overflow-hidden">
         <ReduxProvider>
+          <WebSocketInitializer />
+          <WebSocketDebugger />
           <AuthProvider>
             <SidebarProvider>
               {/* <LayoutWrapper>{children}</LayoutWrapper> */}

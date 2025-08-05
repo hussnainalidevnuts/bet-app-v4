@@ -51,6 +51,7 @@ export default class BaseBetOutcomeCalculationService {
       HALF_TIME_RESULT: [22, 23], // To Win 1st Half, To Win 2nd Half
       TEAM_TO_SCORE_HALF: [24, 25], // Team to Score in 1st/2nd Half
       HALF_TIME_ASIAN_HANDICAP: [26], // 1st Half Asian Handicap
+      SECOND_HALF_ASIAN_HANDICAP: [303], // 2nd Half Asian Handicap
       HALF_TIME_GOAL_LINE: [27], // 1st Half Goal Line
       HALF_TIME_GOALS: [28, 53], // 1st Half Goals, 2nd Half Goals
       HALF_TIME_FULL_TIME: [29], // Half Time/Full Time
@@ -411,9 +412,39 @@ export default class BaseBetOutcomeCalculationService {
   /**
    * Calculate Asian Handicap outcome
    * Handles all handicap types including quarter handicaps (0.25, 0.75, 1.25, etc.)
+   * Also handles half-time specific handicaps
    */
   calculateAsianHandicap(bet, matchData) {
-    const scores = this.extractMatchScores(matchData);
+    // Determine which scores to use based on market type
+    const marketId = parseInt(bet.betDetails?.market_id || bet.marketId);
+    const marketType = this.getMarketType(marketId);
+    
+    let scores;
+    let periodName = "Full Time";
+    
+    if (marketType === "HALF_TIME_ASIAN_HANDICAP" || marketId === 26) {
+      // 1st Half Asian Handicap
+      scores = this.extractFirstHalfScores(matchData);
+      periodName = "1st Half";
+    } else if (marketType === "SECOND_HALF_ASIAN_HANDICAP" || marketId === 303) {
+      // 2nd Half Asian Handicap  
+      scores = this.extractSecondHalfScores(matchData);
+      periodName = "2nd Half";
+    } else {
+      // Full match Asian Handicap
+      scores = this.extractMatchScores(matchData);
+      periodName = "Full Time";
+    }
+    
+    if (!scores) {
+      return {
+        status: "canceled",
+        payout: bet.stake,
+        reason: `${periodName} scores not available`,
+        marketId: marketId,
+        marketType: marketType
+      };
+    }
     
     // Enhanced handicap and team extraction - prioritize betDetails over betOption
     let handicap;
@@ -452,11 +483,12 @@ export default class BaseBetOutcomeCalculationService {
         handicap: handicap,
         extractedTeam: team,
         betDetails: bet.betDetails,
-        betOption: bet.betOption
+        betOption: bet.betOption,
+        period: periodName
       };
     }
 
-    console.log(`[calculateAsianHandicap] Handicap: ${handicap}, Team: ${team}, Original scores: ${scores.homeScore}-${scores.awayScore}`);
+    console.log(`[calculateAsianHandicap] ${periodName} - Handicap: ${handicap}, Team: ${team}, Original scores: ${scores.homeScore}-${scores.awayScore}`);
 
     // Check if this is a quarter handicap (ends in .25 or .75)
     const isQuarterHandicap = (Math.abs(handicap * 4) % 1 === 0) && (Math.abs(handicap * 2) % 1 !== 0);

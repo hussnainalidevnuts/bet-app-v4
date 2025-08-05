@@ -20,7 +20,7 @@ class LiveFixturesService {
     // Define allowed market IDs once in constructor
     this.allowedMarketIds = [
       1, 2, 267, 268, 29, 90, 93, 95, 124, 125, 10, 14, 18, 19, 44, 4, 5, 81,
-      37, 11, 97, 13, 86, 80, 60, 67, 68, 69, 15, 16,53,28
+      37, 11, 97, 13, 86, 80, 60, 67, 68, 69, 15, 16, 28, 53, 6 , 26 , 303
     ];
   }
 

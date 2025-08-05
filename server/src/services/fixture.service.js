@@ -185,10 +185,11 @@ class FixtureOptimizationService {
   }
 
   transformFixturesData(fixtures) {
+
     // Define the allowed market IDs for filtering odds
     const allowedMarketIds = [
       1, 2, 267, 268, 29, 90, 93, 95, 124, 125, 10, 14, 18, 19, 44, 4, 5, 81,
-      37, 11, 97, 13, 86, 80, 60, 67, 68, 69,15,16,28,53,6
+      37, 11, 97, 13, 86, 80, 60, 67, 68, 69,15,16,28,53, 6 , 26 , 303
     ];
 
     return fixtures.map((fixture) => {
@@ -509,10 +510,10 @@ class FixtureOptimizationService {
     const cacheKey = "homepage_data";
     const cached = this.fixtureCache.get(cacheKey);
 
-    // Return cached data if available (30 minute cache)
+    // Force clear cache for debugging timezone issues
     if (cached) {
-      console.log("� Returning cached homepage data");
-      return cached;
+      console.log("🔄 Clearing homepage cache to force fresh data with UTC timezone fixes");
+      this.fixtureCache.del(cacheKey);
     }
 
     try {
@@ -656,9 +657,8 @@ class FixtureOptimizationService {
         // in_play: [], // Skip for now as requested
       };
 
-      // Cache for 30 minutes (1800 seconds)
-      console.log("💾 Caching homepage data for 30 minutes");
-      this.fixtureCache.set(cacheKey, homepageData, 1800);
+      // Cache for 10 minutes
+      this.fixtureCache.set(cacheKey, homepageData, 600);
       return homepageData;
     } catch (error) {
       console.error("❌ Error fetching homepage data:", error);

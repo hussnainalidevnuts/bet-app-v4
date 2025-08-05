@@ -96,6 +96,7 @@ class BetOutcomeCalculationService extends BaseBetOutcomeCalculationService {
 
       case "ASIAN_HANDICAP":
       case "HALF_TIME_ASIAN_HANDICAP":
+      case "SECOND_HALF_ASIAN_HANDICAP":
         return super.calculateAsianHandicap(bet, matchData);
 
       case "LAST_TEAM_TO_SCORE":

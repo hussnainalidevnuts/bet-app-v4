@@ -410,21 +410,81 @@ export default class BaseBetOutcomeCalculationService {
 
   /**
    * Calculate Asian Handicap outcome
+   * Handles all handicap types including quarter handicaps (0.25, 0.75, 1.25, etc.)
    */
   calculateAsianHandicap(bet, matchData) {
     const scores = this.extractMatchScores(matchData);
-    const handicap = this.extractHandicap(bet.betOption);
-    const team = this.extractHandicapTeam(bet.betOption);
+    
+    // Enhanced handicap and team extraction - prioritize betDetails over betOption
+    let handicap;
+    let team;
 
+    // Extract handicap - prefer betDetails.handicap over parsing betOption
+    if (bet.betDetails?.handicap) {
+      // Parse handicap from betDetails.handicap (e.g., "+1.25", "-0.5")
+      const handicapMatch = bet.betDetails.handicap.match(/([-+]?\d+\.?\d*)/);
+      handicap = handicapMatch ? parseFloat(handicapMatch[1]) : 0;
+    } else {
+      // Fallback to extracting from betOption
+      handicap = this.extractHandicap(bet.betOption);
+    }
+
+    // Extract team - prefer betDetails.label/name, then betOption
+    if (bet.betDetails?.label) {
+      // For Asian Handicap, label usually contains "1" (home) or "2" (away)
+      if (bet.betDetails.label === "1") {
+        team = "HOME";
+      } else if (bet.betDetails.label === "2") {
+        team = "AWAY";
+      } else {
+        team = this.extractHandicapTeam(bet.betDetails.label);
+      }
+    } else {
+      // Fallback to extracting from betOption
+      team = this.extractHandicapTeam(bet.betOption);
+    }
+
+    if (!team || team === "UNKNOWN") {
+      return {
+        status: "canceled",
+        payout: bet.stake,
+        reason: "Unable to determine team for Asian Handicap",
+        handicap: handicap,
+        extractedTeam: team,
+        betDetails: bet.betDetails,
+        betOption: bet.betOption
+      };
+    }
+
+    console.log(`[calculateAsianHandicap] Handicap: ${handicap}, Team: ${team}, Original scores: ${scores.homeScore}-${scores.awayScore}`);
+
+    // Check if this is a quarter handicap (ends in .25 or .75)
+    const isQuarterHandicap = (Math.abs(handicap * 4) % 1 === 0) && (Math.abs(handicap * 2) % 1 !== 0);
+    
+    if (isQuarterHandicap) {
+      // Quarter handicap: split into two bets
+      return this.calculateQuarterHandicap(bet, scores, handicap, team);
+    } else {
+      // Standard handicap calculation (whole or half numbers)
+      return this.calculateStandardHandicap(bet, scores, handicap, team);
+    }
+  }
+
+  /**
+   * Calculate standard Asian Handicap (whole numbers and half numbers like 1, 0.5, 1.5)
+   */
+  calculateStandardHandicap(bet, scores, handicap, team) {
     let adjustedHomeScore = scores.homeScore;
     let adjustedAwayScore = scores.awayScore;
 
-    // Apply handicap
+    // Apply handicap to the selected team
     if (team === "HOME") {
       adjustedHomeScore += handicap;
-    } else {
+    } else if (team === "AWAY") {
       adjustedAwayScore += handicap;
     }
+
+    console.log(`[calculateStandardHandicap] Adjusted scores: ${adjustedHomeScore}-${adjustedAwayScore}`);
 
     let result;
     if (adjustedHomeScore > adjustedAwayScore) {
@@ -435,21 +495,134 @@ export default class BaseBetOutcomeCalculationService {
       result = "push"; // Stake refunded
     }
 
-    const payout =
-      result === "won"
-        ? bet.stake * bet.odds
-        : result === "push"
-        ? bet.stake
-        : 0;
+    const payout = result === "won" ? bet.stake * bet.odds : result === "push" ? bet.stake : 0;
 
     return {
       status: result === "push" ? "canceled" : result,
       payout: payout,
       handicap: handicap,
       team: team,
+      originalScore: `${scores.homeScore}-${scores.awayScore}`,
       adjustedScore: `${adjustedHomeScore}-${adjustedAwayScore}`,
-      reason: `With handicap: ${adjustedHomeScore}-${adjustedAwayScore}`,
+      handicapType: "standard",
+      reason: `Asian Handicap ${team} ${handicap >= 0 ? '+' : ''}${handicap}: Original ${scores.homeScore}-${scores.awayScore}, Adjusted ${adjustedHomeScore}-${adjustedAwayScore} = ${result}`,
     };
+  }
+
+  /**
+   * Calculate quarter Asian Handicap (0.25, 0.75, 1.25, 1.75, etc.)
+   * Quarter handicaps split the bet into two parts with different handicaps
+   */
+  calculateQuarterHandicap(bet, scores, handicap, team) {
+    // Split quarter handicap into two parts
+    // For example: +1.25 becomes +1 and +1.5
+    // For example: -0.75 becomes -0.5 and -1
+    
+    const isPositive = handicap >= 0;
+    const absHandicap = Math.abs(handicap);
+    
+    let handicap1, handicap2;
+    
+    if (absHandicap % 1 === 0.25) {
+      // .25 handicaps: split into 0 and 0.5
+      // e.g., +1.25 -> +1 and +1.5, -0.25 -> 0 and -0.5
+      handicap1 = isPositive ? Math.floor(absHandicap) : -Math.ceil(absHandicap);
+      handicap2 = isPositive ? Math.floor(absHandicap) + 0.5 : -Math.ceil(absHandicap) + 0.5;
+    } else if (absHandicap % 1 === 0.75) {
+      // .75 handicaps: split into 0.5 and 1
+      // e.g., +0.75 -> +0.5 and +1, -1.75 -> -1.5 and -2
+      handicap1 = isPositive ? Math.floor(absHandicap) + 0.5 : -Math.floor(absHandicap) - 0.5;
+      handicap2 = isPositive ? Math.ceil(absHandicap) : -Math.ceil(absHandicap);
+    } else {
+      // Fallback for unexpected values
+      return this.calculateStandardHandicap(bet, scores, handicap, team);
+    }
+
+    console.log(`[calculateQuarterHandicap] Quarter handicap ${handicap} split into: ${handicap1} and ${handicap2}`);
+
+    // Calculate result for both parts
+    const result1 = this.calculateSingleHandicapResult(scores, handicap1, team);
+    const result2 = this.calculateSingleHandicapResult(scores, handicap2, team);
+
+    console.log(`[calculateQuarterHandicap] Result 1 (${handicap1}): ${result1}, Result 2 (${handicap2}): ${result2}`);
+
+    // Determine overall outcome
+    let finalStatus;
+    let finalPayout;
+    let resultDescription;
+
+    if (result1 === "won" && result2 === "won") {
+      // Both parts win = full win
+      finalStatus = "won";
+      finalPayout = bet.stake * bet.odds;
+      resultDescription = "Full win";
+    } else if (result1 === "lost" && result2 === "lost") {
+      // Both parts lose = full loss
+      finalStatus = "lost";
+      finalPayout = 0;
+      resultDescription = "Full loss";
+    } else if ((result1 === "won" && result2 === "push") || (result1 === "push" && result2 === "won")) {
+      // One wins, one pushes = half win
+      finalStatus = "won";
+      finalPayout = bet.stake * ((bet.odds - 1) / 2 + 1); // Half win calculation
+      resultDescription = "Half win";
+    } else if ((result1 === "lost" && result2 === "push") || (result1 === "push" && result2 === "lost")) {
+      // One loses, one pushes = half loss
+      finalStatus = "lost";
+      finalPayout = bet.stake / 2; // Refund half the stake
+      resultDescription = "Half loss";
+    } else if (result1 === "push" && result2 === "push") {
+      // Both push = full refund
+      finalStatus = "canceled";
+      finalPayout = bet.stake;
+      resultDescription = "Full push";
+    } else if (result1 === "won" && result2 === "lost") {
+      // One wins, one loses = refund stake
+      finalStatus = "canceled";
+      finalPayout = bet.stake;
+      resultDescription = "Win/Loss = Push";
+    } else if (result1 === "lost" && result2 === "won") {
+      // One loses, one wins = refund stake
+      finalStatus = "canceled";
+      finalPayout = bet.stake;
+      resultDescription = "Loss/Win = Push";
+    }
+
+    return {
+      status: finalStatus,
+      payout: finalPayout,
+      handicap: handicap,
+      team: team,
+      originalScore: `${scores.homeScore}-${scores.awayScore}`,
+      handicapType: "quarter",
+      handicapSplit: [handicap1, handicap2],
+      splitResults: [result1, result2],
+      resultDescription: resultDescription,
+      reason: `Quarter Asian Handicap ${team} ${handicap >= 0 ? '+' : ''}${handicap} (split: ${handicap1}/${handicap2}): ${resultDescription}`,
+    };
+  }
+
+  /**
+   * Calculate result for a single handicap value
+   */
+  calculateSingleHandicapResult(scores, handicap, team) {
+    let adjustedHomeScore = scores.homeScore;
+    let adjustedAwayScore = scores.awayScore;
+
+    // Apply handicap to the selected team
+    if (team === "HOME") {
+      adjustedHomeScore += handicap;
+    } else if (team === "AWAY") {
+      adjustedAwayScore += handicap;
+    }
+
+    if (adjustedHomeScore > adjustedAwayScore) {
+      return team === "HOME" ? "won" : "lost";
+    } else if (adjustedHomeScore < adjustedAwayScore) {
+      return team === "AWAY" ? "won" : "lost";
+    } else {
+      return "push";
+    }
   }
 
   /**

@@ -16,8 +16,6 @@ const LiveTimer = ({ startingAt, timing }) => {
     useEffect(() => {
         // Prefer the new timing structure from backend over legacy startingAt calculation
         if (timing && timing.matchStarted) {
-            console.log('[LiveTimer] Using new timing structure:', timing);
-            
             const calculateElapsedTimeFromTiming = () => {
                 try {
                     // Use the precise timing info from backend
@@ -34,11 +32,6 @@ const LiveTimer = ({ startingAt, timing }) => {
                         let totalSeconds = (currentMinute * 60) + currentSecond + cacheAgeSeconds;
                         let totalMinutes = Math.floor(totalSeconds / 60);
                         let seconds = totalSeconds % 60;
-                        
-                        // Debug logging (only log once per second to avoid spam)
-                        if (Math.random() < 0.1) { // 10% chance to log
-                            console.log(`[LiveTimer] Time calc: Backend: ${currentMinute}:${currentSecond.toString().padStart(2, '0')} (${timeSource}), Cache age: ${cacheAgeSeconds}s, Current: ${totalMinutes}:${seconds.toString().padStart(2, '0')}`);
-                        }
                         
                         // Check for end states
                         if (totalMinutes >= 90 && period !== '2nd-half') {
@@ -57,8 +50,6 @@ const LiveTimer = ({ startingAt, timing }) => {
                     
                     // If not ticking, just show the cached time without updating
                     if (currentMinute !== undefined && currentSecond !== undefined && !isTicking) {
-                        console.log(`[LiveTimer] Not ticking - showing cached time: ${currentMinute}:${currentSecond.toString().padStart(2, '0')} (${period})`);
-                        
                         // Check for end states
                         if (currentMinute >= 90 && period !== '2nd-half') {
                             setElapsedTime('FT');
@@ -124,26 +115,21 @@ const LiveTimer = ({ startingAt, timing }) => {
             if (isTicking) {
                 const interval = setInterval(calculateElapsedTimeFromTiming, 1000);
                 return () => {
-                    console.log('[LiveTimer] Cleaning up timing-based interval (ticking)');
                     clearInterval(interval);
                 };
             } else {
                 // If not ticking (halftime), just calculate once and don't update
-                console.log('[LiveTimer] Match not ticking - timer stopped');
                 return () => {
-                    console.log('[LiveTimer] No interval to clean up (not ticking)');
+                    // No interval to clean up
                 };
             }
         }
 
         // Legacy fallback: calculate from startingAt if no timing structure available
         if (!startingAt) {
-            console.log('[LiveTimer] No startingAt or timing provided');
             setElapsedTime('');
             return;
         }
-
-        console.log('[LiveTimer] Using legacy startingAt calculation:', startingAt);
 
         const calculateElapsedTime = () => {
             try {
@@ -157,11 +143,6 @@ const LiveTimer = ({ startingAt, timing }) => {
                 const correctedNow = getCorrectedCurrentTime(serverTimeOffset);
                 const diffMs = correctedNow.getTime() - startTime.getTime();
 
-                console.log('[LiveTimer] Start time (UTC):', startTime.toISOString());
-                console.log('[LiveTimer] Current time (corrected):', correctedNow.toISOString());
-                console.log('[LiveTimer] Server offset:', serverTimeOffset, 'ms');
-                console.log('[LiveTimer] Difference (ms):', diffMs);
-
                 // If match hasn't started yet
                 if (diffMs < 0) {
                     setElapsedTime('0:00');
@@ -171,8 +152,6 @@ const LiveTimer = ({ startingAt, timing }) => {
                 // Calculate minutes and seconds
                 const totalMinutes = Math.floor(diffMs / (1000 * 60));
                 const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
-
-                console.log('[LiveTimer] Calculated minutes:', totalMinutes);
 
                 // If match started more than 120 minutes ago, it's likely finished
                 if (totalMinutes > 120) {
@@ -199,7 +178,6 @@ const LiveTimer = ({ startingAt, timing }) => {
         const interval = setInterval(calculateElapsedTime, 1000);
 
         return () => {
-            console.log('[LiveTimer] Cleaning up legacy interval');
             clearInterval(interval);
         };
     }, [startingAt, timing, serverTimeOffset]);

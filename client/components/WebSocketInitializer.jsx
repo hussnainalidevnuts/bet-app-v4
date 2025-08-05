@@ -11,12 +11,9 @@ const WebSocketInitializer = () => {
     // Join live matches room by default
     websocketService.joinLiveMatches();
     
-    console.log('🔌 WebSocket initialized and joined live matches room');
-    
     // Cleanup on unmount
     return () => {
       // Don't disconnect here as other components might be using the socket
-      console.log('🔌 WebSocket initializer unmounted');
     };
   }, []);
 

@@ -28,12 +28,6 @@ const InPlayPage = () => {
             ).length;
         }, 0);
         
-        console.log('🔄 [InPlayPage] Data check:', {
-            totalMatches,
-            matchesWithOdds,
-            hasCompleteData: matchesWithOdds > 0
-        });
-        
         return matchesWithOdds > 0;
     }, [liveMatches, liveOdds]);
     
@@ -43,7 +37,6 @@ const InPlayPage = () => {
     useEffect(() => {
         if (liveMatches.length > 0 && !hasCompleteData) {
             const timer = setTimeout(() => {
-                console.log('🔄 [InPlayPage] Timeout reached - showing matches without odds');
                 setShowMatchesAnyway(true);
             }, 10000); // 10 seconds timeout
             
@@ -68,28 +61,17 @@ const InPlayPage = () => {
 
     // Use WebSocket data exclusively
     const displayMatches = useMemo(() => {
-        console.log('🔄 [InPlayPage] liveMatches:', liveMatches);
-        console.log('🔄 [InPlayPage] liveMatches type:', typeof liveMatches, 'isArray:', Array.isArray(liveMatches));
-        console.log('🔄 [InPlayPage] liveOdds:', liveOdds);
-        console.log('🔄 [InPlayPage] liveOdds keys:', Object.keys(liveOdds));
-        
         if (!Array.isArray(liveMatches)) {
-            console.error('🔄 [InPlayPage] liveMatches is not an array:', liveMatches);
             return [];
         }
         
         return liveMatches.map(leagueGroup => {
-            console.log('🔄 [InPlayPage] Processing leagueGroup:', leagueGroup);
-            console.log('🔄 [InPlayPage] leagueGroup.matches:', leagueGroup.matches);
-            
             return {
                 ...leagueGroup,
                 matches: leagueGroup.matches.map(match => {
                 // Get odds for this match from WebSocket
                 const matchOdds = liveOdds[match.id];
                 const mainOdds = matchOdds?.odds || {};
-                
-                console.log('🔄 [InPlayPage] Match:', match.id, 'Match odds:', matchOdds, 'Main odds:', mainOdds);
                 
                 return {
                     ...match,

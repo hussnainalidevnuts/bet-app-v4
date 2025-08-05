@@ -23,16 +23,13 @@ class WebSocketService {
 
     // Connection events
     this.socket.on('connect', () => {
-      console.log('🔌 WebSocket connected:', this.socket.id);
       store.dispatch(setConnectionStatus('connected'));
       
       // Join live matches room by default
       this.socket.emit('joinLiveMatches');
-      console.log('👥 Joined live matches room');
     });
 
     this.socket.on('disconnect', () => {
-      console.log('🔌 WebSocket disconnected');
       store.dispatch(setConnectionStatus('disconnected'));
     });
 
@@ -43,7 +40,13 @@ class WebSocketService {
 
     // Live odds updates
     this.socket.on('liveOddsUpdate', (data) => {
-      console.log('📡 [WebSocket] Received liveOddsUpdate for match:', data.matchId);
+      // Log the complete odds data
+      console.log('📊 [ODDS UPDATE] Match:', data.matchId);
+      console.log('📊 [ODDS DATA] Complete odds:', data.odds);
+      console.log('📊 [CLASSIFICATION] Odds classification:', data.classification);
+      console.log('📊 [TIMESTAMP] Update time:', data.timestamp);
+      console.log('---');
+      
       store.dispatch(updateLiveOdds({
         matchId: data.matchId,
         odds: data.odds,
@@ -54,13 +57,6 @@ class WebSocketService {
 
     // Live matches updates
     this.socket.on('liveMatchesUpdate', (data) => {
-      console.log('📡 [WebSocket] Received liveMatchesUpdate:', data);
-      console.log('📡 [WebSocket] Data structure:', {
-        hasMatches: !!data.matches,
-        matchesLength: data.matches?.length,
-        isArray: Array.isArray(data.matches),
-        firstItem: data.matches?.[0]
-      });
       store.dispatch(updateLiveMatches(data));
       
       // Automatically join match rooms for all live matches
@@ -78,10 +74,15 @@ class WebSocketService {
 
     // Multiple odds updates (for initial connection)
     this.socket.on('multipleOddsUpdate', (updates) => {
-      console.log('📡 [WebSocket] Received multipleOddsUpdate:', updates.length, 'updates');
+      console.log('📊 [MULTIPLE ODDS] Received', updates.length, 'odds updates:');
       // Dispatch individual updates instead of using updateMultipleOdds
-      updates.forEach(update => {
-        console.log('📡 [WebSocket] Dispatching odds update for match:', update.matchId);
+      updates.forEach((update, index) => {
+        console.log(`📊 [ODDS UPDATE ${index + 1}] Match:`, update.matchId);
+        console.log('📊 [ODDS DATA] Complete odds:', update.odds);
+        console.log('📊 [CLASSIFICATION] Odds classification:', update.classification);
+        console.log('📊 [TIMESTAMP] Update time:', update.timestamp);
+        console.log('---');
+        
         store.dispatch(updateLiveOdds({
           matchId: update.matchId,
           odds: update.odds,
@@ -91,17 +92,13 @@ class WebSocketService {
       });
     });
 
-
-
     this.isInitialized = true;
-    console.log('🔌 WebSocket service initialized');
   }
 
   // Join specific match room
   joinMatch(matchId) {
     if (this.socket) {
       this.socket.emit('joinMatch', matchId);
-      console.log(`👥 Joined match room: ${matchId}`);
     }
   }
 
@@ -109,7 +106,6 @@ class WebSocketService {
   leaveMatch(matchId) {
     if (this.socket) {
       this.socket.emit('leaveMatch', matchId);
-      console.log(`👋 Left match room: ${matchId}`);
     }
   }
 
@@ -117,14 +113,12 @@ class WebSocketService {
   joinLiveMatches() {
     if (this.socket) {
       this.socket.emit('joinLiveMatches');
-      console.log('👥 Joined live matches room');
     }
   }
 
   // Disconnect
   disconnect() {
     if (this.socket) {
-      console.log('🧹 Disconnecting WebSocket');
       this.socket.disconnect();
       this.socket = null;
       this.isInitialized = false;
@@ -135,8 +129,6 @@ class WebSocketService {
   isConnected() {
     return this.socket?.connected || false;
   }
-
-
 }
 
 // Create singleton instance

@@ -21,34 +21,28 @@ const websocketSlice = createSlice({
     // Live odds updates
     updateLiveOdds: (state, action) => {
       const { matchId, odds, classification, timestamp } = action.payload;
-      console.log('🔄 [WebSocket Slice] updateLiveOdds called for match:', matchId, 'with odds:', odds);
+      
+      // Log the complete odds update
+      console.log('🔄 [STORE UPDATE] Match:', matchId);
+      console.log('🔄 [STORE DATA] Complete odds stored:', odds);
+      console.log('🔄 [STORE CLASSIFICATION] Classification stored:', classification);
+      console.log('🔄 [STORE TIMESTAMP] Stored at:', timestamp);
+      console.log('---');
+      
       state.liveOdds[matchId] = {
         odds: odds || [],
         classification: classification || {},
         timestamp: timestamp || new Date().toISOString()
       };
       state.lastUpdate = new Date().toISOString();
-      console.log('🔄 [WebSocket Slice] Updated liveOdds for match:', matchId, 'Total odds entries:', Object.keys(state.liveOdds).length);
     },
     
     // Live matches updates
     updateLiveMatches: (state, action) => {
-      console.log('🔄 [WebSocket Slice] updateLiveMatches called with:', action.payload);
-      
       // Backend now sends league-grouped data, store it directly
       const leagueGroups = action.payload.matches || [];
       state.liveMatches = leagueGroups;
       state.lastUpdate = new Date().toISOString();
-      
-      console.log('🔄 [WebSocket Slice] Updated liveMatches:', leagueGroups);
-      console.log('🔄 [WebSocket Slice] liveMatches structure:', {
-        length: leagueGroups.length,
-        isArray: Array.isArray(leagueGroups),
-        firstItem: leagueGroups[0],
-        hasLeague: leagueGroups[0]?.league,
-        hasMatches: leagueGroups[0]?.matches,
-        matchesLength: leagueGroups[0]?.matches?.length
-      });
     },
     
     // Clear specific match odds
@@ -63,8 +57,6 @@ const websocketSlice = createSlice({
       state.liveMatches = [];
       state.lastUpdate = null;
     },
-    
-
   }
 });
 

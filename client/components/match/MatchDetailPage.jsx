@@ -1,4 +1,5 @@
 "use client"
+import React, { useEffect } from 'react';
 import MatchHeader from "./MatchHeader"
 import BettingTabs from "./BettingTabs"
 import MatchVisualization from "./MatchVisualization"
@@ -9,10 +10,10 @@ import {
     clearError
 } from "@/lib/features/matches/matchesSlice"
 import { selectMatchOdds, selectMatchOddsClassification } from "@/lib/features/websocket/websocketSlice"
-import { useEffect, useState } from "react"
+import { selectLiveMatches } from '@/lib/features/websocket/websocketSlice';
 import { Card, CardContent } from "@/components/ui/card"
-import { Loader2, AlertCircle, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Loader2, AlertCircle, RefreshCw } from "lucide-react"
 
 const isMatchLive = (match) => {
     if (!match || !match.starting_at) return false;
@@ -41,6 +42,39 @@ const MatchDetailPage = ({ matchId }) => {
 
     const liveOdds = useSelector((state) => selectMatchOdds(state, matchId));
     const liveOddsClassification = useSelector((state) => selectMatchOddsClassification(state, matchId));
+    
+    // Get live match data from WebSocket to ensure consistent timing
+    const liveMatches = useSelector(selectLiveMatches);
+    
+    // Find the live match data for this specific match
+    const liveMatchData = React.useMemo(() => {
+        if (!liveMatches || !Array.isArray(liveMatches)) return null;
+        
+        for (const leagueGroup of liveMatches) {
+            if (leagueGroup.matches && Array.isArray(leagueGroup.matches)) {
+                const match = leagueGroup.matches.find(m => m.id === parseInt(matchId));
+                if (match) {
+                    return match;
+                }
+            }
+        }
+        return null;
+    }, [liveMatches, matchId]);
+    
+    // Use live match data if available and match is live, otherwise use fetched match data
+    const displayMatchData = React.useMemo(() => {
+        if (liveMatchData && isMatchLive(liveMatchData)) {
+            // Merge live match data with fetched match data to preserve betting data
+            return {
+                ...matchData,
+                ...liveMatchData,
+                // Preserve betting data from fetched match data
+                betting_data: matchData?.betting_data || liveMatchData?.betting_data,
+                odds_classification: matchData?.odds_classification || liveMatchData?.odds_classification
+            };
+        }
+        return matchData;
+    }, [matchData, liveMatchData]);
 
     useEffect(() => {
         if (matchId && !matchData) {
@@ -50,7 +84,7 @@ const MatchDetailPage = ({ matchId }) => {
 
     // Join match room for WebSocket updates when match is live
     useEffect(() => {
-        if (!matchId || !matchData || !isMatchLive(matchData)) return;
+        if (!matchId || !displayMatchData || !isMatchLive(displayMatchData)) return;
 
         // Import websocketService dynamically to avoid SSR issues
         import('@/lib/services/websocketService').then(({ default: websocketService }) => {
@@ -63,7 +97,7 @@ const MatchDetailPage = ({ matchId }) => {
                 websocketService.leaveMatch(matchId);
             });
         };
-    }, [matchId, matchData]);
+    }, [matchId, displayMatchData]);
 
     const handleRetry = () => {
         dispatch(clearError());
@@ -72,7 +106,6 @@ const MatchDetailPage = ({ matchId }) => {
 
     const handleRefreshOdds = () => {
         // WebSocket updates are automatic, no need to manually refresh
-        console.log('Live odds are updated automatically via WebSocket');
     };
 
     if (loading) {
@@ -118,7 +151,7 @@ const MatchDetailPage = ({ matchId }) => {
         );
     }
 
-    if (!matchData) {
+    if (!displayMatchData) {
         return (
             <div className="bg-slate-100 min-h-screen relative">
                 <div className="lg:mr-80 xl:mr-96">
@@ -137,7 +170,7 @@ const MatchDetailPage = ({ matchId }) => {
         );
     }
 
-    const isLive = isMatchLive(matchData);
+    const isLive = isMatchLive(displayMatchData);
     const hasLiveOdds = liveOdds && liveOdds.length > 0;
     
     // Determine which odds to show:
@@ -145,7 +178,7 @@ const MatchDetailPage = ({ matchId }) => {
     // For non-live matches: Show pre-match odds
     const bettingData = isLive 
         ? liveOdds || [] // For live matches, only show live odds or empty array if none available
-        : matchData.betting_data || []; // Try betting_data first
+        : displayMatchData.betting_data || []; // Try betting_data first
 
     // Get the odds classification data
     // For live matches, use live odds classification
@@ -156,7 +189,7 @@ const MatchDetailPage = ({ matchId }) => {
             classified_odds: {},
             stats: { total_categories: 0, total_odds: 0 }
           }
-        : matchData.odds_classification || {
+        : displayMatchData.odds_classification || {
             categories: [{ id: 'all', label: 'All', odds_count: 0 }],
             classified_odds: {},
             stats: { total_categories: 0, total_odds: 0 }
@@ -189,13 +222,13 @@ const MatchDetailPage = ({ matchId }) => {
             {/* Main content - adjusts width when sidebar expands */}
             <div className="lg:mr-80 xl:mr-96">
                 <div className="lg:p-2 xl:p-4">
-                    <MatchHeader matchData={matchData} />
+                    <MatchHeader matchData={displayMatchData} />
                     <BettingTabs 
                         matchData={{ 
-                            ...matchData, 
+                            ...displayMatchData, 
                             betting_data: bettingData,
                             odds_classification: oddsClassification,
-                            league: matchData.league
+                            league: displayMatchData.league
                         }} 
                     />
                 </div>
@@ -204,7 +237,7 @@ const MatchDetailPage = ({ matchId }) => {
             {/* Right sidebar - fixed position, doesn't move */}
             <div className="w-full lg:w-80 xl:w-96 lg:fixed lg:right-4 lg:top-40 lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto">
                 <div className="p-2 sm:p-3 md:p-4 lg:p-2">
-                    <MatchVisualization matchData={matchData} />
+                    <MatchVisualization matchData={displayMatchData} />
                 </div>
             </div>
         </div>

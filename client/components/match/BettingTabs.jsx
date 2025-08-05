@@ -1249,6 +1249,27 @@ const BettingOptionButton = ({
             );
         }
 
+        // Special handling for Over/Under markets that need to show total values
+        if (
+            (label === 'Over' || label === 'Under') && 
+            total && 
+            (
+                marketDescription?.toLowerCase().includes('match goals') ||
+                marketDescription?.toLowerCase().includes('alternative match goals') ||
+                marketDescription?.toLowerCase().includes('1st half goals') ||
+                marketDescription?.toLowerCase().includes('first half goals') ||
+                marketDescription?.toLowerCase().includes('2nd half goals') ||
+                marketDescription?.toLowerCase().includes('second half goals') ||
+                marketDescription?.toLowerCase().includes('corners over') ||
+                marketDescription?.toLowerCase().includes('corners over / under') ||
+                marketDescription?.toLowerCase().includes('first 10 minutes goals')
+            )
+        ) {
+            return (
+                <span>{label} {total}</span>
+            );
+        }
+
         // For Team Total Goals markets: show team name and total as badge
         if (
             marketDescription &&

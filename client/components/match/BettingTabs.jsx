@@ -278,6 +278,51 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
         else if (optionsCount <= 6) return "grid-cols-1 min-[500px]:grid-cols-2 min-[800px]:grid-cols-3";
         else return "grid-cols-1 min-[500px]:grid-cols-2 min-[800px]:grid-cols-3 lg:grid-cols-4";
     };
+
+    // Helper function to sort result options in Home, Draw, Away order
+    const sortResultOptions = (options, matchData) => {
+        const homeTeam = matchData?.participants?.[0]?.name;
+        const awayTeam = matchData?.participants?.[1]?.name;
+        
+        return options.sort((a, b) => {
+            // Define the desired order: Home (1), Draw (X), Away (2)
+            const getOrder = (option) => {
+                const label = option.label?.toLowerCase();
+                const name = option.name?.toLowerCase();
+                
+                // Check for home team (1)
+                if (label === '1' || 
+                    label === 'home' || 
+                    name === 'home' ||
+                    (homeTeam && (label === homeTeam.toLowerCase() || name === homeTeam.toLowerCase()))) {
+                    return 1;
+                }
+                
+                // Check for draw (X)
+                if (label === 'x' || 
+                    label === 'draw' || 
+                    label === 'tie' ||
+                    name === 'draw' ||
+                    name === 'tie') {
+                    return 2;
+                }
+                
+                // Check for away team (2)
+                if (label === '2' || 
+                    label === 'away' ||
+                    name === 'away' ||
+                    (awayTeam && (label === awayTeam.toLowerCase() || name === awayTeam.toLowerCase()))) {
+                    return 3;
+                }
+                
+                // Default order for unknown options
+                return 4;
+            };
+            
+            return getOrder(a) - getOrder(b);
+        });
+    };
+
     // Render betting options
     const renderOptions = (options, section) => {
         // Special handling for result markets (1X2, Match Result, etc.)
@@ -492,7 +537,8 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
         
         return (
             <div className={`grid ${gridClass} gap-1`}>
-                {options.map((option, idx) => {
+                {/* Sort options for result markets to ensure Home, Draw, Away order */}
+                {(isResultMarket ? sortResultOptions(options, matchData) : options).map((option, idx) => {
                     // For Correct Score, Corners Race, Winning Margin always use the score/race number/margin as name
                     let name;
                     if (section.title && section.title.toLowerCase().includes('correct score')) {

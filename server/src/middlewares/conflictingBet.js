@@ -63,53 +63,64 @@ export const preventConflictingBet = async (req, res, next) => {
       seenMatchIds.add(matchId);
     }
 
+    // Determine if this is a combination bet request
+    const isCombinationBetRequest = req.body.combinationData && Array.isArray(req.body.combinationData);
+
     // Check for conflicts with existing pending bets in the DB
     for (const bet of betsToCheck) {
       const matchId = bet.matchId;
       const marketId = bet.marketId || (bet.betDetails && bet.betDetails.market_id);
       
-      console.log('[conflictingBet] Checking for conflicts with:', { matchId, marketId });
+      console.log('[conflictingBet] Checking for conflicts with:', { matchId, marketId, isCombinationBetRequest });
 
-      // Check for conflicts with single bets (non-combination bets)
-      const existingSingleBet = await Bet.findOne({
-        userId,
-        matchId,
-        'betDetails.market_id': marketId,
-        status: 'pending',
-        // Ensure it's not a combination bet
-        $or: [
-          { combination: { $exists: false } },
-          { combination: { $size: 0 } }
-        ]
-      });
-
-      if (existingSingleBet) {
-        console.log('[conflictingBet] Found conflicting single bet:', existingSingleBet._id);
-        return res.status(400).json({ 
-          success: false, 
-          message: 'You already have a pending bet on this market for this match.' 
-        });
-      }
-
-      // Check for conflicts with combination bet legs
-      const existingCombinationBet = await Bet.findOne({
-        userId,
-        status: 'pending',
-        combination: { $exists: true, $ne: [] },
-        'combination': {
-          $elemMatch: {
-            matchId: matchId,
-            'betDetails.market_id': marketId
+      if (isCombinationBetRequest) {
+        // For combination bets, only check conflicts with other combination bets that have the exact same leg
+        // Allow combination bets to coexist with single bets and other combination bets
+        const existingCombinationBet = await Bet.findOne({
+          userId,
+          matchId,
+          'betDetails.market_id': marketId,
+          status: 'pending',
+          combination: { $exists: true, $ne: [] },
+          'combination': {
+            $elemMatch: {
+              matchId: matchId,
+              'betDetails.market_id': marketId,
+              'betDetails.label': bet.betDetails?.label, // Also check the specific selection
+              'betDetails.name': bet.betDetails?.name
+            }
           }
-        }
-      });
-
-      if (existingCombinationBet) {
-        console.log('[conflictingBet] Found conflicting combination bet leg:', existingCombinationBet._id);
-        return res.status(400).json({ 
-          success: false, 
-          message: 'You already have a pending bet on this market for this match (in a combination bet).' 
         });
+
+        if (existingCombinationBet) {
+          console.log('[conflictingBet] Found conflicting combination bet with identical leg:', existingCombinationBet._id);
+          return res.status(400).json({ 
+            success: false, 
+            message: 'You already have a pending combination bet with the exact same selection on this market for this match.' 
+          });
+        }
+      } else {
+        // For single bets, check conflicts with other single bets only
+        // Allow single bets to coexist with combination bets
+        const existingSingleBet = await Bet.findOne({
+          userId,
+          matchId,
+          'betDetails.market_id': marketId,
+          status: 'pending',
+          // Ensure it's not a combination bet
+          $or: [
+            { combination: { $exists: false } },
+            { combination: { $size: 0 } }
+          ]
+        });
+
+        if (existingSingleBet) {
+          console.log('[conflictingBet] Found conflicting single bet:', existingSingleBet._id);
+          return res.status(400).json({ 
+            success: false, 
+            message: 'You already have a pending bet on this market for this match.' 
+          });
+        }
       }
     }
 

@@ -16,7 +16,7 @@ class WebSocketService {
     if (this.isInitialized) return;
 
     // Create Socket.IO connection
-    this.socket = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000', {
+    this.socket = io(process.env.NEXT_PUBLIC_BASE_API_URL || 'http://localhost:4000', {
       transports: ['websocket', 'polling'],
       withCredentials: true,
     });
@@ -34,10 +34,12 @@ class WebSocketService {
     });
 
     this.socket.on('connect_error', (error) => {
+    
       console.error('❌ WebSocket connection error:', error);
       store.dispatch(setConnectionStatus('error'));
     });
-
+    console.log('🌐 WebSocket initialized with URL:', process.env.NEXT_PUBLIC_BASE_API_URL || 'http://localhost:4000');
+    
     // Live odds updates
     this.socket.on('liveOddsUpdate', (data) => {
       // Log the complete odds data

@@ -11,8 +11,9 @@ const apiClient = axios.create({
 });
 
 // Debug the API URL being used
-console.log('🌐 API Base URL:', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api');
-console.log('🌍 Environment:', process.env.NODE_ENV);
+console.log('🌐 API Base URL :', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api');
+console.log('🌐 API Base URL for sockets :', process.env.NEXT_PUBLIC_BASE_API_URL || 'http://localhost:4000/api');
+
 
 // Request interceptor - logs outgoing requests and includes auth token
 apiClient.interceptors.request.use(

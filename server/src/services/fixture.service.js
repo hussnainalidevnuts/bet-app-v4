@@ -30,6 +30,8 @@ class FixtureOptimizationService {
 
   }
 
+
+
   async getOptimizedFixtures() {
     const today = new Date();
     // Fetch matches from today to next 7 days
@@ -1342,7 +1344,10 @@ class FixtureOptimizationService {
       throw new CustomError("Match ID is required", 400, "INVALID_MATCH_ID");
     }
 
-    // 1. Try to get from dedicated match cache first
+    // Convert matchId to number for consistent Map key lookup
+    const numericMatchId = Number(matchId);
+
+    // 1. Try to get from dedicated match cache first (O(1))
     const matchCacheKey = `match_${matchId}`;
     let cachedMatch = this.fixtureCache.get(matchCacheKey);
 
@@ -1351,11 +1356,35 @@ class FixtureOptimizationService {
       return cachedMatch;
     }
 
-    // 2. If not found, search in all cached fixtures
-    const allCachedMatches = this.getAllCachedMatches();
-    cachedMatch = allCachedMatches.find(
-      (fixture) => fixture.id == matchId || fixture.id === parseInt(matchId)
-    );
+    // 2. Direct O(1) lookup from fixtures Map cache
+    const today = new Date();
+    const utcDate = new Date(today.getTime() - (today.getTimezoneOffset() * 60 * 1000));
+    const startDate = utcDate.toISOString().split("T")[0];
+    const endDate = new Date(utcDate.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    const fixturesCacheKey = `fixtures_today_to_7days_${startDate}_${endDate}`;
+    
+    console.log(`🔍 Looking for fixtures Map with key: ${fixturesCacheKey}`);
+    console.log(`🔍 Available cache keys:`, this.fixtureCache.keys());
+    
+    const fixturesMap = this.fixtureCache.get(fixturesCacheKey);
+    console.log(`🔍 FixturesMap type:`, fixturesMap ? (fixturesMap instanceof Map ? 'Map' : typeof fixturesMap) : 'null');
+    
+    if (fixturesMap instanceof Map) {
+      console.log(`🔍 FixturesMap size: ${fixturesMap.size}`);
+      console.log(`🔍 Looking for match ID: ${numericMatchId} (type: ${typeof numericMatchId})`);
+      
+      cachedMatch = fixturesMap.get(numericMatchId);
+      if (cachedMatch) {
+        console.log("📦 Found match in fixtures Map cache (O(1) lookup)");
+      } else {
+        console.log(`❌ Match ${numericMatchId} not found in fixtures Map`);
+        // Debug: show some keys in the Map
+        const keys = Array.from(fixturesMap.keys()).slice(0, 5);
+        console.log(`🔍 Sample Map keys:`, keys);
+      }
+    } else {
+      console.log(`❌ FixturesMap is not a Map, it's: ${typeof fixturesMap}`);
+    }
 
     // 3. If still not found, check live fixtures cache (for finished matches)
     if (!cachedMatch && global.liveFixturesService) {
@@ -1382,22 +1411,14 @@ class FixtureOptimizationService {
     }
 
     if (!cachedMatch) {
-      // 3. If still not found, make API call (using getOptimizedFixtures)
+      // 4. If still not found, make API call (using getOptimizedFixtures)
       console.log("🔍 Match not found in cache, making API call...");
       this.checkRateLimit();
       try {
         const fixturesMap = await this.getOptimizedFixtures();
-        // Use Map for direct lookup
-        cachedMatch =
-          fixturesMap instanceof Map ? fixturesMap.get(Number(matchId)) : null;
-        if (!cachedMatch) {
-          // fallback: if not found in Map, try array search (for legacy or error cases)
-          let fixtures = this.getAllFixturesArrayFromMap(fixturesMap);
-          cachedMatch = fixtures.find(
-            (fixture) =>
-              fixture.id == matchId || fixture.id === parseInt(matchId)
-          );
-        }
+        // Direct O(1) Map lookup
+        cachedMatch = fixturesMap instanceof Map ? fixturesMap.get(numericMatchId) : null;
+        
         if (!cachedMatch) {
           throw new CustomError(
             `Match with ID ${matchId} not found`,
@@ -1405,7 +1426,7 @@ class FixtureOptimizationService {
             "MATCH_NOT_FOUND"
           );
         }
-        console.log("✅ Found match in API response");
+        console.log("✅ Found match in API response (O(1) Map lookup)");
       } catch (error) {
         if (error.code === "MATCH_NOT_FOUND") {
           throw error;

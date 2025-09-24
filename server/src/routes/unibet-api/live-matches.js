@@ -1,5 +1,6 @@
 import express from 'express';
 import axios from 'axios';
+import { filterMatchesByAllowedLeagues, getLeagueFilterStats } from '../../utils/leagueFilter.js';
 const router = express.Router();
 
 // In-memory cache for live matches
@@ -354,7 +355,25 @@ function extractFootballMatches(data) {
     }
   }
   
-  return { allMatches, liveMatches, upcomingMatches };
+  // Apply league filtering based on CSV file
+  console.log('🔍 Applying league filtering...');
+  const stats = getLeagueFilterStats();
+  console.log(`📊 Total allowed leagues: ${stats.totalAllowedLeagues}`);
+  
+  const filteredAllMatches = filterMatchesByAllowedLeagues(allMatches);
+  const filteredLiveMatches = filterMatchesByAllowedLeagues(liveMatches);
+  const filteredUpcomingMatches = filterMatchesByAllowedLeagues(upcomingMatches);
+  
+  console.log(`✅ League filtering complete:`);
+  console.log(`   - All matches: ${allMatches.length} → ${filteredAllMatches.length}`);
+  console.log(`   - Live matches: ${liveMatches.length} → ${filteredLiveMatches.length}`);
+  console.log(`   - Upcoming matches: ${upcomingMatches.length} → ${filteredUpcomingMatches.length}`);
+
+  return { 
+    allMatches: filteredAllMatches, 
+    liveMatches: filteredLiveMatches, 
+    upcomingMatches: filteredUpcomingMatches 
+  };
 }
 
 // Initialize cache on startup

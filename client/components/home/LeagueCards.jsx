@@ -33,7 +33,7 @@ const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButt
                                 {formatMatchTime(match.starting_at).date} - {formatMatchTime(match.starting_at).time}
                             </div>
                         ) : (
-                            match.time
+                            match.time || match.start
                         )
                     )}
                 </div>
@@ -342,7 +342,17 @@ const LeagueCards = ({
                     const transformedMatches = leagueData.matches.map(match => {
     
     
-                    const teamNames = match.name?.split(' vs ') || ['Team A', 'Team B'];
+                    // Handle both formats: Unibet API (homeName/awayName) and old format (name with ' vs ')
+                    let teamNames;
+                    if (match.homeName && match.awayName) {
+                        // Unibet API format
+                        teamNames = [match.homeName, match.awayName];
+                    } else if (match.name) {
+                        // Old format
+                        teamNames = match.name.split(' vs ') || ['Team A', 'Team B'];
+                    } else {
+                        teamNames = ['Team A', 'Team B'];
+                    }
     
                     // Extract odds - handle the new object format from backend
                     const odds = {};
@@ -350,8 +360,24 @@ const LeagueCards = ({
 
     
                     // Check for odds in different possible locations
-                    // Football Daily uses odds_main, In-Play uses odds
-                    const oddsData = match.odds_main || match.odds || {};
+                    // Unibet API uses mainBetOffer, old format uses odds_main/odds
+                    let oddsData = {};
+                    if (match.mainBetOffer && match.mainBetOffer.outcomes) {
+                        // Unibet API format - extract from mainBetOffer.outcomes
+                        const outcomes = match.mainBetOffer.outcomes;
+                        const homeOdds = outcomes.find(o => o.label === '1')?.odds;
+                        const drawOdds = outcomes.find(o => o.label === 'X')?.odds;
+                        const awayOdds = outcomes.find(o => o.label === '2')?.odds;
+                        
+                        oddsData = {
+                            home: homeOdds ? homeOdds / 1000 : null, // Divide by 1000 to get decimal odds
+                            draw: drawOdds ? drawOdds / 1000 : null,
+                            away: awayOdds ? awayOdds / 1000 : null
+                        };
+                    } else {
+                        // Old format
+                        oddsData = match.odds_main || match.odds || {};
+                    }
                     
 
                     
@@ -458,7 +484,7 @@ const LeagueCards = ({
                             // Based on SportMonks API documentation
                             const liveStateIds = [2, 3, 4, 22, 23, 24]; // Live match states
                             const now = new Date();
-                            const startTime = new Date(match.starting_at + (match.starting_at.includes('Z') ? '' : ' UTC'));
+                            const startTime = new Date((match.starting_at || match.start) + ((match.starting_at || match.start).includes('Z') ? '' : ' UTC'));
                             const timeSinceStart = now.getTime() - startTime.getTime();
                             const minutesSinceStart = Math.floor(timeSinceStart / (1000 * 60));
                             
@@ -474,7 +500,7 @@ const LeagueCards = ({
                         }
                         
                         if (!isInPlay || !isMatchLive) {
-                            displayTime = formatToLocalTime(match.starting_at, { format: 'timeOnly' });
+                            displayTime = formatToLocalTime(match.starting_at || match.start, { format: 'timeOnly' });
                         }
                     }
 
@@ -485,16 +511,16 @@ const LeagueCards = ({
                         time: displayTime,
                         odds: odds,
                         clock: true,
-                        starting_at: match.starting_at, // Add the starting_at field for live timer
-                        state_id: match.state_id, // Add state_id for live determination
+                        starting_at: match.starting_at || match.start, // Handle both formats
+                        state_id: match.state_id || (match.state === 'STARTED' ? 2 : 1), // Map Unibet state to state_id
                         isLive: isMatchLive, // Add live flag
                         timing: match.timing || null // Include timing info from backend if available
                     };
                 }).filter(match => match !== null); // Filter out null matches
     
                 return {
-                    id: leagueData.league.id,
-                    name: leagueData.league.name,
+                    id: leagueData.league.id || leagueData.league, // Handle both object and string formats
+                    name: leagueData.league.name || leagueData.league, // Handle both object and string formats
                     icon: "⚽", // Default icon
                     imageUrl: leagueData.league.imageUrl || null,
                     day: "Today",
@@ -591,7 +617,7 @@ const LeagueCards = ({
                         if (isInPlay) {
                             const liveStateIds = [2, 3, 4, 22, 23, 24];
                             const now = new Date();
-                            const startTime = new Date(match.starting_at + (match.starting_at.includes('Z') ? '' : ' UTC'));
+                            const startTime = new Date((match.starting_at || match.start) + ((match.starting_at || match.start).includes('Z') ? '' : ' UTC'));
                             const timeSinceStart = now.getTime() - startTime.getTime();
                             const minutesSinceStart = Math.floor(timeSinceStart / (1000 * 60));
                             
@@ -602,7 +628,7 @@ const LeagueCards = ({
                         }
                         
                         if (!isInPlay || !isMatchLive) {
-                            displayTime = formatToLocalTime(match.starting_at, { format: 'timeOnly' });
+                            displayTime = formatToLocalTime(match.starting_at || match.start, { format: 'timeOnly' });
                         }
                     }
                     
@@ -637,7 +663,23 @@ const LeagueCards = ({
     const transformed = transformReduxData(reduxData).filter(league=>league.matches.length > 0);
    
 
-    if (!transformed || transformed.length === 0) return null;
+    if (!transformed || transformed.length === 0) {
+        return (
+            <div className="mb-8">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold text-gray-800">{title}</h2>
+                    {viewAllText && (
+                        <Link href="/matches" className="text-green-600 hover:underline text-sm">
+                            {viewAllText}
+                        </Link>
+                    )}
+                </div>
+                <div className="text-gray-500 text-center py-8">
+                    No {title.toLowerCase()} matches available at the moment.
+                </div>
+            </div>
+        );
+    }
 
     // Get appropriate data based on mode
     let displayData;

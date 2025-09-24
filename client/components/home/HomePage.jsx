@@ -6,7 +6,7 @@ import TopPicks from './TopPicks';
 import LiveMatches from './LiveMatches';
 import LeagueCards from './LeagueCards';
 import { fetchHomepageData, selectHomeLoading, selectHomeError, selectFootballDaily } from '@/lib/features/home/homeSlice';
-import { fetchLiveMatches, selectLiveMatches } from '@/lib/features/matches/liveMatchesSlice';
+import { fetchLiveMatches, selectLiveMatches, selectUpcomingMatchesGrouped } from '@/lib/features/matches/liveMatchesSlice';
 
 const HomePage = () => {
     const dispatch = useDispatch();
@@ -20,6 +20,8 @@ const HomePage = () => {
     
     // Live matches state from Unibet API
     const liveMatches = useSelector(selectLiveMatches);
+    // Upcoming matches state from Unibet API (filtered by CSV leagues)
+    const upcomingMatches = useSelector(selectUpcomingMatchesGrouped);
 
     useEffect(() => {
         // Fetch homepage data when component mounts
@@ -67,11 +69,11 @@ const HomePage = () => {
                         {/* Top Picks - using Redux data */}
                         <TopPicks />
 
-                        {/* Football Daily - using existing LeagueCards component */}
+                        {/* Football Daily - using Unibet upcoming matches (filtered by CSV leagues) with fallback */}
                         <LeagueCards
                             title="Football Daily"
                             useReduxData={true}
-                            reduxData={filteredFootballDaily}
+                            reduxData={upcomingMatches && upcomingMatches.length > 0 ? upcomingMatches : filteredFootballDaily}
                             isInPlay={false}
                             showDayTabs={true}
                             viewAllText="View All Football Daily"

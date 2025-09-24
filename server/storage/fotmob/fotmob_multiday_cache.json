@@ -5658,7 +5658,7 @@
               "longName": "Cartagena"
             },
             "eliminatedTeamId": null,
-            "statusId": 93,
+            "statusId": 12,
             "tournamentStage": "3",
             "status": {
               "utcTime": "2025-09-24T15:00:00.000Z",
@@ -5666,9 +5666,19 @@
                 "firstHalfStarted": "13.09.2025 14:01:51"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "0 - 0",
+              "liveTime": {
+                "short": "IR",
+                "shortKey": "interrupted_short",
+                "long": "Interrupted",
+                "longKey": "interrupted",
+                "maxTime": 45,
+                "addedTime": 0
+              }
             },
             "timeTS": 1758726000000
           }
@@ -7314,296 +7324,6 @@
               "finished": false
             },
             "timeTS": 1758726000000
-          }
-        ],
-        "internalRank": 0,
-        "liveRank": 0,
-        "simpleLeague": false
-      },
-      {
-        "ccode": "CZE",
-        "id": 254,
-        "primaryId": 254,
-        "name": "Cup",
-        "matches": [
-          {
-            "id": 4947298,
-            "leagueId": 254,
-            "time": "24.09.2025 16:00",
-            "home": {
-              "id": 279090,
-              "score": 0,
-              "name": "Jiskra Domazlice",
-              "longName": "Jiskra Domazlice"
-            },
-            "away": {
-              "id": 1670,
-              "score": 0,
-              "name": "Bohemians 1905",
-              "longName": "Bohemians 1905"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "3rd Round",
-            "status": {
-              "utcTime": "2025-09-24T14:00:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "24.09.2025 16:00:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1758722400000
-          },
-          {
-            "id": 4947299,
-            "leagueId": 254,
-            "time": "24.09.2025 16:00",
-            "home": {
-              "id": 1154784,
-              "score": 0,
-              "name": "SK Petrin Plzen",
-              "longName": "SK Petrin Plzen"
-            },
-            "away": {
-              "id": 10180,
-              "score": 0,
-              "name": "Mlada Boleslav",
-              "longName": "Mlada Boleslav"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "3rd Round",
-            "status": {
-              "utcTime": "2025-09-24T14:00:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "24.09.2025 16:00:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1758722400000
-          },
-          {
-            "id": 4947300,
-            "leagueId": 254,
-            "time": "24.09.2025 16:00",
-            "home": {
-              "id": 1528336,
-              "score": 0,
-              "name": "Hlinsko",
-              "longName": "Hlinsko"
-            },
-            "away": {
-              "id": 7758,
-              "score": 0,
-              "name": "Jablonec",
-              "longName": "Jablonec"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "3rd Round",
-            "status": {
-              "utcTime": "2025-09-24T14:00:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "24.09.2025 16:00:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1758722400000
-          },
-          {
-            "id": 4947302,
-            "leagueId": 254,
-            "time": "24.09.2025 16:00",
-            "home": {
-              "id": 1408093,
-              "score": 0,
-              "name": "FK Frydek-Mistek",
-              "longName": "FK Frydek-Mistek"
-            },
-            "away": {
-              "id": 2406,
-              "score": 0,
-              "name": "Pardubice",
-              "longName": "Pardubice"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "3rd Round",
-            "status": {
-              "utcTime": "2025-09-24T14:00:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "24.09.2025 16:00:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1758722400000
-          },
-          {
-            "id": 4947303,
-            "leagueId": 254,
-            "time": "24.09.2025 16:00",
-            "home": {
-              "id": 183891,
-              "score": 0,
-              "name": "FC Slavia Karlovy Vary",
-              "longName": "FC Slavia Karlovy Vary"
-            },
-            "away": {
-              "id": 10247,
-              "score": 0,
-              "name": "Sparta Prague",
-              "longName": "Sparta Prague"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "3rd Round",
-            "status": {
-              "utcTime": "2025-09-24T14:00:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "24.09.2025 16:00:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1758722400000
-          },
-          {
-            "id": 4947306,
-            "leagueId": 254,
-            "time": "24.09.2025 16:00",
-            "home": {
-              "id": 1153471,
-              "score": 0,
-              "name": "FK Nove Sady",
-              "longName": "FK Nove Sady"
-            },
-            "away": {
-              "id": 6461,
-              "score": 0,
-              "name": "Sigma Olomouc",
-              "longName": "Sigma Olomouc"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "3rd Round",
-            "status": {
-              "utcTime": "2025-09-24T14:00:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "24.09.2025 16:00:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1758722400000
-          },
-          {
-            "id": 4947313,
-            "leagueId": 254,
-            "time": "24.09.2025 16:00",
-            "home": {
-              "id": 7840,
-              "score": 0,
-              "name": "SK Dynamo Ceske Budejovice",
-              "longName": "SK Dynamo Ceske Budejovice"
-            },
-            "away": {
-              "id": 6362,
-              "score": 0,
-              "name": "Banik Ostrava",
-              "longName": "Banik Ostrava"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "3rd Round",
-            "status": {
-              "utcTime": "2025-09-24T14:00:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "24.09.2025 16:00:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1758722400000
-          },
-          {
-            "id": 4947312,
-            "leagueId": 254,
-            "time": "24.09.2025 18:00",
-            "home": {
-              "id": 5733,
-              "score": 0,
-              "name": "Usti nad Labem",
-              "longName": "Usti nad Labem"
-            },
-            "away": {
-              "id": 1860,
-              "score": 0,
-              "name": "FC Zlin",
-              "longName": "FC Zlin"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "3rd Round",
-            "status": {
-              "utcTime": "2025-09-24T16:00:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "24.09.2025 18:00:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1758729600000
-          },
-          {
-            "id": 4947309,
-            "leagueId": 254,
-            "time": "24.09.2025 18:30",
-            "home": {
-              "id": 1673,
-              "score": 0,
-              "name": "FC Zbrojovka Brno",
-              "longName": "FC Zbrojovka Brno"
-            },
-            "away": {
-              "id": 4721,
-              "score": 0,
-              "name": "Teplice",
-              "longName": "Teplice"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "3rd Round",
-            "status": {
-              "utcTime": "2025-09-24T16:30:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "24.09.2025 18:30:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1758731400000
           }
         ],
         "internalRank": 0,
@@ -10273,13 +9993,19 @@
               "longName": "Sporting Cristal"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 5,
             "tournamentStage": "11",
             "status": {
               "utcTime": "2025-09-25T20:00:00.000Z",
               "finished": false,
               "started": false,
-              "cancelled": false,
+              "cancelled": true,
+              "reason": {
+                "short": "PP",
+                "shortKey": "postponed_short",
+                "long": "Postponed",
+                "longKey": "postponed"
+              },
               "halfs": {
                 "firstHalfStarted": "25.09.2025 22:00:00"
               },
@@ -10499,265 +10225,6 @@
           }
         ],
         "parentLeagueId": 337,
-        "internalRank": 0,
-        "liveRank": 0,
-        "simpleLeague": false
-      },
-      {
-        "ccode": "ALG",
-        "id": 516,
-        "primaryId": 516,
-        "name": "Ligue 1",
-        "matches": [
-          {
-            "id": 4907679,
-            "leagueId": 516,
-            "time": "25.09.2025 18:00",
-            "home": {
-              "id": 101629,
-              "score": 0,
-              "name": "ASO Chlef",
-              "longName": "ASO Chlef"
-            },
-            "away": {
-              "id": 1792386,
-              "score": 0,
-              "name": "MB Rouissat",
-              "longName": "MB Rouissat"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "6",
-            "status": {
-              "utcTime": "2025-09-25T16:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "25.09.2025 18:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1758816000000
-          },
-          {
-            "id": 4907682,
-            "leagueId": 516,
-            "time": "25.09.2025 18:00",
-            "home": {
-              "id": 1531341,
-              "score": 0,
-              "name": "Ben Aknoun",
-              "longName": "Ben Aknoun"
-            },
-            "away": {
-              "id": 316399,
-              "score": 0,
-              "name": "JS Saoura",
-              "longName": "JS Saoura"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "6",
-            "status": {
-              "utcTime": "2025-09-25T16:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "25.09.2025 18:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1758816000000
-          },
-          {
-            "id": 4907680,
-            "leagueId": 516,
-            "time": "25.09.2025 18:00",
-            "home": {
-              "id": 101633,
-              "score": 0,
-              "name": "CR Belouizdad",
-              "longName": "CR Belouizdad"
-            },
-            "away": {
-              "id": 277392,
-              "score": 0,
-              "name": "CS Constantine",
-              "longName": "CS Constantine"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "6",
-            "status": {
-              "utcTime": "2025-09-25T16:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "25.09.2025 18:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1758816000000
-          },
-          {
-            "id": 4907678,
-            "leagueId": 516,
-            "time": "25.09.2025 18:00",
-            "home": {
-              "id": 316402,
-              "score": 0,
-              "name": "ES Mostaganem",
-              "longName": "ES Mostaganem"
-            },
-            "away": {
-              "id": 45655,
-              "score": 0,
-              "name": "ES Setif",
-              "longName": "ES Setif"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "6",
-            "status": {
-              "utcTime": "2025-09-25T16:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "25.09.2025 18:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1758816000000
-          },
-          {
-            "id": 4907685,
-            "leagueId": 516,
-            "time": "25.09.2025 18:00",
-            "home": {
-              "id": 101630,
-              "score": 0,
-              "name": "JS Kabylie",
-              "longName": "JS Kabylie"
-            },
-            "away": {
-              "id": 6353,
-              "score": 0,
-              "name": "MC Alger",
-              "longName": "MC Alger"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "6",
-            "status": {
-              "utcTime": "2025-09-25T16:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "25.09.2025 18:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1758816000000
-          },
-          {
-            "id": 4907684,
-            "leagueId": 516,
-            "time": "25.09.2025 18:00",
-            "home": {
-              "id": 101636,
-              "score": 0,
-              "name": "MC Oran",
-              "longName": "MC Oran"
-            },
-            "away": {
-              "id": 316408,
-              "score": 0,
-              "name": "Paradou AC",
-              "longName": "Paradou AC"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "6",
-            "status": {
-              "utcTime": "2025-09-25T16:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "25.09.2025 18:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1758816000000
-          },
-          {
-            "id": 4907683,
-            "leagueId": 516,
-            "time": "25.09.2025 18:00",
-            "home": {
-              "id": 1660716,
-              "score": 0,
-              "name": "Olympique Akbou",
-              "longName": "Olympique Akbou"
-            },
-            "away": {
-              "id": 1387869,
-              "score": 0,
-              "name": "USM Khenchela",
-              "longName": "USM Khenchela"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "6",
-            "status": {
-              "utcTime": "2025-09-25T16:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "25.09.2025 18:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1758816000000
-          },
-          {
-            "id": 4907681,
-            "leagueId": 516,
-            "time": "25.09.2025 18:00",
-            "home": {
-              "id": 101628,
-              "score": 0,
-              "name": "USM Alger",
-              "longName": "USM Alger"
-            },
-            "away": {
-              "id": 1387865,
-              "score": 0,
-              "name": "MC El Bayadh",
-              "longName": "MC El Bayadh"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "6",
-            "status": {
-              "utcTime": "2025-09-25T16:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "25.09.2025 18:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1758816000000
-          }
-        ],
         "internalRank": 0,
         "liveRank": 0,
         "simpleLeague": false
@@ -18744,6 +18211,48 @@
         ],
         "parentLeagueId": 251,
         "internalRank": 9,
+        "liveRank": 0,
+        "simpleLeague": false
+      },
+      {
+        "ccode": "PAR",
+        "id": 199,
+        "primaryId": 199,
+        "name": "Division Profesional",
+        "matches": [
+          {
+            "id": 1000003011,
+            "leagueId": 199,
+            "time": "27.09.2025 00:00",
+            "home": {
+              "id": 59844,
+              "score": 0,
+              "name": "Sportivo Trinidense",
+              "longName": "Sportivo Trinidense"
+            },
+            "away": {
+              "id": 1893,
+              "score": 0,
+              "name": "Guarani",
+              "longName": "Guarani"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "Clausura - Round 14",
+            "status": {
+              "utcTime": "2025-09-26T22:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 00:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1758924000000
+          }
+        ],
+        "internalRank": 0,
         "liveRank": 0,
         "simpleLeague": false
       },
@@ -30129,6 +29638,37 @@
             "timeTS": 1758960000000
           },
           {
+            "id": 4889860,
+            "leagueId": 901684,
+            "time": "27.09.2025 10:00",
+            "home": {
+              "id": 1277917,
+              "score": 0,
+              "name": "Steaua Bucuresti",
+              "longName": "Steaua Bucuresti"
+            },
+            "away": {
+              "id": 583706,
+              "score": 0,
+              "name": "Sepsi OSK",
+              "longName": "Sepsi OSK"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "8",
+            "status": {
+              "utcTime": "2025-09-27T08:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 10:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1758960000000
+          },
+          {
             "id": 4889862,
             "leagueId": 901684,
             "time": "27.09.2025 12:00",
@@ -31120,6 +30660,147 @@
               "periodLength": 45
             },
             "timeTS": 1758978000000
+          }
+        ],
+        "internalRank": 0,
+        "liveRank": 0,
+        "simpleLeague": false
+      },
+      {
+        "ccode": "ALG",
+        "id": 516,
+        "primaryId": 516,
+        "name": "Ligue 1",
+        "matches": [
+          {
+            "id": 4907682,
+            "leagueId": 516,
+            "time": "27.09.2025 17:00",
+            "home": {
+              "id": 1531341,
+              "score": 0,
+              "name": "Ben Aknoun",
+              "longName": "Ben Aknoun"
+            },
+            "away": {
+              "id": 316399,
+              "score": 0,
+              "name": "JS Saoura",
+              "longName": "JS Saoura"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "6",
+            "status": {
+              "utcTime": "2025-09-27T15:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 17:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1758985200000
+          },
+          {
+            "id": 4907679,
+            "leagueId": 516,
+            "time": "27.09.2025 18:00",
+            "home": {
+              "id": 101629,
+              "score": 0,
+              "name": "ASO Chlef",
+              "longName": "ASO Chlef"
+            },
+            "away": {
+              "id": 1792386,
+              "score": 0,
+              "name": "MB Rouissat",
+              "longName": "MB Rouissat"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "6",
+            "status": {
+              "utcTime": "2025-09-27T16:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 18:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1758988800000
+          },
+          {
+            "id": 4907685,
+            "leagueId": 516,
+            "time": "27.09.2025 18:00",
+            "home": {
+              "id": 101630,
+              "score": 0,
+              "name": "JS Kabylie",
+              "longName": "JS Kabylie"
+            },
+            "away": {
+              "id": 6353,
+              "score": 0,
+              "name": "MC Alger",
+              "longName": "MC Alger"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 5,
+            "tournamentStage": "6",
+            "status": {
+              "utcTime": "2025-09-27T16:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": true,
+              "reason": {
+                "short": "PP",
+                "shortKey": "postponed_short",
+                "long": "Postponed",
+                "longKey": "postponed"
+              },
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 18:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1758988800000
+          },
+          {
+            "id": 4907684,
+            "leagueId": 516,
+            "time": "27.09.2025 18:45",
+            "home": {
+              "id": 101636,
+              "score": 0,
+              "name": "MC Oran",
+              "longName": "MC Oran"
+            },
+            "away": {
+              "id": 316408,
+              "score": 0,
+              "name": "Paradou AC",
+              "longName": "Paradou AC"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "6",
+            "status": {
+              "utcTime": "2025-09-27T16:45:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 18:45:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1758991500000
           }
         ],
         "internalRank": 0,
@@ -32255,43 +31936,6 @@
         "name": "Northern Premier Division",
         "matches": [
           {
-            "id": 4883165,
-            "leagueId": 901535,
-            "time": "27.09.2025 16:00",
-            "home": {
-              "id": 6450,
-              "score": 0,
-              "name": "Gainsborough",
-              "longName": "Gainsborough"
-            },
-            "away": {
-              "id": 282510,
-              "score": 0,
-              "name": "Leek Town",
-              "longName": "Leek Town"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 5,
-            "tournamentStage": "12",
-            "status": {
-              "utcTime": "2025-09-27T14:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": true,
-              "reason": {
-                "short": "PP",
-                "shortKey": "postponed_short",
-                "long": "Postponed",
-                "longKey": "postponed"
-              },
-              "halfs": {
-                "firstHalfStarted": "27.09.2025 16:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1758981600000
-          },
-          {
             "id": 4883166,
             "leagueId": 901535,
             "time": "27.09.2025 16:00",
@@ -32470,43 +32114,6 @@
               "finished": false,
               "started": false,
               "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "27.09.2025 16:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1758981600000
-          },
-          {
-            "id": 4883173,
-            "leagueId": 901535,
-            "time": "27.09.2025 16:00",
-            "home": {
-              "id": 282389,
-              "score": 0,
-              "name": "Warrington Town",
-              "longName": "Warrington Town"
-            },
-            "away": {
-              "id": 161818,
-              "score": 0,
-              "name": "Ashton United",
-              "longName": "Ashton United"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 5,
-            "tournamentStage": "12",
-            "status": {
-              "utcTime": "2025-09-27T14:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": true,
-              "reason": {
-                "short": "PP",
-                "shortKey": "postponed_short",
-                "long": "Postponed",
-                "longKey": "postponed"
-              },
               "halfs": {
                 "firstHalfStarted": "27.09.2025 16:00:00"
               },
@@ -35739,133 +35346,9 @@
         "name": "Primera Nacional Zona A",
         "matches": [
           {
-            "id": 4748439,
-            "leagueId": 896820,
-            "time": "27.09.2025 22:00",
-            "home": {
-              "id": 719912,
-              "score": 0,
-              "name": "Atletico Guemes",
-              "longName": "Atletico Guemes"
-            },
-            "away": {
-              "id": 581826,
-              "score": 0,
-              "name": "CA San Miguel",
-              "longName": "CA San Miguel"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "33",
-            "status": {
-              "utcTime": "2025-09-27T20:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "27.09.2025 22:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759003200000
-          },
-          {
-            "id": 4748445,
-            "leagueId": 896820,
-            "time": "27.09.2025 22:00",
-            "home": {
-              "id": 354496,
-              "score": 0,
-              "name": "CA Alvarado",
-              "longName": "CA Alvarado"
-            },
-            "away": {
-              "id": 161732,
-              "score": 0,
-              "name": "All Boys",
-              "longName": "All Boys"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "33",
-            "status": {
-              "utcTime": "2025-09-27T20:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "27.09.2025 22:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759003200000
-          },
-          {
-            "id": 4748444,
-            "leagueId": 896820,
-            "time": "27.09.2025 22:00",
-            "home": {
-              "id": 568706,
-              "score": 0,
-              "name": "Deportivo Madryn",
-              "longName": "Deportivo Madryn"
-            },
-            "away": {
-              "id": 10098,
-              "score": 0,
-              "name": "Arsenal Sarandi",
-              "longName": "Arsenal Sarandi"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "33",
-            "status": {
-              "utcTime": "2025-09-27T20:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "27.09.2025 22:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759003200000
-          },
-          {
-            "id": 4748443,
-            "leagueId": 896820,
-            "time": "27.09.2025 22:00",
-            "home": {
-              "id": 213590,
-              "score": 0,
-              "name": "Deportivo Maipu",
-              "longName": "Deportivo Maipu"
-            },
-            "away": {
-              "id": 213535,
-              "score": 0,
-              "name": "Colegiales",
-              "longName": "Colegiales"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "33",
-            "status": {
-              "utcTime": "2025-09-27T20:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "27.09.2025 22:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759003200000
-          },
-          {
             "id": 4748442,
             "leagueId": 896820,
-            "time": "27.09.2025 22:00",
+            "time": "27.09.2025 03:00",
             "home": {
               "id": 276511,
               "score": 0,
@@ -35882,114 +35365,21 @@
             "statusId": 1,
             "tournamentStage": "33",
             "status": {
-              "utcTime": "2025-09-27T20:00:00.000Z",
+              "utcTime": "2025-09-27T01:00:00.000Z",
               "finished": false,
               "started": false,
               "cancelled": false,
               "halfs": {
-                "firstHalfStarted": "27.09.2025 22:00:00"
+                "firstHalfStarted": "27.09.2025 03:00:00"
               },
               "periodLength": 45
             },
-            "timeTS": 1759003200000
-          },
-          {
-            "id": 4748437,
-            "leagueId": 896820,
-            "time": "27.09.2025 22:00",
-            "home": {
-              "id": 10097,
-              "score": 0,
-              "name": "Los Andes",
-              "longName": "Los Andes"
-            },
-            "away": {
-              "id": 161733,
-              "score": 0,
-              "name": "Ferro Carril Oeste",
-              "longName": "Ferro Carril Oeste"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "33",
-            "status": {
-              "utcTime": "2025-09-27T20:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "27.09.2025 22:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759003200000
-          },
-          {
-            "id": 4748438,
-            "leagueId": 896820,
-            "time": "27.09.2025 22:00",
-            "home": {
-              "id": 207875,
-              "score": 0,
-              "name": "Patronato de Parana",
-              "longName": "Patronato de Parana"
-            },
-            "away": {
-              "id": 10099,
-              "score": 0,
-              "name": "Almagro",
-              "longName": "Almagro"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "33",
-            "status": {
-              "utcTime": "2025-09-27T20:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "27.09.2025 22:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759003200000
-          },
-          {
-            "id": 4748440,
-            "leagueId": 896820,
-            "time": "27.09.2025 22:00",
-            "home": {
-              "id": 146371,
-              "score": 0,
-              "name": "San Martin de Tucuman",
-              "longName": "San Martin de Tucuman"
-            },
-            "away": {
-              "id": 10226,
-              "score": 0,
-              "name": "Quilmes",
-              "longName": "Quilmes"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "33",
-            "status": {
-              "utcTime": "2025-09-27T20:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "27.09.2025 22:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759003200000
+            "timeTS": 1758934800000
           },
           {
             "id": 4748441,
             "leagueId": 896820,
-            "time": "27.09.2025 22:00",
+            "time": "28.09.2025 00:00",
             "home": {
               "id": 213528,
               "score": 0,
@@ -36006,16 +35396,16 @@
             "statusId": 1,
             "tournamentStage": "33",
             "status": {
-              "utcTime": "2025-09-27T20:00:00.000Z",
+              "utcTime": "2025-09-27T22:00:00.000Z",
               "finished": false,
               "started": false,
               "cancelled": false,
               "halfs": {
-                "firstHalfStarted": "27.09.2025 22:00:00"
+                "firstHalfStarted": "28.09.2025 00:00:00"
               },
               "periodLength": 45
             },
-            "timeTS": 1759003200000
+            "timeTS": 1759010400000
           }
         ],
         "parentLeagueId": 8965,
@@ -36030,226 +35420,9 @@
         "name": "Primera Nacional Zona B",
         "matches": [
           {
-            "id": 4748593,
-            "leagueId": 896821,
-            "time": "27.09.2025 22:00",
-            "home": {
-              "id": 213603,
-              "score": 0,
-              "name": "CA Defensores de Belgrano",
-              "longName": "CA Defensores de Belgrano"
-            },
-            "away": {
-              "id": 213597,
-              "score": 0,
-              "name": "Central Norte",
-              "longName": "Central Norte"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "33",
-            "status": {
-              "utcTime": "2025-09-27T20:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "27.09.2025 22:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759003200000
-          },
-          {
-            "id": 4748598,
-            "leagueId": 896821,
-            "time": "27.09.2025 22:00",
-            "home": {
-              "id": 425967,
-              "score": 0,
-              "name": "CA Defensores Unidos",
-              "longName": "CA Defensores Unidos"
-            },
-            "away": {
-              "id": 213531,
-              "score": 0,
-              "name": "Temperley",
-              "longName": "Temperley"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "33",
-            "status": {
-              "utcTime": "2025-09-27T20:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "27.09.2025 22:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759003200000
-          },
-          {
-            "id": 4748595,
-            "leagueId": 896821,
-            "time": "27.09.2025 22:00",
-            "home": {
-              "id": 581805,
-              "score": 0,
-              "name": "CA Talleres Remedios de Escalada",
-              "longName": "CA Talleres Remedios de Escalada"
-            },
-            "away": {
-              "id": 465716,
-              "score": 0,
-              "name": "CA Chaco For Ever",
-              "longName": "CA Chaco For Ever"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "33",
-            "status": {
-              "utcTime": "2025-09-27T20:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "27.09.2025 22:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759003200000
-          },
-          {
-            "id": 4748592,
-            "leagueId": 896821,
-            "time": "27.09.2025 22:00",
-            "home": {
-              "id": 10093,
-              "score": 0,
-              "name": "Chacarita Juniors",
-              "longName": "Chacarita Juniors"
-            },
-            "away": {
-              "id": 568727,
-              "score": 0,
-              "name": "Gimnasia Mendoza",
-              "longName": "Gimnasia Mendoza"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "33",
-            "status": {
-              "utcTime": "2025-09-27T20:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "27.09.2025 22:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759003200000
-          },
-          {
-            "id": 4748597,
-            "leagueId": 896821,
-            "time": "27.09.2025 22:00",
-            "home": {
-              "id": 213523,
-              "score": 0,
-              "name": "Club Atlético Estudiantes",
-              "longName": "Club Atlético Estudiantes"
-            },
-            "away": {
-              "id": 10088,
-              "score": 0,
-              "name": "Colon",
-              "longName": "Colon"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "33",
-            "status": {
-              "utcTime": "2025-09-27T20:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "27.09.2025 22:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759003200000
-          },
-          {
-            "id": 4748596,
-            "leagueId": 896821,
-            "time": "27.09.2025 22:00",
-            "home": {
-              "id": 213530,
-              "score": 0,
-              "name": "Deportivo Moron",
-              "longName": "Deportivo Moron"
-            },
-            "away": {
-              "id": 568714,
-              "score": 0,
-              "name": "Club Atletico Mitre",
-              "longName": "Club Atletico Mitre"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "33",
-            "status": {
-              "utcTime": "2025-09-27T20:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "27.09.2025 22:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759003200000
-          },
-          {
-            "id": 4748594,
-            "leagueId": 896821,
-            "time": "27.09.2025 22:00",
-            "home": {
-              "id": 213591,
-              "score": 0,
-              "name": "Estudiantes de Rio Cuarto",
-              "longName": "Estudiantes de Rio Cuarto"
-            },
-            "away": {
-              "id": 207874,
-              "score": 0,
-              "name": "Almirante Brown",
-              "longName": "Almirante Brown"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "33",
-            "status": {
-              "utcTime": "2025-09-27T20:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "27.09.2025 22:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759003200000
-          },
-          {
             "id": 4748590,
             "leagueId": 896821,
-            "time": "27.09.2025 22:00",
+            "time": "27.09.2025 18:00",
             "home": {
               "id": 10091,
               "score": 0,
@@ -36266,21 +35439,21 @@
             "statusId": 1,
             "tournamentStage": "33",
             "status": {
-              "utcTime": "2025-09-27T20:00:00.000Z",
+              "utcTime": "2025-09-27T16:00:00.000Z",
               "finished": false,
               "started": false,
               "cancelled": false,
               "halfs": {
-                "firstHalfStarted": "27.09.2025 22:00:00"
+                "firstHalfStarted": "27.09.2025 18:00:00"
               },
               "periodLength": 45
             },
-            "timeTS": 1759003200000
+            "timeTS": 1758988800000
           },
           {
             "id": 4748591,
             "leagueId": 896821,
-            "time": "27.09.2025 22:00",
+            "time": "27.09.2025 18:05",
             "home": {
               "id": 213522,
               "score": 0,
@@ -36297,16 +35470,140 @@
             "statusId": 1,
             "tournamentStage": "33",
             "status": {
-              "utcTime": "2025-09-27T20:00:00.000Z",
+              "utcTime": "2025-09-27T16:05:00.000Z",
               "finished": false,
               "started": false,
               "cancelled": false,
               "halfs": {
-                "firstHalfStarted": "27.09.2025 22:00:00"
+                "firstHalfStarted": "27.09.2025 18:05:00"
               },
               "periodLength": 45
             },
-            "timeTS": 1759003200000
+            "timeTS": 1758989100000
+          },
+          {
+            "id": 4748593,
+            "leagueId": 896821,
+            "time": "27.09.2025 20:30",
+            "home": {
+              "id": 213603,
+              "score": 0,
+              "name": "CA Defensores de Belgrano",
+              "longName": "CA Defensores de Belgrano"
+            },
+            "away": {
+              "id": 213597,
+              "score": 0,
+              "name": "Central Norte",
+              "longName": "Central Norte"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "33",
+            "status": {
+              "utcTime": "2025-09-27T18:30:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 20:30:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1758997800000
+          },
+          {
+            "id": 4748595,
+            "leagueId": 896821,
+            "time": "27.09.2025 20:30",
+            "home": {
+              "id": 581805,
+              "score": 0,
+              "name": "CA Talleres Remedios de Escalada",
+              "longName": "CA Talleres Remedios de Escalada"
+            },
+            "away": {
+              "id": 465716,
+              "score": 0,
+              "name": "CA Chaco For Ever",
+              "longName": "CA Chaco For Ever"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "33",
+            "status": {
+              "utcTime": "2025-09-27T18:30:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 20:30:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1758997800000
+          },
+          {
+            "id": 4748597,
+            "leagueId": 896821,
+            "time": "27.09.2025 20:30",
+            "home": {
+              "id": 213523,
+              "score": 0,
+              "name": "Club Atlético Estudiantes",
+              "longName": "Club Atlético Estudiantes"
+            },
+            "away": {
+              "id": 10088,
+              "score": 0,
+              "name": "Colon",
+              "longName": "Colon"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "33",
+            "status": {
+              "utcTime": "2025-09-27T18:30:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 20:30:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1758997800000
+          },
+          {
+            "id": 4748596,
+            "leagueId": 896821,
+            "time": "27.09.2025 21:30",
+            "home": {
+              "id": 213530,
+              "score": 0,
+              "name": "Deportivo Moron",
+              "longName": "Deportivo Moron"
+            },
+            "away": {
+              "id": 568714,
+              "score": 0,
+              "name": "Club Atletico Mitre",
+              "longName": "Club Atletico Mitre"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "33",
+            "status": {
+              "utcTime": "2025-09-27T19:30:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 21:30:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759001400000
           }
         ],
         "parentLeagueId": 8965,
@@ -36393,37 +35690,6 @@
         "primaryId": 249,
         "name": "Prva Liga",
         "matches": [
-          {
-            "id": 4904769,
-            "leagueId": 249,
-            "time": "27.09.2025 15:00",
-            "home": {
-              "id": 866489,
-              "score": 0,
-              "name": "FK Struga",
-              "longName": "FK Struga"
-            },
-            "away": {
-              "id": 1589,
-              "score": 0,
-              "name": "Pelister",
-              "longName": "Pelister"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "8",
-            "status": {
-              "utcTime": "2025-09-27T13:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "27.09.2025 15:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1758978000000
-          },
           {
             "id": 4904770,
             "leagueId": 249,
@@ -37640,6 +36906,173 @@
             "timeTS": 1758985200000
           }
         ],
+        "internalRank": 0,
+        "liveRank": 0,
+        "simpleLeague": false
+      },
+      {
+        "ccode": "URU",
+        "id": 899582,
+        "primaryId": 9122,
+        "name": "Segunda Division",
+        "matches": [
+          {
+            "id": 4977146,
+            "leagueId": 899582,
+            "time": "27.09.2025 15:45",
+            "home": {
+              "id": 924934,
+              "score": 0,
+              "name": "Albion",
+              "longName": "Albion"
+            },
+            "away": {
+              "id": 2220,
+              "score": 0,
+              "name": "Cerrito",
+              "longName": "Cerrito"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "22",
+            "status": {
+              "utcTime": "2025-09-27T13:45:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 15:45:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1758980700000
+          },
+          {
+            "id": 4977147,
+            "leagueId": 899582,
+            "time": "27.09.2025 16:00",
+            "home": {
+              "id": 1725579,
+              "score": 0,
+              "name": "Artigas",
+              "longName": "Artigas"
+            },
+            "away": {
+              "id": 1834,
+              "score": 0,
+              "name": "Central Espanol",
+              "longName": "Central Espanol"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "22",
+            "status": {
+              "utcTime": "2025-09-27T14:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 16:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1758981600000
+          },
+          {
+            "id": 4977148,
+            "leagueId": 899582,
+            "time": "27.09.2025 18:00",
+            "home": {
+              "id": 7808,
+              "score": 0,
+              "name": "Fenix",
+              "longName": "Fenix"
+            },
+            "away": {
+              "id": 1319664,
+              "score": 0,
+              "name": "La Luz",
+              "longName": "La Luz"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "22",
+            "status": {
+              "utcTime": "2025-09-27T16:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 18:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1758988800000
+          },
+          {
+            "id": 4977149,
+            "leagueId": 899582,
+            "time": "27.09.2025 20:30",
+            "home": {
+              "id": 4421,
+              "score": 0,
+              "name": "Rampla Juniors",
+              "longName": "Rampla Juniors"
+            },
+            "away": {
+              "id": 2221,
+              "score": 0,
+              "name": "Rentistas",
+              "longName": "Rentistas"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "22",
+            "status": {
+              "utcTime": "2025-09-27T18:30:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 20:30:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1758997800000
+          },
+          {
+            "id": 4977150,
+            "leagueId": 899582,
+            "time": "27.09.2025 20:30",
+            "home": {
+              "id": 1257662,
+              "score": 0,
+              "name": "Uruguay Montevideo",
+              "longName": "Uruguay Montevideo"
+            },
+            "away": {
+              "id": 1223580,
+              "score": 0,
+              "name": "Colon",
+              "longName": "Colon"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "22",
+            "status": {
+              "utcTime": "2025-09-27T18:30:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 20:30:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1758997800000
+          }
+        ],
+        "parentLeagueId": 9122,
         "internalRank": 0,
         "liveRank": 0,
         "simpleLeague": false
@@ -39246,6 +38679,123 @@
             "timeTS": 1758974400000
           }
         ],
+        "internalRank": 0,
+        "liveRank": 0,
+        "simpleLeague": false
+      },
+      {
+        "ccode": "GRE",
+        "id": 905426,
+        "primaryId": 8815,
+        "name": "Super League 2 Grp. A",
+        "matches": [
+          {
+            "id": 4953973,
+            "leagueId": 905426,
+            "time": "27.09.2025 14:00",
+            "home": {
+              "id": 162387,
+              "score": 0,
+              "name": "Makedonikos Neapolis",
+              "longName": "Makedonikos Neapolis"
+            },
+            "away": {
+              "id": 1679128,
+              "score": 0,
+              "name": "Asteras Tripolis B",
+              "longName": "Asteras Tripolis B"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "3",
+            "status": {
+              "utcTime": "2025-09-27T12:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 14:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1758974400000
+          },
+          {
+            "id": 4953971,
+            "leagueId": 905426,
+            "time": "27.09.2025 16:00",
+            "home": {
+              "id": 1620,
+              "score": 0,
+              "name": "PAS Giannina",
+              "longName": "PAS Giannina"
+            },
+            "away": {
+              "id": 1303118,
+              "score": 0,
+              "name": "PAOK Thessaloniki FC B",
+              "longName": "PAOK Thessaloniki FC B"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "3",
+            "status": {
+              "utcTime": "2025-09-27T14:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 16:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1758981600000
+          }
+        ],
+        "parentLeagueId": 8815,
+        "internalRank": 0,
+        "liveRank": 0,
+        "simpleLeague": false
+      },
+      {
+        "ccode": "GRE",
+        "id": 905427,
+        "primaryId": 8815,
+        "name": "Super League 2 Grp. B",
+        "matches": [
+          {
+            "id": 4953981,
+            "leagueId": 905427,
+            "time": "27.09.2025 13:00",
+            "home": {
+              "id": 8170,
+              "score": 0,
+              "name": "Panionios",
+              "longName": "Panionios"
+            },
+            "away": {
+              "id": 488116,
+              "score": 0,
+              "name": "APO Panargiakos",
+              "longName": "APO Panargiakos"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "3",
+            "status": {
+              "utcTime": "2025-09-27T11:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 13:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1758970800000
+          }
+        ],
+        "parentLeagueId": 8815,
         "internalRank": 0,
         "liveRank": 0,
         "simpleLeague": false
@@ -41006,7 +40556,7 @@
           {
             "id": 1000003008,
             "leagueId": 199,
-            "time": "27.09.2025 21:30",
+            "time": "27.09.2025 22:00",
             "home": {
               "id": 49687,
               "score": 0,
@@ -41023,21 +40573,21 @@
             "statusId": 1,
             "tournamentStage": "Clausura - Round 14",
             "status": {
-              "utcTime": "2025-09-27T19:30:00.000Z",
+              "utcTime": "2025-09-27T20:00:00.000Z",
               "finished": false,
               "started": false,
               "cancelled": false,
               "halfs": {
-                "firstHalfStarted": "27.09.2025 21:30:00"
+                "firstHalfStarted": "27.09.2025 22:00:00"
               },
               "periodLength": 45
             },
-            "timeTS": 1759001400000
+            "timeTS": 1759003200000
           },
           {
             "id": 1000003010,
             "leagueId": 199,
-            "time": "28.09.2025 00:00",
+            "time": "28.09.2025 00:30",
             "home": {
               "id": 49689,
               "score": 0,
@@ -41054,16 +40604,16 @@
             "statusId": 1,
             "tournamentStage": "Clausura - Round 14",
             "status": {
-              "utcTime": "2025-09-27T22:00:00.000Z",
+              "utcTime": "2025-09-27T22:30:00.000Z",
               "finished": false,
               "started": false,
               "cancelled": false,
               "halfs": {
-                "firstHalfStarted": "28.09.2025 00:00:00"
+                "firstHalfStarted": "28.09.2025 00:30:00"
               },
               "periodLength": 45
             },
-            "timeTS": 1759010400000
+            "timeTS": 1759012200000
           }
         ],
         "internalRank": 0,
@@ -41810,6 +41360,79 @@
         "simpleLeague": false
       },
       {
+        "ccode": "ECU",
+        "id": 246,
+        "primaryId": 246,
+        "name": "Serie A",
+        "matches": [
+          {
+            "id": 4726877,
+            "leagueId": 246,
+            "time": "27.09.2025 21:00",
+            "home": {
+              "id": 162922,
+              "score": 0,
+              "name": "Manta",
+              "longName": "Manta"
+            },
+            "away": {
+              "id": 6609,
+              "score": 0,
+              "name": "CSD Macara",
+              "longName": "CSD Macara"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "30",
+            "status": {
+              "utcTime": "2025-09-27T19:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 21:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1758999600000
+          },
+          {
+            "id": 4726873,
+            "leagueId": 246,
+            "time": "27.09.2025 23:30",
+            "home": {
+              "id": 6612,
+              "score": 0,
+              "name": "El Nacional",
+              "longName": "El Nacional"
+            },
+            "away": {
+              "id": 304929,
+              "score": 0,
+              "name": "Mushuc Runa",
+              "longName": "Mushuc Runa"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "30",
+            "status": {
+              "utcTime": "2025-09-27T21:30:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 23:30:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759008600000
+          }
+        ],
+        "internalRank": 0,
+        "liveRank": 0,
+        "simpleLeague": false
+      },
+      {
         "ccode": "BRA",
         "id": 8971,
         "primaryId": 8971,
@@ -41876,6 +41499,49 @@
               "periodLength": 45
             },
             "timeTS": 1759012200000
+          }
+        ],
+        "internalRank": 0,
+        "liveRank": 0,
+        "simpleLeague": false
+      },
+      {
+        "ccode": "BRA",
+        "id": 9464,
+        "primaryId": 9464,
+        "name": "Serie D",
+        "matches": [
+          {
+            "id": 1000004433,
+            "leagueId": 9464,
+            "time": "27.09.2025 22:00",
+            "home": {
+              "id": 9920,
+              "score": 0,
+              "name": "Santa Cruz",
+              "longName": "Santa Cruz"
+            },
+            "away": {
+              "id": 1320333,
+              "score": 0,
+              "name": "Barra FC",
+              "longName": "Barra FC"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "Finals",
+            "status": {
+              "utcTime": "2025-09-27T20:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "27.09.2025 22:00:00"
+              },
+              "periodLength": 45,
+              "aggregatedStr": "0 - 0"
+            },
+            "timeTS": 1759003200000
           }
         ],
         "internalRank": 0,
@@ -50879,6 +50545,79 @@
         "simpleLeague": false
       },
       {
+        "ccode": "ALG",
+        "id": 516,
+        "primaryId": 516,
+        "name": "Ligue 1",
+        "matches": [
+          {
+            "id": 4907680,
+            "leagueId": 516,
+            "time": "28.09.2025 17:00",
+            "home": {
+              "id": 101633,
+              "score": 0,
+              "name": "CR Belouizdad",
+              "longName": "CR Belouizdad"
+            },
+            "away": {
+              "id": 277392,
+              "score": 0,
+              "name": "CS Constantine",
+              "longName": "CS Constantine"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "6",
+            "status": {
+              "utcTime": "2025-09-28T15:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "28.09.2025 17:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759071600000
+          },
+          {
+            "id": 4907683,
+            "leagueId": 516,
+            "time": "28.09.2025 17:00",
+            "home": {
+              "id": 1660716,
+              "score": 0,
+              "name": "Olympique Akbou",
+              "longName": "Olympique Akbou"
+            },
+            "away": {
+              "id": 1387869,
+              "score": 0,
+              "name": "USM Khenchela",
+              "longName": "USM Khenchela"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "6",
+            "status": {
+              "utcTime": "2025-09-28T15:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "28.09.2025 17:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759071600000
+          }
+        ],
+        "internalRank": 0,
+        "liveRank": 0,
+        "simpleLeague": false
+      },
+      {
         "ccode": "PAN",
         "id": 901159,
         "primaryId": 9039,
@@ -52315,7 +52054,7 @@
           {
             "id": 4709642,
             "leagueId": 250,
-            "time": "28.09.2025 15:45",
+            "time": "28.09.2025 15:30",
             "home": {
               "id": 4176,
               "score": 0,
@@ -52332,16 +52071,16 @@
             "statusId": 1,
             "tournamentStage": "24",
             "status": {
-              "utcTime": "2025-09-28T13:45:00.000Z",
+              "utcTime": "2025-09-28T13:30:00.000Z",
               "finished": false,
               "started": false,
               "cancelled": false,
               "halfs": {
-                "firstHalfStarted": "28.09.2025 15:45:00"
+                "firstHalfStarted": "28.09.2025 15:30:00"
               },
               "periodLength": 45
             },
-            "timeTS": 1759067100000
+            "timeTS": 1759066200000
           },
           {
             "id": 4709641,
@@ -53886,10 +53625,301 @@
       },
       {
         "ccode": "ARG",
+        "id": 896820,
+        "primaryId": 8965,
+        "name": "Primera Nacional Zona A",
+        "matches": [
+          {
+            "id": 4748445,
+            "leagueId": 896820,
+            "time": "28.09.2025 20:30",
+            "home": {
+              "id": 354496,
+              "score": 0,
+              "name": "CA Alvarado",
+              "longName": "CA Alvarado"
+            },
+            "away": {
+              "id": 161732,
+              "score": 0,
+              "name": "All Boys",
+              "longName": "All Boys"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "33",
+            "status": {
+              "utcTime": "2025-09-28T18:30:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "28.09.2025 20:30:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759084200000
+          },
+          {
+            "id": 4748437,
+            "leagueId": 896820,
+            "time": "28.09.2025 20:30",
+            "home": {
+              "id": 10097,
+              "score": 0,
+              "name": "Los Andes",
+              "longName": "Los Andes"
+            },
+            "away": {
+              "id": 161733,
+              "score": 0,
+              "name": "Ferro Carril Oeste",
+              "longName": "Ferro Carril Oeste"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "33",
+            "status": {
+              "utcTime": "2025-09-28T18:30:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "28.09.2025 20:30:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759084200000
+          },
+          {
+            "id": 4748438,
+            "leagueId": 896820,
+            "time": "28.09.2025 20:30",
+            "home": {
+              "id": 207875,
+              "score": 0,
+              "name": "Patronato de Parana",
+              "longName": "Patronato de Parana"
+            },
+            "away": {
+              "id": 10099,
+              "score": 0,
+              "name": "Almagro",
+              "longName": "Almagro"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "33",
+            "status": {
+              "utcTime": "2025-09-28T18:30:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "28.09.2025 20:30:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759084200000
+          },
+          {
+            "id": 4748439,
+            "leagueId": 896820,
+            "time": "28.09.2025 21:00",
+            "home": {
+              "id": 719912,
+              "score": 0,
+              "name": "Atletico Guemes",
+              "longName": "Atletico Guemes"
+            },
+            "away": {
+              "id": 581826,
+              "score": 0,
+              "name": "CA San Miguel",
+              "longName": "CA San Miguel"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "33",
+            "status": {
+              "utcTime": "2025-09-28T19:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "28.09.2025 21:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759086000000
+          },
+          {
+            "id": 4748444,
+            "leagueId": 896820,
+            "time": "28.09.2025 21:00",
+            "home": {
+              "id": 568706,
+              "score": 0,
+              "name": "Deportivo Madryn",
+              "longName": "Deportivo Madryn"
+            },
+            "away": {
+              "id": 10098,
+              "score": 0,
+              "name": "Arsenal Sarandi",
+              "longName": "Arsenal Sarandi"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "33",
+            "status": {
+              "utcTime": "2025-09-28T19:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "28.09.2025 21:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759086000000
+          },
+          {
+            "id": 4748443,
+            "leagueId": 896820,
+            "time": "28.09.2025 21:30",
+            "home": {
+              "id": 213590,
+              "score": 0,
+              "name": "Deportivo Maipu",
+              "longName": "Deportivo Maipu"
+            },
+            "away": {
+              "id": 213535,
+              "score": 0,
+              "name": "Colegiales",
+              "longName": "Colegiales"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "33",
+            "status": {
+              "utcTime": "2025-09-28T19:30:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "28.09.2025 21:30:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759087800000
+          },
+          {
+            "id": 4748440,
+            "leagueId": 896820,
+            "time": "29.09.2025 01:30",
+            "home": {
+              "id": 146371,
+              "score": 0,
+              "name": "San Martin de Tucuman",
+              "longName": "San Martin de Tucuman"
+            },
+            "away": {
+              "id": 10226,
+              "score": 0,
+              "name": "Quilmes",
+              "longName": "Quilmes"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "33",
+            "status": {
+              "utcTime": "2025-09-28T23:30:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "29.09.2025 01:30:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759102200000
+          }
+        ],
+        "parentLeagueId": 8965,
+        "internalRank": 8,
+        "liveRank": 0,
+        "simpleLeague": false
+      },
+      {
+        "ccode": "ARG",
         "id": 896821,
         "primaryId": 8965,
         "name": "Primera Nacional Zona B",
         "matches": [
+          {
+            "id": 4748592,
+            "leagueId": 896821,
+            "time": "28.09.2025 20:15",
+            "home": {
+              "id": 10093,
+              "score": 0,
+              "name": "Chacarita Juniors",
+              "longName": "Chacarita Juniors"
+            },
+            "away": {
+              "id": 568727,
+              "score": 0,
+              "name": "Gimnasia Mendoza",
+              "longName": "Gimnasia Mendoza"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "33",
+            "status": {
+              "utcTime": "2025-09-28T18:15:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "28.09.2025 20:15:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759083300000
+          },
+          {
+            "id": 4748598,
+            "leagueId": 896821,
+            "time": "28.09.2025 20:30",
+            "home": {
+              "id": 425967,
+              "score": 0,
+              "name": "CA Defensores Unidos",
+              "longName": "CA Defensores Unidos"
+            },
+            "away": {
+              "id": 213531,
+              "score": 0,
+              "name": "Temperley",
+              "longName": "Temperley"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "33",
+            "status": {
+              "utcTime": "2025-09-28T18:30:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "28.09.2025 20:30:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759084200000
+          },
           {
             "id": 4748603,
             "leagueId": 896821,
@@ -53920,6 +53950,37 @@
               "periodLength": 45
             },
             "timeTS": 1759089600000
+          },
+          {
+            "id": 4748594,
+            "leagueId": 896821,
+            "time": "29.09.2025 00:00",
+            "home": {
+              "id": 213591,
+              "score": 0,
+              "name": "Estudiantes de Rio Cuarto",
+              "longName": "Estudiantes de Rio Cuarto"
+            },
+            "away": {
+              "id": 207874,
+              "score": 0,
+              "name": "Almirante Brown",
+              "longName": "Almirante Brown"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "33",
+            "status": {
+              "utcTime": "2025-09-28T22:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "29.09.2025 00:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759096800000
           }
         ],
         "parentLeagueId": 8965,
@@ -54290,6 +54351,80 @@
             "timeTS": 1759071600000
           }
         ],
+        "internalRank": 0,
+        "liveRank": 0,
+        "simpleLeague": false
+      },
+      {
+        "ccode": "URU",
+        "id": 899582,
+        "primaryId": 9122,
+        "name": "Segunda Division",
+        "matches": [
+          {
+            "id": 4977151,
+            "leagueId": 899582,
+            "time": "28.09.2025 02:00",
+            "home": {
+              "id": 688270,
+              "score": 0,
+              "name": "Oriental",
+              "longName": "Oriental"
+            },
+            "away": {
+              "id": 1833,
+              "score": 0,
+              "name": "Deportivo Maldonado",
+              "longName": "Deportivo Maldonado"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "22",
+            "status": {
+              "utcTime": "2025-09-28T00:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "28.09.2025 02:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759017600000
+          },
+          {
+            "id": 4977152,
+            "leagueId": 899582,
+            "time": "28.09.2025 02:15",
+            "home": {
+              "id": 181912,
+              "score": 0,
+              "name": "Atenas",
+              "longName": "Atenas"
+            },
+            "away": {
+              "id": 1837,
+              "score": 0,
+              "name": "Tacuarembo FC",
+              "longName": "Tacuarembo FC"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "22",
+            "status": {
+              "utcTime": "2025-09-28T00:15:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "28.09.2025 02:15:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759018500000
+          }
+        ],
+        "parentLeagueId": 9122,
         "internalRank": 0,
         "liveRank": 0,
         "simpleLeague": false
@@ -56814,7 +56949,7 @@
           {
             "id": 4953972,
             "leagueId": 905426,
-            "time": "28.09.2025 16:00",
+            "time": "28.09.2025 13:00",
             "home": {
               "id": 149647,
               "score": 0,
@@ -56831,21 +56966,21 @@
             "statusId": 1,
             "tournamentStage": "3",
             "status": {
-              "utcTime": "2025-09-28T14:00:00.000Z",
+              "utcTime": "2025-09-28T11:00:00.000Z",
               "finished": false,
               "started": false,
               "cancelled": false,
               "halfs": {
-                "firstHalfStarted": "28.09.2025 16:00:00"
+                "firstHalfStarted": "28.09.2025 13:00:00"
               },
               "periodLength": 45
             },
-            "timeTS": 1759068000000
+            "timeTS": 1759057200000
           },
           {
             "id": 4953974,
             "leagueId": 905426,
-            "time": "28.09.2025 16:00",
+            "time": "28.09.2025 13:00",
             "home": {
               "id": 488158,
               "score": 0,
@@ -56862,109 +56997,16 @@
             "statusId": 1,
             "tournamentStage": "3",
             "status": {
-              "utcTime": "2025-09-28T14:00:00.000Z",
+              "utcTime": "2025-09-28T11:00:00.000Z",
               "finished": false,
               "started": false,
               "cancelled": false,
               "halfs": {
-                "firstHalfStarted": "28.09.2025 16:00:00"
+                "firstHalfStarted": "28.09.2025 13:00:00"
               },
               "periodLength": 45
             },
-            "timeTS": 1759068000000
-          },
-          {
-            "id": 4953973,
-            "leagueId": 905426,
-            "time": "28.09.2025 16:00",
-            "home": {
-              "id": 162387,
-              "score": 0,
-              "name": "Makedonikos Neapolis",
-              "longName": "Makedonikos Neapolis"
-            },
-            "away": {
-              "id": 1679128,
-              "score": 0,
-              "name": "Asteras Tripolis B",
-              "longName": "Asteras Tripolis B"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "3",
-            "status": {
-              "utcTime": "2025-09-28T14:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "28.09.2025 16:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759068000000
-          },
-          {
-            "id": 4953970,
-            "leagueId": 905426,
-            "time": "28.09.2025 16:00",
-            "home": {
-              "id": 488150,
-              "score": 0,
-              "name": "Nestos Chrisoupolis",
-              "longName": "Nestos Chrisoupolis"
-            },
-            "away": {
-              "id": 149646,
-              "score": 0,
-              "name": "Kavala",
-              "longName": "Kavala"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "3",
-            "status": {
-              "utcTime": "2025-09-28T14:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "28.09.2025 16:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759068000000
-          },
-          {
-            "id": 4953971,
-            "leagueId": 905426,
-            "time": "28.09.2025 16:00",
-            "home": {
-              "id": 1620,
-              "score": 0,
-              "name": "PAS Giannina",
-              "longName": "PAS Giannina"
-            },
-            "away": {
-              "id": 1303118,
-              "score": 0,
-              "name": "PAOK Thessaloniki FC B",
-              "longName": "PAOK Thessaloniki FC B"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "3",
-            "status": {
-              "utcTime": "2025-09-28T14:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "28.09.2025 16:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759068000000
+            "timeTS": 1759057200000
           }
         ],
         "parentLeagueId": 8815,
@@ -56981,7 +57023,7 @@
           {
             "id": 4953977,
             "leagueId": 905427,
-            "time": "28.09.2025 16:00",
+            "time": "28.09.2025 14:00",
             "home": {
               "id": 7975,
               "score": 0,
@@ -56998,16 +57040,47 @@
             "statusId": 1,
             "tournamentStage": "3",
             "status": {
-              "utcTime": "2025-09-28T14:00:00.000Z",
+              "utcTime": "2025-09-28T12:00:00.000Z",
               "finished": false,
               "started": false,
               "cancelled": false,
               "halfs": {
-                "firstHalfStarted": "28.09.2025 16:00:00"
+                "firstHalfStarted": "28.09.2025 14:00:00"
               },
               "periodLength": 45
             },
-            "timeTS": 1759068000000
+            "timeTS": 1759060800000
+          },
+          {
+            "id": 4953979,
+            "leagueId": 905427,
+            "time": "28.09.2025 15:00",
+            "home": {
+              "id": 1303117,
+              "score": 0,
+              "name": "Olympiacos B",
+              "longName": "Olympiacos B"
+            },
+            "away": {
+              "id": 488110,
+              "score": 0,
+              "name": "PAE Chania",
+              "longName": "PAE Chania"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "3",
+            "status": {
+              "utcTime": "2025-09-28T13:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "28.09.2025 15:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759064400000
           },
           {
             "id": 4953980,
@@ -57055,68 +57128,6 @@
               "score": 0,
               "name": "Ilioupoli GS",
               "longName": "Ilioupoli GS"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "3",
-            "status": {
-              "utcTime": "2025-09-28T14:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "28.09.2025 16:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759068000000
-          },
-          {
-            "id": 4953979,
-            "leagueId": 905427,
-            "time": "28.09.2025 16:00",
-            "home": {
-              "id": 1303117,
-              "score": 0,
-              "name": "Olympiacos B",
-              "longName": "Olympiacos B"
-            },
-            "away": {
-              "id": 488110,
-              "score": 0,
-              "name": "PAE Chania",
-              "longName": "PAE Chania"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "3",
-            "status": {
-              "utcTime": "2025-09-28T14:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "28.09.2025 16:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759068000000
-          },
-          {
-            "id": 4953981,
-            "leagueId": 905427,
-            "time": "28.09.2025 16:00",
-            "home": {
-              "id": 8170,
-              "score": 0,
-              "name": "Panionios",
-              "longName": "Panionios"
-            },
-            "away": {
-              "id": 488116,
-              "score": 0,
-              "name": "APO Panargiakos",
-              "longName": "APO Panargiakos"
             },
             "eliminatedTeamId": null,
             "statusId": 1,
@@ -58696,40 +58707,9 @@
         "name": "Division Profesional",
         "matches": [
           {
-            "id": 1000003011,
-            "leagueId": 199,
-            "time": "28.09.2025 21:00",
-            "home": {
-              "id": 59844,
-              "score": 0,
-              "name": "Sportivo Trinidense",
-              "longName": "Sportivo Trinidense"
-            },
-            "away": {
-              "id": 1893,
-              "score": 0,
-              "name": "Guarani",
-              "longName": "Guarani"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "Clausura - Round 14",
-            "status": {
-              "utcTime": "2025-09-28T19:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "28.09.2025 21:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759086000000
-          },
-          {
             "id": 1000003009,
             "leagueId": 199,
-            "time": "29.09.2025 00:00",
+            "time": "28.09.2025 20:30",
             "home": {
               "id": 49688,
               "score": 0,
@@ -58746,16 +58726,16 @@
             "statusId": 1,
             "tournamentStage": "Clausura - Round 14",
             "status": {
-              "utcTime": "2025-09-28T22:00:00.000Z",
+              "utcTime": "2025-09-28T18:30:00.000Z",
               "finished": false,
               "started": false,
               "cancelled": false,
               "halfs": {
-                "firstHalfStarted": "29.09.2025 00:00:00"
+                "firstHalfStarted": "28.09.2025 20:30:00"
               },
               "periodLength": 45
             },
-            "timeTS": 1759096800000
+            "timeTS": 1759084200000
           }
         ],
         "internalRank": 0,
@@ -59269,68 +59249,6 @@
         "name": "Serie A",
         "matches": [
           {
-            "id": 4726878,
-            "leagueId": 246,
-            "time": "28.09.2025 02:00",
-            "home": {
-              "id": 1014174,
-              "score": 0,
-              "name": "Orense",
-              "longName": "Orense"
-            },
-            "away": {
-              "id": 1850,
-              "score": 0,
-              "name": "Emelec",
-              "longName": "Emelec"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "30",
-            "status": {
-              "utcTime": "2025-09-28T00:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "28.09.2025 02:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759017600000
-          },
-          {
-            "id": 4726879,
-            "leagueId": 246,
-            "time": "28.09.2025 02:00",
-            "home": {
-              "id": 113054,
-              "score": 0,
-              "name": "Tecnico Universitario",
-              "longName": "Tecnico Universitario"
-            },
-            "away": {
-              "id": 6721,
-              "score": 0,
-              "name": "LDU de Quito",
-              "longName": "LDU de Quito"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "30",
-            "status": {
-              "utcTime": "2025-09-28T00:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "28.09.2025 02:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759017600000
-          },
-          {
             "id": 4726871,
             "leagueId": 246,
             "time": "28.09.2025 02:00",
@@ -59362,9 +59280,71 @@
             "timeTS": 1759017600000
           },
           {
+            "id": 4726878,
+            "leagueId": 246,
+            "time": "28.09.2025 23:00",
+            "home": {
+              "id": 1014174,
+              "score": 0,
+              "name": "Orense",
+              "longName": "Orense"
+            },
+            "away": {
+              "id": 1850,
+              "score": 0,
+              "name": "Emelec",
+              "longName": "Emelec"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "30",
+            "status": {
+              "utcTime": "2025-09-28T21:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "28.09.2025 23:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759093200000
+          },
+          {
+            "id": 4726879,
+            "leagueId": 246,
+            "time": "28.09.2025 23:00",
+            "home": {
+              "id": 113054,
+              "score": 0,
+              "name": "Tecnico Universitario",
+              "longName": "Tecnico Universitario"
+            },
+            "away": {
+              "id": 6721,
+              "score": 0,
+              "name": "LDU de Quito",
+              "longName": "LDU de Quito"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "30",
+            "status": {
+              "utcTime": "2025-09-28T21:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "28.09.2025 23:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759093200000
+          },
+          {
             "id": 4726876,
             "leagueId": 246,
-            "time": "28.09.2025 02:00",
+            "time": "28.09.2025 23:00",
             "home": {
               "id": 1345405,
               "score": 0,
@@ -59381,83 +59361,21 @@
             "statusId": 1,
             "tournamentStage": "30",
             "status": {
-              "utcTime": "2025-09-28T00:00:00.000Z",
+              "utcTime": "2025-09-28T21:00:00.000Z",
               "finished": false,
               "started": false,
               "cancelled": false,
               "halfs": {
-                "firstHalfStarted": "28.09.2025 02:00:00"
+                "firstHalfStarted": "28.09.2025 23:00:00"
               },
               "periodLength": 45
             },
-            "timeTS": 1759017600000
-          },
-          {
-            "id": 4726877,
-            "leagueId": 246,
-            "time": "28.09.2025 02:00",
-            "home": {
-              "id": 162922,
-              "score": 0,
-              "name": "Manta",
-              "longName": "Manta"
-            },
-            "away": {
-              "id": 6609,
-              "score": 0,
-              "name": "CSD Macara",
-              "longName": "CSD Macara"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "30",
-            "status": {
-              "utcTime": "2025-09-28T00:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "28.09.2025 02:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759017600000
-          },
-          {
-            "id": 4726873,
-            "leagueId": 246,
-            "time": "28.09.2025 02:00",
-            "home": {
-              "id": 6612,
-              "score": 0,
-              "name": "El Nacional",
-              "longName": "El Nacional"
-            },
-            "away": {
-              "id": 304929,
-              "score": 0,
-              "name": "Mushuc Runa",
-              "longName": "Mushuc Runa"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "30",
-            "status": {
-              "utcTime": "2025-09-28T00:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "28.09.2025 02:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759017600000
+            "timeTS": 1759093200000
           },
           {
             "id": 4726874,
             "leagueId": 246,
-            "time": "28.09.2025 02:00",
+            "time": "28.09.2025 23:00",
             "home": {
               "id": 192875,
               "score": 0,
@@ -59474,21 +59392,21 @@
             "statusId": 1,
             "tournamentStage": "30",
             "status": {
-              "utcTime": "2025-09-28T00:00:00.000Z",
+              "utcTime": "2025-09-28T21:00:00.000Z",
               "finished": false,
               "started": false,
               "cancelled": false,
               "halfs": {
-                "firstHalfStarted": "28.09.2025 02:00:00"
+                "firstHalfStarted": "28.09.2025 23:00:00"
               },
               "periodLength": 45
             },
-            "timeTS": 1759017600000
+            "timeTS": 1759093200000
           },
           {
             "id": 4726880,
             "leagueId": 246,
-            "time": "28.09.2025 02:00",
+            "time": "28.09.2025 23:00",
             "home": {
               "id": 113053,
               "score": 0,
@@ -59505,16 +59423,16 @@
             "statusId": 1,
             "tournamentStage": "30",
             "status": {
-              "utcTime": "2025-09-28T00:00:00.000Z",
+              "utcTime": "2025-09-28T21:00:00.000Z",
               "finished": false,
               "started": false,
               "cancelled": false,
               "halfs": {
-                "firstHalfStarted": "28.09.2025 02:00:00"
+                "firstHalfStarted": "28.09.2025 23:00:00"
               },
               "periodLength": 45
             },
-            "timeTS": 1759017600000
+            "timeTS": 1759093200000
           }
         ],
         "internalRank": 0,
@@ -59588,49 +59506,6 @@
               "periodLength": 45
             },
             "timeTS": 1759096800000
-          }
-        ],
-        "internalRank": 0,
-        "liveRank": 0,
-        "simpleLeague": false
-      },
-      {
-        "ccode": "BRA",
-        "id": 9464,
-        "primaryId": 9464,
-        "name": "Serie D",
-        "matches": [
-          {
-            "id": 1000004433,
-            "leagueId": 9464,
-            "time": "28.09.2025 02:00",
-            "home": {
-              "id": 9920,
-              "score": 0,
-              "name": "Santa Cruz",
-              "longName": "Santa Cruz"
-            },
-            "away": {
-              "id": 1320333,
-              "score": 0,
-              "name": "Barra FC",
-              "longName": "Barra FC"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "Finals",
-            "status": {
-              "utcTime": "2025-09-28T00:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "28.09.2025 02:00:00"
-              },
-              "periodLength": 45,
-              "aggregatedStr": "0 - 0"
-            },
-            "timeTS": 1759017600000
           }
         ],
         "internalRank": 0,
@@ -62798,6 +62673,79 @@
         "simpleLeague": false
       },
       {
+        "ccode": "ALG",
+        "id": 516,
+        "primaryId": 516,
+        "name": "Ligue 1",
+        "matches": [
+          {
+            "id": 4907681,
+            "leagueId": 516,
+            "time": "29.09.2025 17:00",
+            "home": {
+              "id": 101628,
+              "score": 0,
+              "name": "USM Alger",
+              "longName": "USM Alger"
+            },
+            "away": {
+              "id": 1387865,
+              "score": 0,
+              "name": "MC El Bayadh",
+              "longName": "MC El Bayadh"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "6",
+            "status": {
+              "utcTime": "2025-09-29T15:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "29.09.2025 17:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759158000000
+          },
+          {
+            "id": 4907678,
+            "leagueId": 516,
+            "time": "29.09.2025 19:00",
+            "home": {
+              "id": 316402,
+              "score": 0,
+              "name": "ES Mostaganem",
+              "longName": "ES Mostaganem"
+            },
+            "away": {
+              "id": 45655,
+              "score": 0,
+              "name": "ES Setif",
+              "longName": "ES Setif"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "6",
+            "status": {
+              "utcTime": "2025-09-29T17:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "29.09.2025 19:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759165200000
+          }
+        ],
+        "internalRank": 0,
+        "liveRank": 0,
+        "simpleLeague": false
+      },
+      {
         "ccode": "FRA",
         "id": 110,
         "primaryId": 110,
@@ -63953,6 +63901,37 @@
               "periodLength": 45
             },
             "timeTS": 1759150800000
+          },
+          {
+            "id": 4904769,
+            "leagueId": 249,
+            "time": "29.09.2025 15:00",
+            "home": {
+              "id": 866489,
+              "score": 0,
+              "name": "FK Struga",
+              "longName": "FK Struga"
+            },
+            "away": {
+              "id": 1589,
+              "score": 0,
+              "name": "Pelister",
+              "longName": "Pelister"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "8",
+            "status": {
+              "utcTime": "2025-09-29T13:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "29.09.2025 15:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759150800000
           }
         ],
         "internalRank": 11,
@@ -64419,6 +64398,49 @@
         "simpleLeague": false
       },
       {
+        "ccode": "GRE",
+        "id": 905426,
+        "primaryId": 8815,
+        "name": "Super League 2 Grp. A",
+        "matches": [
+          {
+            "id": 4953970,
+            "leagueId": 905426,
+            "time": "29.09.2025 16:00",
+            "home": {
+              "id": 488150,
+              "score": 0,
+              "name": "Nestos Chrisoupolis",
+              "longName": "Nestos Chrisoupolis"
+            },
+            "away": {
+              "id": 149646,
+              "score": 0,
+              "name": "Kavala",
+              "longName": "Kavala"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "3",
+            "status": {
+              "utcTime": "2025-09-29T14:00:00.000Z",
+              "finished": false,
+              "started": false,
+              "cancelled": false,
+              "halfs": {
+                "firstHalfStarted": "29.09.2025 16:00:00"
+              },
+              "periodLength": 45
+            },
+            "timeTS": 1759154400000
+          }
+        ],
+        "parentLeagueId": 8815,
+        "internalRank": 0,
+        "liveRank": 0,
+        "simpleLeague": false
+      },
+      {
         "ccode": "TUR",
         "id": 71,
         "primaryId": 71,
@@ -64881,7 +64903,7 @@
           {
             "id": 1000003013,
             "leagueId": 199,
-            "time": "29.09.2025 21:30",
+            "time": "29.09.2025 22:00",
             "home": {
               "id": 1242560,
               "score": 0,
@@ -64898,21 +64920,21 @@
             "statusId": 1,
             "tournamentStage": "Clausura - Round 14",
             "status": {
-              "utcTime": "2025-09-29T19:30:00.000Z",
+              "utcTime": "2025-09-29T20:00:00.000Z",
               "finished": false,
               "started": false,
               "cancelled": false,
               "halfs": {
-                "firstHalfStarted": "29.09.2025 21:30:00"
+                "firstHalfStarted": "29.09.2025 22:00:00"
               },
               "periodLength": 45
             },
-            "timeTS": 1759174200000
+            "timeTS": 1759176000000
           },
           {
             "id": 1000003012,
             "leagueId": 199,
-            "time": "30.09.2025 00:00",
+            "time": "30.09.2025 00:30",
             "home": {
               "id": 1299349,
               "score": 0,
@@ -64929,16 +64951,16 @@
             "statusId": 1,
             "tournamentStage": "Clausura - Round 14",
             "status": {
-              "utcTime": "2025-09-29T22:00:00.000Z",
+              "utcTime": "2025-09-29T22:30:00.000Z",
               "finished": false,
               "started": false,
               "cancelled": false,
               "halfs": {
-                "firstHalfStarted": "30.09.2025 00:00:00"
+                "firstHalfStarted": "30.09.2025 00:30:00"
               },
               "periodLength": 45
             },
-            "timeTS": 1759183200000
+            "timeTS": 1759185000000
           }
         ],
         "internalRank": 0,
@@ -67951,49 +67973,6 @@
         ],
         "parentLeagueId": 131,
         "internalRank": 0,
-        "liveRank": 0,
-        "simpleLeague": false
-      },
-      {
-        "ccode": "ROU",
-        "id": 901684,
-        "primaryId": 9113,
-        "name": "Liga II",
-        "matches": [
-          {
-            "id": 4889860,
-            "leagueId": 901684,
-            "time": "30.09.2025 16:00",
-            "home": {
-              "id": 1277917,
-              "score": 0,
-              "name": "Steaua Bucuresti",
-              "longName": "Steaua Bucuresti"
-            },
-            "away": {
-              "id": 583706,
-              "score": 0,
-              "name": "Sepsi OSK",
-              "longName": "Sepsi OSK"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "8",
-            "status": {
-              "utcTime": "2025-09-30T14:00:00.000Z",
-              "finished": false,
-              "started": false,
-              "cancelled": false,
-              "halfs": {
-                "firstHalfStarted": "30.09.2025 16:00:00"
-              },
-              "periodLength": 45
-            },
-            "timeTS": 1759240800000
-          }
-        ],
-        "parentLeagueId": 9113,
-        "internalRank": 9,
         "liveRank": 0,
         "simpleLeague": false
       },

@@ -1,11 +1,15 @@
 import express from 'express';
 import AdminController from '../controllers/admin.controller.js';
 import { authenticateToken } from '../middlewares/auth.js';
+import leaguesRouter from './admin/leagues.js';
 
 const router = express.Router();
 const adminController = new AdminController();
 
-// Apply authentication middleware to all admin routes
+// Admin leagues routes (without auth for now)
+router.use('/leagues', leaguesRouter);
+
+// Apply authentication middleware to other admin routes
 router.use(authenticateToken);
 
 // Update bet status

@@ -50,20 +50,19 @@ export const fetchPopularLeagues = createAsyncThunk(
   "leagues/fetchPopularLeagues",
   async (_, { rejectWithValue }) => {
     try {
-      console.log("Fetching popular leagues for sidebar...");
+      console.log("🔄 Fetching leagues from CSV file...");
 
-      // Updated endpoint to fetch leagues with isPopular flag
-      const response = await apiClient.get("/fixtures/leagues/popular");
+      // Use new admin endpoint that serves leagues from CSV
+      const response = await apiClient.get("/admin/leagues");
+      console.log("📡 API Response:", response.data);
 
       const leagues = response.data.data;
+      console.log(`✅ Loaded ${leagues.length} leagues from CSV`);
       return leagues;
     } catch (error) {
       // Return fallback data if API fails
-
-      console.warn(
-        "Failed to fetch popular leagues, using fallback data:",
-        error
-      );
+      console.error("❌ Failed to fetch leagues from CSV:", error);
+      console.warn("🔄 Using fallback data instead");
       return fallbackLeagues;
     }
   }
@@ -74,7 +73,7 @@ export const updateLeaguePopularity = createAsyncThunk(
   "leagues/updateLeaguePopularity",
   async (leagues, { rejectWithValue }) => {
     try {
-      const response = await apiClient.post("/fixtures/leagues/popular", {
+      const response = await apiClient.post("/admin/leagues/popular", {
         leagues: leagues
       });
 

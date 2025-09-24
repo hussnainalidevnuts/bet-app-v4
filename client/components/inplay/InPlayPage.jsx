@@ -1,105 +1,103 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Clock } from 'lucide-react';
-import { useSelector } from 'react-redux';
-import { selectLiveMatches, selectIsConnected, selectLiveOdds } from '@/lib/features/websocket/websocketSlice';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchLiveMatches, selectLiveMatchesGrouped, selectLiveMatchesLoading, selectLiveMatchesError } from '@/lib/features/matches/liveMatchesSlice';
 import MatchListPage from '@/components/shared/MatchListPage';
 import LiveTimer from '@/components/home/LiveTimer';
-import websocketService from '@/lib/services/websocketService';
 
 const InPlayPage = () => {
-    const liveMatches = useSelector(selectLiveMatches);
-    const isConnected = useSelector(selectIsConnected);
-    const liveOdds = useSelector(selectLiveOdds);
-    
-    // Check if we have both matches and odds for those matches
-    const hasCompleteData = useMemo(() => {
-        if (liveMatches.length === 0) return true; // No matches means no data needed
-        
-        // Check if we have odds for at least some matches
-        const totalMatches = liveMatches.reduce((total, leagueGroup) => 
-            total + (leagueGroup.matches?.length || 0), 0);
-        
-        const matchesWithOdds = liveMatches.reduce((count, leagueGroup) => {
-            if (!leagueGroup.matches) return count;
-            return count + leagueGroup.matches.filter(match => 
-                liveOdds[match.id] && liveOdds[match.id].odds
-            ).length;
-        }, 0);
-        
-        return matchesWithOdds > 0;
-    }, [liveMatches, liveOdds]);
-    
-    // Add timeout to prevent infinite loading
-    const [showMatchesAnyway, setShowMatchesAnyway] = useState(false);
+    const liveMatchesRaw = useSelector(selectLiveMatchesGrouped);
+    const loading = useSelector(selectLiveMatchesLoading);
+    const error = useSelector(selectLiveMatchesError);
+    const dispatch = useDispatch();
     
     useEffect(() => {
-        if (liveMatches.length > 0 && !hasCompleteData) {
-            const timer = setTimeout(() => {
-                setShowMatchesAnyway(true);
-            }, 10000); // 10 seconds timeout
-            
-            return () => clearTimeout(timer);
-        } else if (hasCompleteData) {
-            setShowMatchesAnyway(false);
-        }
-    }, [liveMatches.length, hasCompleteData]);
+        dispatch(fetchLiveMatches());
+    }, [dispatch]);
 
-
-
-    useEffect(() => {
-        // WebSocket is already initialized by WebSocketInitializer
-        // Just join live matches room for this component
-        websocketService.joinLiveMatches();
-        
-        return () => {
-            // Cleanup: leave live matches room when component unmounts
-            // Don't disconnect the socket as it might be used by other components
-        };
-    }, []);
-
-    // Use WebSocket data exclusively
+    // Transform Unibet API data to match MatchListPage expected format
     const displayMatches = useMemo(() => {
-        if (!Array.isArray(liveMatches)) {
+        if (!Array.isArray(liveMatchesRaw)) {
             return [];
         }
         
-        return liveMatches.map(leagueGroup => {
-            return {
-                ...leagueGroup,
-                matches: leagueGroup.matches.map(match => {
-                // Get odds for this match from WebSocket
-                const matchOdds = liveOdds[match.id];
-                const mainOdds = matchOdds?.odds || {};
+        return liveMatchesRaw.map(leagueData => ({
+            id: leagueData.league || Math.random().toString(36).substr(2, 9),
+            name: leagueData.league || 'Unknown League',
+            league: {
+                id: leagueData.league,
+                name: leagueData.league,
+                imageUrl: null, // Unibet API doesn't provide league images
+            },
+            icon: "⚽",
+            matches: (leagueData.matches || []).map(match => {
+                // Extract team names from Unibet API format
+                const team1 = match.homeName || match.team1 || 'Home Team';
+                const team2 = match.awayName || match.team2 || 'Away Team';
+                
+                // Extract odds from Unibet API format
+                let odds = {};
+                if (match.mainBetOffer && match.mainBetOffer.outcomes) {
+                    match.mainBetOffer.outcomes.forEach(outcome => {
+                        // Convert Unibet API odds format (divide by 1000)
+                        const convertedOdds = outcome.oddsDecimal || (parseFloat(outcome.odds) / 1000).toFixed(2);
+                        
+                        if (outcome.label === '1' || outcome.label === 'Home') {
+                            odds.home = {
+                                value: convertedOdds,
+                                oddId: outcome.id || outcome.outcomeId,
+                                suspended: false
+                            };
+                        } else if (outcome.label === 'X' || outcome.label === 'Draw') {
+                            odds.draw = {
+                                value: convertedOdds,
+                                oddId: outcome.id || outcome.outcomeId,
+                                suspended: false
+                            };
+                        } else if (outcome.label === '2' || outcome.label === 'Away') {
+                            odds.away = {
+                                value: convertedOdds,
+                                oddId: outcome.id || outcome.outcomeId,
+                                suspended: false
+                            };
+                        }
+                    });
+                }
+                
+                // Format start time - ensure it's in the expected format
+                let startTime = match.start || match.starting_at;
+                
+                // If startTime is an ISO string, convert it to the expected format
+                if (startTime && typeof startTime === 'string') {
+                    try {
+                        const date = new Date(startTime);
+                        if (!isNaN(date.getTime())) {
+                            // Format as "YYYY-MM-DD HH:MM:SS" for MatchListPage compatibility
+                            startTime = date.toISOString().replace('T', ' ').replace('Z', '').slice(0, 19);
+                        }
+                    } catch (e) {
+                        console.warn('Invalid start time format:', startTime);
+                        startTime = null;
+                    }
+                }
                 
                 return {
-                    ...match,
-                    odds: {
-                        home: mainOdds.home ? {
-                            value: mainOdds.home.value,
-                            oddId: mainOdds.home.oddId,
-                            suspended: mainOdds.home.suspended
-                        } : null,
-                        draw: mainOdds.draw ? {
-                            value: mainOdds.draw.value,
-                            oddId: mainOdds.draw.oddId,
-                            suspended: mainOdds.draw.suspended
-                        } : null,
-                        away: mainOdds.away ? {
-                            value: mainOdds.away.value,
-                            oddId: mainOdds.away.oddId,
-                            suspended: mainOdds.away.suspended
-                        } : null
+                    id: match.id || match.eventId,
+                    team1: team1,
+                    team2: team2,
+                    starting_at: startTime,
+                    odds: odds,
+                    isLive: true, // Live matches are live
+                    league: {
+                        name: leagueData.league
                     }
                 };
-            })
-            };
-        });
-    }, [liveMatches, liveOdds]);
-
-    const loading = !isConnected || (liveMatches.length > 0 && !hasCompleteData && !showMatchesAnyway);
-    const error = !isConnected ? 'WebSocket connection failed' : null;
+            }),
+            matchCount: leagueData.matches?.length || 0,
+        }));
+    }, [liveMatchesRaw]);
 
     const inPlayConfig = {
         pageTitle: 'Live Matches',
@@ -107,6 +105,7 @@ const InPlayPage = () => {
         leagues: displayMatches,
         loading,
         error,
+        retryFunction: () => dispatch(fetchLiveMatches()),
         matchTimeComponent: LiveTimer, // Use LiveTimer component for real-time updates
         PageIcon: Clock,
         noMatchesConfig: {

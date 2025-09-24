@@ -8,9 +8,9 @@ export const fetchLiveMatches = createAsyncThunk(
     try {
       const response = await apiClient.get("/v2/live-matches");
       // Transform the response to match the expected format
-      const { matches, totalMatches, lastUpdated, warning, cacheAge } = response.data;
+      const { matches, upcomingMatches, totalMatches, lastUpdated, warning, cacheAge } = response.data;
       
-      // Group matches by league for the frontend
+      // Group live matches by league for the frontend
       const groupedMatches = {};
       matches.forEach(match => {
         const leagueName = match.leagueName || 'Football';
@@ -22,11 +22,27 @@ export const fetchLiveMatches = createAsyncThunk(
         }
         groupedMatches[leagueName].matches.push(match);
       });
+
+      // Group upcoming matches by league for the frontend
+      const upcomingGroupedMatches = {};
+      upcomingMatches.forEach(match => {
+        const leagueName = match.leagueName || 'Football';
+        if (!upcomingGroupedMatches[leagueName]) {
+          upcomingGroupedMatches[leagueName] = {
+            league: leagueName,
+            matches: []
+          };
+        }
+        upcomingGroupedMatches[leagueName].matches.push(match);
+      });
       
       return {
         matches,
+        upcomingMatches,
         groupedMatches: Object.values(groupedMatches),
+        upcomingGroupedMatches: Object.values(upcomingGroupedMatches),
         totalMatches,
+        totalUpcomingMatches: upcomingMatches.length,
         lastUpdated,
         rawData: response.data
       };
@@ -45,9 +61,9 @@ export const silentUpdateLiveMatches = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await apiClient.get("/v2/live-matches");
-      const { matches, totalMatches, lastUpdated } = response.data;
+      const { matches, upcomingMatches, totalMatches, lastUpdated } = response.data;
       
-      // Group matches by league for the frontend
+      // Group live matches by league for the frontend
       const groupedMatches = {};
       matches.forEach(match => {
         const leagueName = match.leagueName || 'Football';
@@ -59,11 +75,27 @@ export const silentUpdateLiveMatches = createAsyncThunk(
         }
         groupedMatches[leagueName].matches.push(match);
       });
+
+      // Group upcoming matches by league for the frontend
+      const upcomingGroupedMatches = {};
+      upcomingMatches.forEach(match => {
+        const leagueName = match.leagueName || 'Football';
+        if (!upcomingGroupedMatches[leagueName]) {
+          upcomingGroupedMatches[leagueName] = {
+            league: leagueName,
+            matches: []
+          };
+        }
+        upcomingGroupedMatches[leagueName].matches.push(match);
+      });
       
       return {
         matches,
+        upcomingMatches,
         groupedMatches: Object.values(groupedMatches),
+        upcomingGroupedMatches: Object.values(upcomingGroupedMatches),
         totalMatches,
+        totalUpcomingMatches: upcomingMatches.length,
         lastUpdated,
         rawData: response.data
       };
@@ -79,10 +111,13 @@ export const silentUpdateLiveMatches = createAsyncThunk(
 const liveMatchesSlice = createSlice({
   name: "liveMatches",
   initialState: {
-    data: [], // Array of { league, matches }
-    matches: [], // Raw matches array
-    groupedMatches: {}, // Grouped matches by parent/league
+    data: [], // Array of { league, matches } for live matches
+    matches: [], // Raw live matches array
+    upcomingMatches: [], // Raw upcoming matches array
+    groupedMatches: {}, // Grouped live matches by parent/league
+    upcomingGroupedMatches: [], // Grouped upcoming matches by parent/league
     totalMatches: 0,
+    totalUpcomingMatches: 0,
     lastUpdated: null,
     warning: null, // Cache warning message
     cacheAge: null, // Cache age in minutes
@@ -103,8 +138,11 @@ const liveMatchesSlice = createSlice({
         state.loading = false;
         state.data = action.payload.groupedMatches;
         state.matches = action.payload.matches;
+        state.upcomingMatches = action.payload.upcomingMatches;
         state.groupedMatches = action.payload.groupedMatches;
+        state.upcomingGroupedMatches = action.payload.upcomingGroupedMatches;
         state.totalMatches = action.payload.totalMatches;
+        state.totalUpcomingMatches = action.payload.totalUpcomingMatches;
         state.lastUpdated = action.payload.lastUpdated;
         state.warning = action.payload.warning;
         state.cacheAge = action.payload.cacheAge;
@@ -117,8 +155,11 @@ const liveMatchesSlice = createSlice({
       .addCase(silentUpdateLiveMatches.fulfilled, (state, action) => {
         state.data = action.payload.groupedMatches;
         state.matches = action.payload.matches;
+        state.upcomingMatches = action.payload.upcomingMatches;
         state.groupedMatches = action.payload.groupedMatches;
+        state.upcomingGroupedMatches = action.payload.upcomingGroupedMatches;
         state.totalMatches = action.payload.totalMatches;
+        state.totalUpcomingMatches = action.payload.totalUpcomingMatches;
         state.lastUpdated = action.payload.lastUpdated;
         state.warning = action.payload.warning;
         state.cacheAge = action.payload.cacheAge;
@@ -137,8 +178,11 @@ export default liveMatchesSlice.reducer;
 // Selectors
 export const selectLiveMatches = (state) => state.liveMatches.data;
 export const selectLiveMatchesRaw = (state) => state.liveMatches.matches;
+export const selectUpcomingMatchesRaw = (state) => state.liveMatches.upcomingMatches;
 export const selectLiveMatchesGrouped = (state) => state.liveMatches.groupedMatches;
+export const selectUpcomingMatchesGrouped = (state) => state.liveMatches.upcomingGroupedMatches;
 export const selectLiveMatchesTotal = (state) => state.liveMatches.totalMatches;
+export const selectUpcomingMatchesTotal = (state) => state.liveMatches.totalUpcomingMatches;
 export const selectLiveMatchesLastUpdated = (state) => state.liveMatches.lastUpdated;
 export const selectLiveMatchesWarning = (state) => state.liveMatches.warning;
 export const selectLiveMatchesCacheAge = (state) => state.liveMatches.cacheAge;

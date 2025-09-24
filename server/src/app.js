@@ -40,8 +40,12 @@ app.use(
   cors({
     origin: [
       process.env.CLIENT_URL || "http://localhost:3000",
-      "https://betting-website-tau.vercel.app", // Remove trailing slash
+      "https://betting-website-tau.vercel.app",
       "https://betting-website-tau.vercel.app/",
+      "https://betting-app-gules.vercel.app",
+      "https://betting-app-gules.vercel.app/",
+      "https://betting-gyfbehjhc-hassaan-2223s-projects.vercel.app",
+      "https://betting-gyfbehjhc-hassaan-2223s-projects.vercel.app/",
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

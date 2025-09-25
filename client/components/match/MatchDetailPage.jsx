@@ -215,20 +215,31 @@ const MatchDetailPage = ({ matchId }) => {
                 minute: '0'
             } : null,
             // Convert betOffers to betting_data format for compatibility
-            betting_data: (matchData.data?.betOffers || []).map(offer => ({
-                id: offer.id,
-                name: offer.criterion?.label || offer.betOfferType?.name,
-                outcomes: (offer.outcomes || []).map(outcome => ({
-                    id: outcome.id,
-                    name: outcome.label,
-                    odds: outcome.odds / 1000, // Convert from Unibet format (13000 -> 13.00)
-                    status: outcome.status,
-                    line: outcome.line, // Include line value for Over/Under markets (raw)
-                    participant: outcome.participant,
-                    participantId: outcome.participantId,
-                    eventParticipantId: outcome.eventParticipantId
+            betting_data: (matchData.data?.betOffers || [])
+                .filter(offer => {
+                    const marketName = offer.criterion?.label || offer.betOfferType?.name;
+                    const isImplemented = isMarketImplemented(marketName);
+                    if (!isImplemented) {
+                        console.log(`🚫 Main: Filtering out non-implemented market: "${marketName}"`);
+                    } else {
+                        console.log(`✅ Main: Including implemented market: "${marketName}"`);
+                    }
+                    return isImplemented;
+                })
+                .map(offer => ({
+                    id: offer.id,
+                    name: offer.criterion?.label || offer.betOfferType?.name,
+                    outcomes: (offer.outcomes || []).map(outcome => ({
+                        id: outcome.id,
+                        name: outcome.label,
+                        odds: outcome.odds / 1000, // Convert from Unibet format (13000 -> 13.00)
+                        status: outcome.status,
+                        line: outcome.line, // Include line value for Over/Under markets (raw)
+                        participant: outcome.participant,
+                        participantId: outcome.participantId,
+                        eventParticipantId: outcome.eventParticipantId
+                    }))
                 }))
-            }))
         };
 
         bettingData = displayMatchData.betting_data;
@@ -240,17 +251,28 @@ const MatchDetailPage = ({ matchId }) => {
         // Fallback: If bettingData is empty but we have raw betOffers, try to process them directly
         if ((!bettingData || bettingData.length === 0) && matchData.data?.betOffers?.length > 0) {
             console.log('⚠️ Fallback: Processing raw betOffers directly');
-            bettingData = matchData.data.betOffers.map(offer => ({
-                id: offer.id,
-                name: offer.criterion?.label || offer.betOfferType?.name,
-                outcomes: (offer.outcomes || []).map(outcome => ({
-                    id: outcome.id,
-                    name: outcome.label,
-                    odds: outcome.odds / 1000,
-                    status: outcome.status,
-                    line: outcome.line // Include line value for Over/Under markets
-                }))
-            }));
+            bettingData = matchData.data.betOffers
+                .filter(offer => {
+                    const marketName = offer.criterion?.label || offer.betOfferType?.name;
+                    const isImplemented = isMarketImplemented(marketName);
+                    if (!isImplemented) {
+                        console.log(`🚫 Fallback: Filtering out non-implemented market: "${marketName}"`);
+                    } else {
+                        console.log(`✅ Fallback: Including implemented market: "${marketName}"`);
+                    }
+                    return isImplemented;
+                })
+                .map(offer => ({
+                    id: offer.id,
+                    name: offer.criterion?.label || offer.betOfferType?.name,
+                    outcomes: (offer.outcomes || []).map(outcome => ({
+                        id: outcome.id,
+                        name: outcome.label,
+                        odds: outcome.odds / 1000,
+                        status: outcome.status,
+                        line: outcome.line // Include line value for Over/Under markets
+                    }))
+                }));
             console.log('🔄 Fallback betting data:', bettingData);
         }
         
@@ -418,6 +440,100 @@ const MatchDetailPage = ({ matchId }) => {
     )
 }
 
+// List of implemented and tested markets (backend only supports these)
+const IMPLEMENTED_MARKETS = [
+    'Double Chance',
+    'Half time/full time',
+    'total goals by team',
+    'full time result',
+    'Correct score',
+    'total goals odd even',
+    'Draw no bet',
+    'Interval Winner - 30:00-59:59',
+    'total goals by team 2nd half',
+    'Total Goals - 30:00-59:59',
+    'total goals by team 30:00-59:59',
+    'next goal no goal no bet',
+    'Method of scoring next Goal 2 - (No goal, No bet)',
+    'Asian line (1-0)',
+    'Cards 3-Way Line',
+    '3-Way Line',
+    'total corners by team',
+    'total corners',
+    'most corners',
+    'first to corners',
+    'next corner no corner no bet',
+    'Most Corners - 50:00-59:59',
+    'team given a red card',
+    'to get a card',
+    'most cards',
+    'red card given',
+    'most red cards',
+    'player shot',
+    'to score team member',
+    'to score atleat 2 goals team member',
+    '2nd Half',
+    'exact winning margin',
+    'total goals',
+    'total cards',
+    'total cards team',
+    'Draw no bet 2nd half'
+];
+
+// Helper function to check if a market is implemented
+function isMarketImplemented(marketName) {
+    const name = marketName.toLowerCase();
+    
+    // Check for exact matches first
+    for (const implementedMarket of IMPLEMENTED_MARKETS) {
+        if (name === implementedMarket.toLowerCase()) {
+            return true;
+        }
+    }
+    
+    // Check for partial matches (more flexible matching)
+    const implementedLower = IMPLEMENTED_MARKETS.map(m => m.toLowerCase());
+    
+    // Special cases for flexible matching
+    if (name.includes('double chance')) return true;
+    if (name.includes('half time') && name.includes('full time')) return true;
+    if (name.includes('total goals by team') && !name.includes('2nd half') && !name.includes('30:00-59:59')) return true;
+    if (name.includes('full time result') || name.includes('match result')) return true;
+    if (name.includes('correct score')) return true;
+    if (name.includes('total goals') && (name.includes('odd') || name.includes('even'))) return true;
+    if (name.includes('draw no bet') && !name.includes('2nd half')) return true;
+    if (name.includes('interval winner') && name.includes('30:00-59:59')) return true;
+    if (name.includes('total goals by team') && name.includes('2nd half')) return true;
+    if (name.includes('total goals') && name.includes('30:00-59:59') && !name.includes('by team')) return true;
+    if (name.includes('total goals by team') && name.includes('30:00-59:59')) return true;
+    if (name.includes('next goal') && name.includes('no goal') && name.includes('no bet')) return true;
+    if (name.includes('method of scoring') && name.includes('next goal') && name.includes('no goal') && name.includes('no bet')) return true;
+    if (name.includes('asian line') || name.includes('asian handicap')) return true;
+    if (name.includes('cards') && name.includes('3-way')) return true;
+    if (name.includes('3-way line') || name.includes('three way line')) return true;
+    if (name.includes('total corners by team')) return true;
+    if (name.includes('total corners') && !name.includes('by team')) return true;
+    if (name.includes('most corners') && !name.includes('50:00-59:59')) return true;
+    if (name.includes('first to corners')) return true;
+    if (name.includes('next corner') && name.includes('no corner') && name.includes('no bet')) return true;
+    if (name.includes('most corners') && name.includes('50:00-59:59')) return true;
+    if (name.includes('team given a red card')) return true;
+    if (name.includes('to get a card')) return true;
+    if (name.includes('most cards')) return true;
+    if (name.includes('red card given')) return true;
+    if (name.includes('most red cards')) return true;
+    if (name.includes('player shot')) return true;
+    if (name.includes('to score team member')) return true;
+    if (name.includes('to score') && name.includes('at least 2 goals') && name.includes('team member')) return true;
+    if (name.includes('2nd half') && !name.includes('draw no bet') && !name.includes('total goals')) return true;
+    if (name.includes('exact winning margin')) return true;
+    if (name.includes('total cards') && !name.includes('team')) return true;
+    if (name.includes('total cards team')) return true;
+    if (name.includes('draw no bet') && name.includes('2nd half')) return true;
+    
+    return false;
+}
+
 // Helper methods for market categorization (based on unibet-api logic)
 function categorizeMarkets(bettingData) {
     const categorized = {
@@ -435,6 +551,14 @@ function categorizeMarkets(bettingData) {
 
     bettingData.forEach(offer => {
         const marketName = offer.name.toLowerCase();
+        
+        // Filter out non-implemented markets
+        if (!isMarketImplemented(offer.name)) {
+            console.log(`🚫 Filtering out non-implemented market: "${offer.name}"`);
+            return; // Skip this market
+        }
+        
+        console.log(`✅ Including implemented market: "${offer.name}"`);
         
         // Enhanced categorization logic (matching unibet-api app)
         if (marketName.includes('match') || marketName.includes('winner') || marketName.includes('head to head') || 

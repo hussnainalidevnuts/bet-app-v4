@@ -79,7 +79,7 @@ const cancelInplayMatchesJob = async () => {
 const scheduleBetProcessingJob = async () => {
   if (!betProcessingJobScheduled) {
     console.log('[Agenda] Scheduling automated bet processing job...');
-    await agenda.every("30 minutes", "processPendingBets");
+    await agenda.every("5 seconds", "processPendingBets");
     betProcessingJobScheduled = true;
     console.log('[Agenda] Automated bet processing job scheduled successfully');
   }
@@ -295,6 +295,7 @@ agenda.define("refreshHomepageCache", async (job) => {
 // Define automated bet processing job
 agenda.define("processPendingBets", async (job) => {
   try {
+    console.log(`[Agenda] Job "processPendingBets" starting at ${new Date().toISOString()}`);
     const unibetCalcController = new UnibetCalcController();
     
     // Process pending bets (finished matches only)
@@ -302,19 +303,18 @@ agenda.define("processPendingBets", async (job) => {
       body: { limit: 50, onlyPending: true }
     }, {
       json: (data) => {
-        // Only log if there were actual changes
-        if (data.stats && (data.stats.processed > 0 || data.stats.failed > 0)) {
-          console.log(`[Agenda] Bet processing: ${data.stats.processed} processed, ${data.stats.failed} failed`);
+        console.log(`[Agenda] Bet processing result:`, data);
+        // Log all results for debugging
+        if (data.stats) {
+          console.log(`[Agenda] Bet processing: ${data.stats.processed} processed, ${data.stats.failed} failed, ${data.stats.skipped} skipped`);
         }
       }
     });
     
-    // Only log completion every 10th run to reduce noise
-    if (job.attrs.nextRunAt && job.attrs.nextRunAt.getTime() % 10 === 0) {
-      console.log(`[Agenda] Automated bet processing completed at ${new Date().toISOString()}`);
-    }
+    console.log(`[Agenda] Job "processPendingBets" completed at ${new Date().toISOString()}`);
   } catch (error) {
     console.error("[Agenda] Error in automated bet processing:", error);
+    console.error("[Agenda] Error stack:", error.stack);
   }
 });
 

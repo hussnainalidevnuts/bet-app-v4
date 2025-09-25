@@ -42,7 +42,7 @@ const betSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "won", "lost", "canceled"],
+      enum: ["pending", "won", "lost", "canceled", "cancelled", "void"],
       default: "pending",
     },
     result: {
@@ -125,7 +125,7 @@ const betSchema = new mongoose.Schema(
         odds: { type: Number, required: true, min: 1.01 },
         stake: { type: Number, required: true, min: 1 }, // Same as main stake for all legs
         payout: { type: Number, required: true, default: 0 },
-        status: { type: String, enum: ["pending", "won", "lost", "canceled"], default: "pending" },
+        status: { type: String, enum: ["pending", "won", "lost", "canceled", "cancelled", "void"], default: "pending" },
         result: {
           actualOutcome: { type: String, default: null },
           finalScore: { type: String, default: null },

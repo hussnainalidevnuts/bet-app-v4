@@ -60,12 +60,12 @@ export class UnibetCalcController {
 
             const results = [];
 
-            // Process each bet
+            // Process each bet with improved error isolation
             for (const bet of bets) {
                 try {
                     let result;
                     
-                    // Debug logging for bet type detection
+                    console.log(`\n🔄 Processing bet ${bet._id} (${bet.combination && bet.combination.length > 0 ? 'combination' : 'single'})...`);
                     
                     // Check if it's a combination bet
                     if (bet.combination && bet.combination.length > 0) {
@@ -73,25 +73,31 @@ export class UnibetCalcController {
                         stats.combination.processed++;
                         if (result.status === 'won') stats.combination.won++;
                         else if (result.status === 'lost') stats.combination.lost++;
-                        else if (result.status === 'canceled') stats.combination.canceled++;
+                        else if (result.status === 'canceled' || result.status === 'cancelled') stats.combination.canceled++;
                     } else {
                         result = await this.processSingleBet(bet);
                         stats.single.processed++;
                         if (result.status === 'won') stats.single.won++;
                         else if (result.status === 'lost') stats.single.lost++;
-                        else if (result.status === 'canceled') stats.single.canceled++;
+                        else if (result.status === 'canceled' || result.status === 'cancelled') stats.single.canceled++;
                     }
                     
                     results.push(result);
+                    console.log(`✅ Bet ${bet._id} processed successfully: ${result.status}`);
                     
                 } catch (error) {
-                    console.error(`[processAll] Error processing bet ${bet._id}:`, error);
+                    console.error(`❌ [processAll] Error processing bet ${bet._id}:`, error.message);
+                    console.error(`📋 Error details:`, error.stack);
                     stats.failed++;
                     stats.errors.push({
                         betId: bet._id,
                         betType: bet.combination && bet.combination.length > 0 ? 'combination' : 'single',
-                        error: error.message
+                        error: error.message,
+                        timestamp: new Date().toISOString()
                     });
+                    
+                    // Continue processing other bets even if one fails
+                    console.log(`⚠️ Continuing with next bet despite error...`);
                 }
             }
 
@@ -201,8 +207,8 @@ export class UnibetCalcController {
             // No need to update database again - calculator already did it
             // The calculator handles the database update with proper transaction and write concern
 
-            // Update user balance if bet was won or lost
-            if (calculatorResult.outcome?.status === 'won' || calculatorResult.outcome?.status === 'lost') {
+            // Update user balance if bet was won, lost, or cancelled
+            if (calculatorResult.outcome?.status === 'won' || calculatorResult.outcome?.status === 'lost' || calculatorResult.outcome?.status === 'cancelled') {
                 await this.updateUserBalance(bet.userId, calculatorResult.outcome);
             }
 
@@ -320,21 +326,23 @@ export class UnibetCalcController {
                 // Balance was already deducted when bet was placed
                 balanceChange = 0;
                 transactionType = 'bet_loss';
-            } else if (calculatorResult.status === 'canceled') {
+            } else if (calculatorResult.status === 'canceled' || calculatorResult.status === 'cancelled') {
                 // Refund the stake
                 balanceChange = calculatorResult.stake || 0;
                 transactionType = 'bet_cancel';
             }
 
             if (balanceChange !== 0) {
-                await this.financeService.updateBalance(
-                    userId,
-                    balanceChange,
-                    transactionType,
-                    `Bet ${calculatorResult.status}: ${calculatorResult.reason || 'No reason provided'}`
-                );
+                // Update user balance directly using User model (same approach as combination bet)
+                const updateResult = await User.findByIdAndUpdate(userId, {
+                    $inc: { balance: balanceChange }
+                });
                 
-                console.log(`Updated balance for user ${userId}: ${balanceChange > 0 ? '+' : ''}${balanceChange}`);
+                if (updateResult) {
+                    console.log(`Updated balance for user ${userId}: ${balanceChange > 0 ? '+' : ''}${balanceChange}`);
+                } else {
+                    console.error(`Failed to update balance - user not found: ${userId}`);
+                }
             }
 
         } catch (error) {

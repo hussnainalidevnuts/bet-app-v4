@@ -144,7 +144,8 @@ const MatchHeader = ({ matchData }) => {
                 </div>
             </div>
 
-            {/* Match dropdown */}
+            {/* Match dropdown - COMMENTED OUT FOR NOW */}
+            {/*
             <div className="mt-4 flex justify-center">
                 <div className="relative">
                     <Button
@@ -164,10 +165,12 @@ const MatchHeader = ({ matchData }) => {
                             isOpen={isDropdownOpen}
                             onClose={() => setIsDropdownOpen(false)}
                             triggerRef={triggetRef}
+                            currentLeagueId={matchData?.groupId || matchData?.group}
                         />
                     )}
                 </div>
             </div>
+            */}
         </div>
     );
 };

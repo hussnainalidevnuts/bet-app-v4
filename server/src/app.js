@@ -33,8 +33,16 @@ const app = express();
 const server = createServer(app);
 const PORT = process.env.PORT || 4000;
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB and wait for connection
+const initializeDatabase = async () => {
+  try {
+    await connectDB();
+    console.log('✅ Database connection established');
+  } catch (error) {
+    console.error('❌ Database connection failed:', error);
+    process.exit(1);
+  }
+};
 
 app.use(
   cors({
@@ -180,8 +188,31 @@ liveFixturesService.setSocketIO(io);
 // Make io available to services
 app.set('io', io);
 
-// Set up Agenda listeners
-setupAgendaListeners();
+// Initialize everything in proper order
+const initializeApp = async () => {
+  try {
+    // 1. Connect to database first
+    await initializeDatabase();
+    
+    // 2. Set up Agenda listeners (after database is connected)
+    setupAgendaListeners();
+    
+    // 3. Start the server
+    server.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`🌐 API URL: http://localhost:${PORT}/api`);
+      console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+      console.log(`🔌 WebSocket server ready on port ${PORT}`);
+    });
+    
+    // 4. Initialize live matches after a short delay
+    setTimeout(initializeLiveMatches, 3000);
+    
+  } catch (error) {
+    console.error('❌ Failed to initialize app:', error);
+    process.exit(1);
+  }
+};
 
 // Initialize live matches on startup (non-blocking)
 const initializeLiveMatches = async () => {
@@ -221,15 +252,8 @@ const initializeLiveMatches = async () => {
   }
 };
 
-// Initialize live matches after a short delay to ensure services are ready
-setTimeout(initializeLiveMatches, 3000);
-
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌐 API URL: http://localhost:${PORT}/api`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔌 WebSocket server ready on port ${PORT}`);
-});
+// Start the application
+initializeApp();
 
 // Export server instead of app for Socket.IO
 export { server as default };

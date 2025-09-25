@@ -50,6 +50,17 @@ export class BetSchemaAdapter {
             handicapRaw: unibetMeta.handicapRaw || this.parseHandicap(betDetails.handicap),
             handicapLine: unibetMeta.handicapLine || this.parseHandicap(betDetails.handicap),
             line: this.parseHandicap(betDetails.handicap) || unibetMeta.handicapLine,
+            
+            // Bet details for line calculation
+            betDetails: {
+                total: betDetails.total,
+                handicap: betDetails.handicap,
+                market_name: betDetails.market_name,
+                market_description: betDetails.market_description,
+                label: betDetails.label,
+                value: betDetails.value,
+                name: betDetails.name
+            },
 
             // Match context
             leagueId: unibetMeta.leagueId,
@@ -396,7 +407,13 @@ export class BetSchemaAdapter {
         if (hasCanceled) return stake; // Refund
         if (hasLost) return 0; // No payout
         if (allWon) {
-            const totalOdds = legs.reduce((acc, leg) => acc * leg.odds, 1);
+            // Convert odds from Unibet format (e.g., 1400) to decimal format (e.g., 1.4)
+            const totalOdds = legs.reduce((acc, leg) => {
+                const decimalOdds = leg.odds / 1000; // Convert from Unibet format to decimal
+                console.log(`[calculateCombinationPayout] Leg odds: ${leg.odds} → ${decimalOdds}`);
+                return acc * decimalOdds;
+            }, 1);
+            console.log(`[calculateCombinationPayout] Total odds: ${totalOdds}, Stake: ${stake}, Payout: ${stake * totalOdds}`);
             return stake * totalOdds; // Product of all odds
         }
         

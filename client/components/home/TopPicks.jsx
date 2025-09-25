@@ -86,6 +86,10 @@ const transformMatchData = (apiMatch, league) => {
 };
 
 const TopPicks = () => {
+    // COMMENTED OUT FOR NOW - Top picks section temporarily disabled
+    return null;
+    
+    /*
     const topPicks = useSelector(selectTopPicks);
     const loading = useSelector(selectHomeLoading);
 
@@ -135,6 +139,7 @@ const TopPicks = () => {
             </div>
         </div>
     );
+    */
 };
 
 export default TopPicks;

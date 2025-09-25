@@ -87,19 +87,88 @@ export const updateLeaguePopularity = createAsyncThunk(
   }
 );
 
-// Async thunk for fetching matches by league
+// Async thunk for fetching matches by league - Updated to use Unibet API
 export const fetchMatchesByLeague = createAsyncThunk(
   "leagues/fetchMatchesByLeague",
   async (leagueId, { rejectWithValue }) => {
     try {
-      console.log("HELLLOOOOO");
-      const response = await apiClient.get(`/fixtures/league/${leagueId}`);
-
-      return { league: response.data.league, matches: response.data.data };
+      console.log(`🔍 Fetching matches for league: ${leagueId}`);
+      
+      // Use the new Unibet live matches API
+      const response = await apiClient.get('/v2/live-matches');
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch matches');
+      }
+      
+      // Filter matches by the specific league
+      const allMatches = response.data.allMatches || [];
+      console.log(`📊 Total matches available: ${allMatches.length}`);
+      console.log(`🔍 Looking for league ID: ${leagueId} (type: ${typeof leagueId})`);
+      
+      // Show available league IDs for debugging
+      const availableLeagueIds = [...new Set(allMatches.map(match => match.groupId))];
+      console.log(`📋 Available league IDs in matches:`, availableLeagueIds.slice(0, 10));
+      
+      const leagueMatches = allMatches.filter(match => {
+        // Check if match belongs to the requested league
+        const matches = match.groupId === leagueId || match.group === leagueId || match.groupId === leagueId.toString() || match.groupId === parseInt(leagueId);
+        if (matches) {
+          console.log(`✅ Found match for league: ${match.homeName} vs ${match.awayName} (groupId: ${match.groupId})`);
+        }
+        return matches;
+      });
+      
+      console.log(`📊 Matches found for league ${leagueId}: ${leagueMatches.length}`);
+      
+      // If no matches found, return empty result
+      if (leagueMatches.length === 0) {
+        console.log(`⚠️ No matches found for league ${leagueId}. Returning empty result.`);
+        return { 
+          league: { id: leagueId, name: `League ${leagueId}` }, 
+          matches: [] 
+        };
+      }
+      
+      // Transform the data to match the expected format (with participants array)
+      const transformedMatches = leagueMatches.map(match => ({
+        id: match.id,
+        starting_at: match.start,
+        participants: [
+          {
+            name: match.homeName,
+            image_path: null // Unibet API doesn't provide team images
+          },
+          {
+            name: match.awayName,
+            image_path: null
+          }
+        ],
+        league: {
+          id: match.groupId,
+          name: match.group
+        }
+      }));
+      
+      // Find the league info
+      const leagueInfo = leagueMatches.length > 0 ? {
+        id: leagueMatches[0].groupId,
+        name: leagueMatches[0].group
+      } : {
+        id: leagueId,
+        name: `League ${leagueId}`
+      };
+      
+      return { 
+        league: leagueInfo, 
+        matches: transformedMatches 
+      };
     } catch (error) {
+      console.error('❌ Error fetching matches by league:', error);
       return rejectWithValue(
-        error.response?.data?.error?.message ||
-          "Failed to fetch matches for league"
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch matches for league"
       );
     }
   }

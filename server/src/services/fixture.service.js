@@ -504,6 +504,60 @@ class FixtureOptimizationService {
     console.log(`✅ Final result leagues: ${Object.keys(result).length}`);
     console.log(`📋 League names: ${Object.keys(result).join(", ")}`);
 
+    // Create a flat list of all matches sorted by start time (nearest first)
+    const allMatches = [];
+    Object.values(result).forEach(leagueData => {
+      leagueData.matches.forEach(match => {
+        allMatches.push({
+          id: match.id,
+          starting_at: match.starting_at,
+          home_team: match.home_team,
+          away_team: match.away_team,
+          league: match.league
+        });
+      });
+    });
+
+    // Sort all matches by start time (nearest first)
+    allMatches.sort((a, b) => new Date(a.starting_at) - new Date(b.starting_at));
+
+    console.log(`📅 Total upcoming matches: ${allMatches.length}`);
+    console.log(`⏰ Next 5 matches:`);
+    allMatches.slice(0, 5).forEach((match, index) => {
+      const startTime = new Date(match.starting_at);
+      console.log(`   ${index + 1}. ${match.home_team} vs ${match.away_team} - ${startTime.toLocaleString()} (ID: ${match.id})`);
+    });
+
+    // Generate JSON file with match IDs
+    const matchIdsData = {
+      generated_at: new Date().toISOString(),
+      total_matches: allMatches.length,
+      matches: allMatches.map(match => ({
+        id: match.id,
+        starting_at: match.starting_at,
+        home_team: match.home_team,
+        away_team: match.away_team,
+        league_name: match.league?.name || 'Unknown League'
+      }))
+    };
+
+    // Save to JSON file
+    const fs = await import('fs');
+    const path = await import('path');
+    const { fileURLToPath } = await import('url');
+    const { dirname } = await import('path');
+    
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const jsonFilePath = path.join(__dirname, '../../upcoming_matches_sorted.json');
+    
+    try {
+      fs.writeFileSync(jsonFilePath, JSON.stringify(matchIdsData, null, 2));
+      console.log(`💾 Saved upcoming matches data to: ${jsonFilePath}`);
+    } catch (error) {
+      console.error('❌ Failed to save JSON file:', error.message);
+    }
+
     return result;
   }
 

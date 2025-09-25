@@ -90,7 +90,9 @@ export const MARKET_REGISTRY = [
         match: (bet, norm) => {
             const name = norm.marketNameLower;
             // Avoid capturing player totals: require explicit team wording
-            return name.includes('total goals by') || name.includes('team total goals');
+            // Exclude time window markets (they should be handled by MATCH_TOTAL_GOALS_INTERVAL_OU)
+            const hasTimeWindow = norm.hints.hasTimeWindow;
+            return (name.includes('total goals by') || name.includes('team total goals')) && !hasTimeWindow;
         }
     },
     {
@@ -98,6 +100,7 @@ export const MARKET_REGISTRY = [
         priority: 75,
         match: (bet, norm) => {
             const name = norm.marketNameLower;
+            // Handle both match totals and team totals with time windows
             return (name.includes('total goals') || name.includes('goals in')) && norm.hints.hasTimeWindow;
         }
     },

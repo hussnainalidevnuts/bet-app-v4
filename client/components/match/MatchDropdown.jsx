@@ -52,6 +52,7 @@ const MatchDropdown = ({ isOpen, onClose, currentMatchId, triggerRef, currentLea
     // Fetch matches for selected league
     useEffect(() => {
         if (selectedLeagueId && isOpen) {
+            console.log(`🔍 MatchDropdown: Fetching matches for league ID: ${selectedLeagueId} (type: ${typeof selectedLeagueId})`);
             dispatch(fetchMatchesByLeague(selectedLeagueId));
         }
     }, [selectedLeagueId, isOpen, dispatch]);
@@ -175,11 +176,11 @@ const MatchDropdown = ({ isOpen, onClose, currentMatchId, triggerRef, currentLea
                                 <div className="p-4 bg-gray-800">
                                     <div className="flex items-center justify-between">
                                         <div className="flex flex-col items-center flex-1">
-                                            <JerseyImage
-                                                src={match.participants?.[0]?.image_path}
-                                                alt={match.participants?.[0]?.name}
-                                                className="w-10 h-10 mb-2 sm:w-12 sm:h-12"
-                                            />
+                                            <div className="w-10 h-10 mb-2 sm:w-12 sm:h-12 bg-gray-600 rounded-full flex items-center justify-center">
+                                                <span className="text-white text-sm font-bold">
+                                                    {match.participants?.[0]?.name?.charAt(0) || 'H'}
+                                                </span>
+                                            </div>
                                             <span className="text-white text-xs font-medium text-center leading-tight">
                                                 {match.participants?.[0]?.name}
                                             </span>
@@ -190,11 +191,11 @@ const MatchDropdown = ({ isOpen, onClose, currentMatchId, triggerRef, currentLea
                                             </div>
                                         </div>
                                         <div className="flex flex-col items-center flex-1">
-                                            <JerseyImage
-                                                src={match.participants?.[1]?.image_path}
-                                                alt={match.participants?.[1]?.name}
-                                                className="w-10 h-10 mb-2 sm:w-12 sm:h-12"
-                                            />
+                                            <div className="w-10 h-10 mb-2 sm:w-12 sm:h-12 bg-gray-600 rounded-full flex items-center justify-center">
+                                                <span className="text-white text-sm font-bold">
+                                                    {match.participants?.[1]?.name?.charAt(0) || 'A'}
+                                                </span>
+                                            </div>
                                             <span className="text-white text-xs font-medium text-center leading-tight">
                                                 {match.participants?.[1]?.name}
                                             </span>

@@ -190,6 +190,41 @@ const InPlayPage = () => {
                     leagueName: leagueData.league, // Add league name
                     source: 'InPlayPage' // Add source identifier
                 };
+            }).filter(match => {
+                // Filter out matches above 90 minutes with all odds disabled
+                if (match.kambiLiveData?.matchClock) {
+                    const currentMinute = match.kambiLiveData.matchClock.minute || 0;
+                    
+                    // If match is above 90 minutes, check if all odds are disabled
+                    if (currentMinute > 90) {
+                        // Check if all odds are disabled (null, undefined, NaN, 'NaN', or suspended)
+                        const isOddDisabled = (odd) => {
+                            const value = odd?.value;
+                            return !value || 
+                                   value === null || 
+                                   value === undefined || 
+                                   value === 'NaN' || 
+                                   isNaN(value) || 
+                                   odd?.suspended;
+                        };
+                        
+                        const homeDisabled = isOddDisabled(match.odds.home);
+                        const drawDisabled = isOddDisabled(match.odds.draw);
+                        const awayDisabled = isOddDisabled(match.odds.away);
+                        
+                        const allOddsDisabled = homeDisabled && drawDisabled && awayDisabled;
+                        
+                        console.log(`🔍 InPlayPage - Match ${match.team1} vs ${match.team2}: minute=${currentMinute}, allOddsDisabled=${allOddsDisabled}`);
+                        
+                        // Filter out if all odds are disabled
+                        if (allOddsDisabled) {
+                            console.log(`🚫 InPlayPage - Filtering out match ${match.team1} vs ${match.team2} - Above 90min (${currentMinute}min) with all odds disabled`);
+                            return false;
+                        }
+                    }
+                }
+                
+                return true;
             }),
             matchCount: leagueData.matches?.length || 0,
             };

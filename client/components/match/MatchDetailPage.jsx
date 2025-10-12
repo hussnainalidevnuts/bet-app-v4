@@ -174,6 +174,7 @@ const MatchDetailPage = ({ matchId }) => {
         
         // Extract event info from events array
         const eventData = matchData.data?.events?.[0];
+        console.log('🔍 Event Data:', eventData);
         const eventId = matchData.eventId;
         
         

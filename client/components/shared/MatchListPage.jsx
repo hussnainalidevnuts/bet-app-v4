@@ -310,11 +310,11 @@ const MatchListPage = ({ config }) => {
                                                                         <Button
                                                                             size="sm"
                                                                             className={`w-12 h-8 md:w-14 p-0 text-xs font-bold betting-button ${
-                                                                                match.odds.home.suspended 
+                                                                                match.odds.home.suspended || !match.odds.home.value || isNaN(match.odds.home.value) || match.odds.home.value === 'NaN'
                                                                                     ? 'opacity-60 cursor-not-allowed bg-gray-400 hover:bg-gray-400' 
                                                                                     : 'bg-emerald-600 hover:bg-emerald-700'
                                                                             }`}
-                                                                            onClick={match.odds.home.suspended ? undefined : (e) => {
+                                                                            onClick={(match.odds.home.suspended || !match.odds.home.value || isNaN(match.odds.home.value) || match.odds.home.value === 'NaN') ? undefined : (e) => {
                                                                                 console.log(`🔍 MatchListPage - Home button clicked from ${match.source || 'Unknown'} page:`, {
                                                                                     match: match,
                                                                                     'match.league': match.league,
@@ -331,20 +331,20 @@ const MatchListPage = ({ config }) => {
                                                                                     { marketId: "1_home", label: "Home", name: `Win - ${match.team1}`, marketDescription: "Full Time Result" }
                                                                                 )(e);
                                                                             }}
-                                                                            disabled={match.odds.home.suspended}
+                                                                            disabled={match.odds.home.suspended || !match.odds.home.value || isNaN(match.odds.home.value) || match.odds.home.value === 'NaN'}
                                                                         >
-                                                                            {match.odds.home.suspended ? '--' : match.odds.home.value}
+                                                                            {(match.odds.home.suspended || !match.odds.home.value || isNaN(match.odds.home.value) || match.odds.home.value === 'NaN') ? '--' : match.odds.home.value}
                                                                         </Button>
                                                                     )}
                                                                     {match.odds && match.odds.draw && (
                                                                         <Button
                                                                             className={`w-12 h-8 md:w-14 p-0 text-xs font-bold betting-button ${
-                                                                                match.odds.draw.suspended 
+                                                                                match.odds.draw.suspended || !match.odds.draw.value || isNaN(match.odds.draw.value) || match.odds.draw.value === 'NaN'
                                                                                     ? 'opacity-60 cursor-not-allowed bg-gray-400 hover:bg-gray-400' 
                                                                                     : 'bg-emerald-600 hover:bg-emerald-700'
                                                                             }`}
                                                                             size={"sm"}
-                                                                            onClick={match.odds.draw.suspended ? undefined : (e) => {
+                                                                            onClick={(match.odds.draw.suspended || !match.odds.draw.value || isNaN(match.odds.draw.value) || match.odds.draw.value === 'NaN') ? undefined : (e) => {
                                                                                 console.log(`🔍 MatchListPage - Draw button clicked from ${match.source || 'Unknown'} page:`, {
                                                                                     match: match,
                                                                                     'match.league': match.league,
@@ -361,20 +361,20 @@ const MatchListPage = ({ config }) => {
                                                                                     { marketId: "1_draw", label: "Draw", name: `Draw - ${match.team1} vs ${match.team2}`, marketDescription: "Full Time Result" }
                                                                                 )(e);
                                                                             }}
-                                                                            disabled={match.odds.draw.suspended}
+                                                                            disabled={match.odds.draw.suspended || !match.odds.draw.value || isNaN(match.odds.draw.value) || match.odds.draw.value === 'NaN'}
                                                                         >
-                                                                            {match.odds.draw.suspended ? '--' : match.odds.draw.value}
+                                                                            {(match.odds.draw.suspended || !match.odds.draw.value || isNaN(match.odds.draw.value) || match.odds.draw.value === 'NaN') ? '--' : match.odds.draw.value}
                                                                         </Button>
                                                                     )}
                                                                     {match.odds && match.odds.away && (
                                                                         <Button
                                                                             size="sm"
                                                                             className={`w-12 h-8 md:w-14 p-0 text-xs font-bold betting-button ${
-                                                                                match.odds.away.suspended 
+                                                                                match.odds.away.suspended || !match.odds.away.value || isNaN(match.odds.away.value) || match.odds.away.value === 'NaN'
                                                                                     ? 'opacity-60 cursor-not-allowed bg-gray-400 hover:bg-gray-400' 
                                                                                     : 'bg-emerald-600 hover:bg-emerald-700'
                                                                             }`}
-                                                                            onClick={match.odds.away.suspended ? undefined : (e) => {
+                                                                            onClick={(match.odds.away.suspended || !match.odds.away.value || isNaN(match.odds.away.value) || match.odds.away.value === 'NaN') ? undefined : (e) => {
                                                                                 console.log(`🔍 MatchListPage - Away button clicked from ${match.source || 'Unknown'} page:`, {
                                                                                     match: match,
                                                                                     'match.league': match.league,
@@ -391,9 +391,9 @@ const MatchListPage = ({ config }) => {
                                                                                     { marketId: "1_away", label: "Away", name: `Win - ${match.team2}`, marketDescription: "Full Time Result" }
                                                                                 )(e);
                                                                             }}
-                                                                            disabled={match.odds.away.suspended}
+                                                                            disabled={match.odds.away.suspended || !match.odds.away.value || isNaN(match.odds.away.value) || match.odds.away.value === 'NaN'}
                                                                         >
-                                                                            {match.odds.away.suspended ? '--' : match.odds.away.value}
+                                                                            {(match.odds.away.suspended || !match.odds.away.value || isNaN(match.odds.away.value) || match.odds.away.value === 'NaN') ? '--' : match.odds.away.value}
                                                                         </Button>
                                                                     )}
                                                                     </div>

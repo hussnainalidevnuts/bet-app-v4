@@ -44,30 +44,56 @@ const LiveMatchCard = ({ match }) => {
                         )}
                     </div>
 
-                    <div className="flex justify-between items-center mb-3">
-                        {/* Team names on left, score on right */}
-                        <div className="flex-1 min-w-0">
+                    <div className="flex items-center mb-3">
+                        {/* Team names - 80% width */}
+                        <div className="w-4/5 min-w-0">
                             <div className="text-sm mb-1 truncate">{match.team1}</div>
                             <div className="text-sm truncate">{match.team2}</div>
                         </div>
                         
-                        {/* Live score display from Kambi API - vertically on the right */}
-                        {match.kambiLiveData?.score ? (
-                            <div className="text-lg font-bold text-gray-800 text-right">
-                                <div>{match.kambiLiveData.score.home}</div>
-                                <div>{match.kambiLiveData.score.away}</div>
-                            </div>
-                        ) : match.liveData?.score ? (
-                            <div className="text-lg font-bold text-gray-800 text-right">
-                                <div>{match.liveData.score.split(' - ')[0] || '0'}</div>
-                                <div>{match.liveData.score.split(' - ')[1] || '0'}</div>
-                            </div>
-                        ) : (
-                            <div className="text-lg font-bold text-gray-800 text-right">
-                                <div>0</div>
-                                <div>0</div>
-                            </div>
-                        )}
+                        {/* Cards display - 10% width */}
+                        <div className="w-1/10 text-center">
+                            {match.kambiLiveData?.statistics && (
+                                <div className="flex flex-col items-center justify-center gap-1">
+                                    {/* Color blocks on top */}
+                                    <div className="flex items-center justify-center gap-2">
+                                        <div className="w-2 h-2 bg-yellow-500 border-0"></div>
+                                        <div className="w-2 h-2 bg-red-500 border-0"></div>
+                                    </div>
+                                    {/* Card numbers below */}
+                                    <div className="flex items-center justify-center gap-2">
+                                        <div className="text-[10px]">
+                                            <div className="text-xs">{match.kambiLiveData.statistics.football?.home?.yellowCards || 0}</div>
+                                            <div className="text-xs">{match.kambiLiveData.statistics.football?.away?.yellowCards || 0}</div>
+                                        </div>
+                                        <div className="text-[10px]">
+                                            <div className="text-xs">{match.kambiLiveData.statistics.football?.home?.redCards || 0}</div>
+                                            <div className="text-xs">{match.kambiLiveData.statistics.football?.away?.redCards || 0}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        
+                        {/* Live score display - 10% width */}
+                        <div className="w-1/10 text-right">
+                            {match.kambiLiveData?.score ? (
+                                <div className="text-lg font-bold text-gray-800">
+                                    <div>{match.kambiLiveData.score.home}</div>
+                                    <div>{match.kambiLiveData.score.away}</div>
+                                </div>
+                            ) : match.liveData?.score ? (
+                                <div className="text-lg font-bold text-gray-800">
+                                    <div>{match.liveData.score.split(' - ')[0] || '0'}</div>
+                                    <div>{match.liveData.score.split(' - ')[1] || '0'}</div>
+                                </div>
+                            ) : (
+                                <div className="text-lg font-bold text-gray-800">
+                                    <div>0</div>
+                                    <div>0</div>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Odds buttons */}

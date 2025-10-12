@@ -11,12 +11,21 @@ export const MarketCodes = {
     TEAM_TOTAL_GOALS_OU: 'TEAM_TOTAL_GOALS_OU',
     MATCH_TOTAL_GOALS_OU: 'MATCH_TOTAL_GOALS_OU',
     MATCH_TOTAL_GOALS_INTERVAL_OU: 'MATCH_TOTAL_GOALS_INTERVAL_OU',
+    HALF_TIME_FULL_TIME: 'HALF_TIME_FULL_TIME',
+    METHOD_OF_SCORING_NEXT_GOAL: 'METHOD_OF_SCORING_NEXT_GOAL',
 
     CORNERS_TOTAL_OU: 'CORNERS_TOTAL_OU',
     CORNERS_TEAM_TOTAL_OU: 'CORNERS_TEAM_TOTAL_OU',
     CORNERS_MOST: 'CORNERS_MOST',
     CORNERS_HANDICAP_3WAY: 'CORNERS_HANDICAP_3WAY',
     CORNERS_FIRST_TO_X: 'CORNERS_FIRST_TO_X',
+    CORNERS_MOST_TIME_WINDOW: 'CORNERS_MOST_TIME_WINDOW',
+    CORNERS_TOTAL_OU_TIME_WINDOW: 'CORNERS_TOTAL_OU_TIME_WINDOW',
+    CORNER_OCCURRENCE_TIME_WINDOW: 'CORNER_OCCURRENCE_TIME_WINDOW',
+    FIRST_CORNER_TIME_WINDOW: 'FIRST_CORNER_TIME_WINDOW',
+
+    CARDS_3_WAY_LINE: 'CARDS_3_WAY_LINE',
+    THREE_WAY_LINE: 'THREE_WAY_LINE',
 
     UNKNOWN: 'UNKNOWN'
 };
@@ -70,6 +79,47 @@ export const MARKET_REGISTRY = [
             const name = norm.marketNameLower;
             const crit = norm.criterionLower;
             return name.includes('to get a card') || crit.includes('to get a card');
+        }
+    },
+    {
+        code: MarketCodes.HALF_TIME_FULL_TIME,
+        priority: 90,
+        match: (bet, norm) => {
+            const name = norm.marketNameLower;
+            const crit = norm.criterionLower;
+            const outcome = norm.outcomeLower;
+            
+            // Check for Half Time/Full Time market name
+            const isHalfTimeFullTime = name.includes('half time/full time') || 
+                                     name.includes('half time full time') ||
+                                     crit.includes('half time/full time') ||
+                                     crit.includes('half time full time');
+            
+            // Check for numeric format like "1/1", "1/X", "1/2", etc.
+            const hasNumericFormat = /^[12X]\/[12X]$/.test(outcome);
+            
+            return isHalfTimeFullTime && hasNumericFormat;
+        }
+    },
+    {
+        code: MarketCodes.METHOD_OF_SCORING_NEXT_GOAL,
+        priority: 88,
+        match: (bet, norm) => {
+            const name = norm.marketNameLower;
+            const crit = norm.criterionLower;
+            const outcome = norm.outcomeLower;
+            
+            // Check for Method of scoring next goal market
+            const isMethodOfScoring = name.includes('method of scoring') || 
+                                    name.includes('method of scoring next goal') ||
+                                    crit.includes('method of scoring') ||
+                                    crit.includes('method of scoring next goal');
+            
+            // Check for valid scoring methods
+            const validMethods = ['shot inside the box', 'shot outside the box', 'header', 'penalty', 'free kick', 'own goal'];
+            const hasValidMethod = validMethods.some(method => outcome.includes(method));
+            
+            return isMethodOfScoring && hasValidMethod;
         }
     },
 
@@ -144,6 +194,61 @@ export const MARKET_REGISTRY = [
         code: MarketCodes.CORNERS_FIRST_TO_X,
         priority: 50,
         match: (bet, norm) => norm.marketNameLower.includes('first to') && norm.marketNameLower.includes('corners')
+    },
+    {
+        code: MarketCodes.CORNERS_MOST_TIME_WINDOW,
+        priority: 60,
+        match: (bet, norm) => {
+            const n = norm.marketNameLower;
+            return n.includes('most corners') && n.includes('-') && norm.hints.hasTimeWindow;
+        }
+    },
+    {
+        code: MarketCodes.CORNERS_TOTAL_OU_TIME_WINDOW,
+        priority: 65,
+        match: (bet, norm) => {
+            const n = norm.marketNameLower;
+            return n.includes('total corners') && n.includes('-') && norm.hints.hasTimeWindow;
+        }
+    },
+    {
+        code: MarketCodes.CORNER_OCCURRENCE_TIME_WINDOW,
+        priority: 70,
+        match: (bet, norm) => {
+            const n = norm.marketNameLower;
+            return n.includes('corner') && n.includes('-') && norm.hints.hasTimeWindow && 
+                   (n.includes('2nd half') || n.includes('1st half') || n.includes('half')) &&
+                   !n.includes('first corner');
+        }
+    },
+    {
+        code: MarketCodes.FIRST_CORNER_TIME_WINDOW,
+        priority: 75,
+        match: (bet, norm) => {
+            const n = norm.marketNameLower;
+            return n.includes('first corner') && n.includes('-') && norm.hints.hasTimeWindow && 
+                   (n.includes('2nd half') || n.includes('1st half') || n.includes('half'));
+        }
+    },
+
+    // Cards
+    {
+        code: MarketCodes.CARDS_3_WAY_LINE,
+        priority: 55,
+        match: (bet, norm) => {
+            const n = norm.marketNameLower;
+            return (n.includes('cards') && n.includes('3-way') && n.includes('line'));
+        }
+    },
+
+    // 3-Way Line (goal-based handicap)
+    {
+        code: MarketCodes.THREE_WAY_LINE,
+        priority: 50,
+        match: (bet, norm) => {
+            const n = norm.marketNameLower;
+            return (n.includes('3-way') && n.includes('line') && !n.includes('cards'));
+        }
     },
 
     { code: MarketCodes.UNKNOWN, priority: 0, match: () => true }

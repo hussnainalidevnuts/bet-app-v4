@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
 import { Button } from "@/components/ui/button"
 import { formatToLocalTime } from '@/lib/utils';
 import Link from "next/link";
+import apiClient from '@/config/axios';
 
 const isMatchLive = (match) => {
     if (!match || !match.start) return false;
@@ -56,11 +57,29 @@ const parseTeamsFromName = (matchName) => {
 const MatchHeader = ({ matchData, onScoreUpdate }) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
     const [currentScore, setCurrentScore] = useState('0-0')
+    const [fetchedLiveData, setFetchedLiveData] = useState(null)
     const triggetRef = useRef(null)
     const router = useRouter()
 
     const toggleDropdown = () => {
         setIsDropdownOpen(!isDropdownOpen)
+    }
+
+    // Fetch live match data with card details
+    const fetchLiveData = async () => {
+        if (!matchData?.id || !isLive) return;
+        
+        try {
+            console.log('🔍 Fetching live data for match:', matchData.id);
+            const response = await apiClient.get(`/api/live-matches/${matchData.id}/live`);
+            
+            if (response.data?.success && response.data?.liveData) {
+                console.log('✅ Live data fetched:', response.data.liveData);
+                setFetchedLiveData(response.data.liveData);
+            }
+        } catch (error) {
+            console.error('❌ Error fetching live data:', error);
+        }
     }
 
     if (!matchData) {
@@ -153,6 +172,16 @@ const MatchHeader = ({ matchData, onScoreUpdate }) => {
         console.log('📊 Current score state changed:', currentScore);
     }, [currentScore]);
 
+    // Fetch live data when component mounts or match changes
+    useEffect(() => {
+        if (isLive && matchData?.id) {
+            fetchLiveData();
+            // Set up interval to refresh live data every 30 seconds
+            const interval = setInterval(fetchLiveData, 30000);
+            return () => clearInterval(interval);
+        }
+    }, [matchData?.id, isLive]);
+
     return (
         <div className="bg-white shadow-sm border p-4 mb-4">
             {/* Back button */}
@@ -210,6 +239,39 @@ const MatchHeader = ({ matchData, onScoreUpdate }) => {
                                 {score}
                             </div>
                             <LiveTimer matchId={matchData.id} isLive={isLive} onScoreUpdate={handleScoreUpdate} />
+                            
+                            {/* Card details - only for live matches with statistics */}
+                            {console.log('🔍 MatchHeader - Complete match data:', matchData)}
+                            {console.log('🔍 MatchHeader - Live data:', liveData)}
+                            {console.log('🔍 MatchHeader - Checking card data:', {
+                                isLive,
+                                hasLiveData: !!liveData,
+                                hasStatistics: !!liveData?.statistics,
+                                hasFootball: !!liveData?.statistics?.football,
+                                liveData: liveData
+                            })}
+                            {(liveData?.statistics || isLive) && (
+                                <div className="flex flex-col items-center gap-1 mt-2 text-sm">
+                                    {/* Yellow cards */}
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-3 h-3 bg-yellow-500 border-0"></div>
+                                        <span className="font-semibold text-gray-800">
+                                            {liveData?.statistics?.football?.home?.yellowCards || 
+                                             liveData?.statistics?.home?.yellowCards || 0} - {liveData?.statistics?.football?.away?.yellowCards || 
+                                             liveData?.statistics?.away?.yellowCards || 0}
+                                        </span>
+                                    </div>
+                                    {/* Red cards */}
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-3 h-3 bg-red-500 border-0"></div>
+                                        <span className="font-semibold text-gray-800">
+                                            {liveData?.statistics?.football?.home?.redCards || 
+                                             liveData?.statistics?.home?.redCards || 0} - {liveData?.statistics?.football?.away?.redCards || 
+                                             liveData?.statistics?.away?.redCards || 0}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="text-4xl font-bold text-gray-800">

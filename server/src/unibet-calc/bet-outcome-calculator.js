@@ -23,6 +23,7 @@ import {
     getNthGoal,
     getPlayerStats,
     getPlayerEvents,
+    getCardEvents,
     findPlayerIdByName
 } from './utils/fotmob-helpers.js';
 import { normalizeBet } from './utils/market-normalizer.js';
@@ -32,7 +33,35 @@ import User from '../models/User.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export default class BetOutcomeCalculator {
+// Helper function to get corners in a specific time window
+function getCornersInTimeWindow(matchDetails, team, startMinute, startSecond, endMinute, endSecond) {
+    const events = matchDetails?.header?.events?.events || [];
+    let cornerCount = 0;
+    
+    for (const event of events) {
+        if (event.type === 'Corner' && event.minute !== undefined) {
+            const eventMinute = event.minute;
+            const eventSecond = event.second || 0;
+            
+            // Check if event is within time window
+            const eventTime = eventMinute * 60 + eventSecond;
+            const startTime = startMinute * 60 + startSecond;
+            const endTime = endMinute * 60 + endSecond;
+            
+            if (eventTime >= startTime && eventTime <= endTime) {
+                // Check if it's for the correct team
+                const isHomeTeam = event.isHome === true;
+                if ((team === 'home' && isHomeTeam) || (team === 'away' && !isHomeTeam)) {
+                    cornerCount++;
+                }
+            }
+        }
+    }
+    
+    return cornerCount;
+}
+
+class BetOutcomeCalculator {
     constructor(db) {
         this.db = db;
         this.fotmob = new Fotmob();
@@ -1023,11 +1052,13 @@ export default class BetOutcomeCalculator {
         const whoLostOnAggregated = matchDetails.header?.status?.whoLostOnAggregated;
 
         // Check for regular time/full time markets (handle both naming conventions)
+        // Exclude Half Time/Full Time markets from regular time analysis
         const isRegularTimeMarket = (bet.marketName === 'Match (regular time)') || 
                                    (bet.marketName?.toLowerCase().includes('regular time')) ||
-                                   (bet.marketName?.toLowerCase().includes('full time')) ||
                                    (bet.marketName === 'Full Time') ||
-                                   (bet.marketName === 'Match Regular Time');
+                                   (bet.marketName === 'Match Regular Time') ||
+                                   (bet.marketName?.toLowerCase() === 'full time result') ||
+                                   (bet.marketName?.toLowerCase() === 'match result');
         
         if (isRegularTimeMarket) {
             // For regular time/full time markets, we need to check if the match was decided by penalties or aggregate
@@ -1274,7 +1305,7 @@ export default class BetOutcomeCalculator {
                 reason: `2nd Half result: ${sh.home}-${sh.away} (bet ${selection})`
             };
 
-        } else if (bet.marketName === '3-Way Line' || bet.marketName === '3-Way Handicap') {
+        } else if ((bet.marketName === '3-Way Line' || bet.marketName === '3-Way Handicap') && marketCode === MarketCodes.UNKNOWN) {
             // 3-way handicap based on integer/half line (e.g., -1.0, 0.0, +1.0) from bet.handicapLine
             const { homeScore: ftHome, awayScore: ftAway } = getFinalScore(matchDetails);
             const selection = String(bet.outcomeLabel || '').trim().toUpperCase(); // '1' | 'X' | '2'
@@ -1954,7 +1985,7 @@ export default class BetOutcomeCalculator {
                 reason: `Goals in ${start}-${end} ${selection} ${line}: total=${total} → ${status}`
             };
 
-        } else if ((bet.marketName || '').toLowerCase().includes('next goal')) {
+        } else if ((bet.marketName || '').toLowerCase().includes('next goal') && !(bet.marketName || '').toLowerCase().includes('method of scoring')) {
             // Next Goal markets. outcomeLabel may be '1', '2', 'X' or 'Home', 'Away', 'No more goals'
             const selection = String(bet.outcomeLabel || '').toLowerCase();
             const name = (bet.marketName || '').toLowerCase();
@@ -2226,7 +2257,7 @@ export default class BetOutcomeCalculator {
                 reason: `Most Red Cards: ${actual} (home=${home}, away=${away}) (bet ${sel})`
             };
 
-        } else if ((bet.marketName || '').toLowerCase().includes('cards 3-way')) {
+        } else if ((bet.marketName || '').toLowerCase().includes('cards 3-way') && !(bet.marketName || '').toLowerCase().includes('line')) {
             // Cards 3-Way Handicap: compare totals with integer handicap
             const sel = String(bet.outcomeLabel || '').toLowerCase();
             // Get line with proper conversion
@@ -2369,6 +2400,353 @@ export default class BetOutcomeCalculator {
                 reason: `Total Corners ${sel} ${line}: total=${total} → ${status}`
             };
 
+        } else if (marketCode === MarketCodes.CORNER_OCCURRENCE_TIME_WINDOW) {
+            // Corner occurrence in specific time window (e.g., 45:00-49:59 - 2nd Half)
+            const selection = String(bet.outcomeLabel || bet.outcomeEnglishLabel || '').toLowerCase();
+            const marketName = String(bet.marketName || '').toLowerCase();
+            
+            console.log(`🎯 CORNER OCCURRENCE TIME WINDOW MARKET: "${selection}"`);
+            console.log(`   - Market name: "${marketName}"`);
+            
+            // Extract time window from market name (e.g., "45:00-49:59")
+            const timeMatch = marketName.match(/(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})/);
+            if (!timeMatch) {
+                return {
+                    status: 'cancelled',
+                    reason: 'Unable to extract time window from market name',
+                    debugInfo: { marketName }
+                };
+            }
+            
+            const startMinute = parseInt(timeMatch[1], 10);
+            const startSecond = parseInt(timeMatch[2], 10);
+            const endMinute = parseInt(timeMatch[3], 10);
+            const endSecond = parseInt(timeMatch[4], 10);
+            
+            // Adjust for half (2nd half starts at 45 minutes)
+            let adjustedStartMinute = startMinute;
+            let adjustedEndMinute = endMinute;
+            
+            if (marketName.includes('2nd half')) {
+                adjustedStartMinute = startMinute + 45; // 2nd half starts at 45 minutes
+                adjustedEndMinute = endMinute + 45;
+            } else if (marketName.includes('1st half')) {
+                // 1st half is 0-45 minutes, so no adjustment needed
+                adjustedStartMinute = startMinute;
+                adjustedEndMinute = endMinute;
+            }
+            
+            console.log(`   - Time window: ${startMinute}:${startSecond.toString().padStart(2, '0')} - ${endMinute}:${endSecond.toString().padStart(2, '0')}`);
+            console.log(`   - Adjusted for half: ${adjustedStartMinute}:${startSecond.toString().padStart(2, '0')} - ${adjustedEndMinute}:${endSecond.toString().padStart(2, '0')}`);
+            
+            // Check if any corner occurred in the time window
+            const events = matchDetails?.header?.events?.events || [];
+            let cornerOccurred = false;
+            let cornerCount = 0;
+            
+            for (const event of events) {
+                if (event.type === 'Corner' && event.minute !== undefined) {
+                    const eventMinute = event.minute;
+                    const eventSecond = event.second || 0;
+                    
+                    // Check if event is within time window
+                    const eventTime = eventMinute * 60 + eventSecond;
+                    const startTime = adjustedStartMinute * 60 + startSecond;
+                    const endTime = adjustedEndMinute * 60 + endSecond;
+                    
+                    if (eventTime >= startTime && eventTime <= endTime) {
+                        cornerOccurred = true;
+                        cornerCount++;
+                    }
+                }
+            }
+            
+            console.log(`   - Corner occurred: ${cornerOccurred}`);
+            console.log(`   - Corner count: ${cornerCount}`);
+            
+            // Determine result based on selection
+            let won = false;
+            if (selection === 'yes' && cornerOccurred) {
+                won = true;
+            } else if (selection === 'no' && !cornerOccurred) {
+                won = true;
+            }
+            
+            console.log(`   - Bet selection: ${selection}`);
+            console.log(`   - Result: ${won ? 'WON' : 'LOST'}`);
+            
+            return {
+                status: won ? 'won' : 'lost',
+                actualOutcome: cornerOccurred ? 'Yes' : 'No',
+                finalScore: cornerOccurred ? 'Yes' : 'No',
+                timeWindow: `${startMinute}:${startSecond.toString().padStart(2, '0')}-${endMinute}:${endSecond.toString().padStart(2, '0')}`,
+                cornerCount: cornerCount,
+                matchId: matchDetails.general?.matchId,
+                reason: `Corner ${startMinute}:${startSecond.toString().padStart(2, '0')}-${endMinute}:${endSecond.toString().padStart(2, '0')}: ${cornerOccurred ? 'Yes' : 'No'} (${cornerCount} corners) → ${won ? 'WON' : 'LOST'}`,
+                payout: won ? (bet.stake * bet.odds) : 0,
+                stake: bet.stake,
+                odds: bet.odds,
+                debugInfo: {
+                    timeWindow: `${startMinute}:${startSecond}-${endMinute}:${endSecond}`,
+                    adjustedTimeWindow: `${adjustedStartMinute}:${startSecond}-${adjustedEndMinute}:${endSecond}`,
+                    cornerOccurred,
+                    cornerCount,
+                    betSelection: selection
+                }
+            };
+        } else if (marketCode === MarketCodes.FIRST_CORNER_TIME_WINDOW) {
+            // First corner in specific time window (e.g., 45:00-49:59 - 2nd Half)
+            const selection = String(bet.outcomeLabel || bet.outcomeEnglishLabel || '');
+            const marketName = String(bet.marketName || '').toLowerCase();
+            
+            console.log(`🎯 FIRST CORNER TIME WINDOW MARKET: "${selection}"`);
+            console.log(`   - Market name: "${marketName}"`);
+            
+            // Extract time window from market name (e.g., "45:00-49:59")
+            const timeMatch = marketName.match(/(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})/);
+            if (!timeMatch) {
+                return {
+                    status: 'cancelled',
+                    reason: 'Unable to extract time window from market name',
+                    debugInfo: { marketName }
+                };
+            }
+            
+            const startMinute = parseInt(timeMatch[1], 10);
+            const startSecond = parseInt(timeMatch[2], 10);
+            const endMinute = parseInt(timeMatch[3], 10);
+            const endSecond = parseInt(timeMatch[4], 10);
+            
+            // Adjust for half (2nd half starts at 45 minutes)
+            let adjustedStartMinute = startMinute;
+            let adjustedEndMinute = endMinute;
+            
+            if (marketName.includes('2nd half')) {
+                adjustedStartMinute = startMinute + 45; // 2nd half starts at 45 minutes
+                adjustedEndMinute = endMinute + 45;
+            } else if (marketName.includes('1st half')) {
+                // 1st half is 0-45 minutes, so no adjustment needed
+                adjustedStartMinute = startMinute;
+                adjustedEndMinute = endMinute;
+            }
+            
+            console.log(`   - Time window: ${startMinute}:${startSecond.toString().padStart(2, '0')} - ${endMinute}:${endSecond.toString().padStart(2, '0')}`);
+            console.log(`   - Adjusted for half: ${adjustedStartMinute}:${startSecond.toString().padStart(2, '0')} - ${adjustedEndMinute}:${endSecond.toString().padStart(2, '0')}`);
+            
+            // Find the first corner in the time window
+            const events = matchDetails?.header?.events?.events || [];
+            let firstCornerInWindow = null;
+            let firstCornerTime = null;
+            
+            for (const event of events) {
+                if (event.type === 'Corner' && event.minute !== undefined) {
+                    const eventMinute = event.minute;
+                    const eventSecond = event.second || 0;
+                    
+                    // Check if event is within time window
+                    const eventTime = eventMinute * 60 + eventSecond;
+                    const startTime = adjustedStartMinute * 60 + startSecond;
+                    const endTime = adjustedEndMinute * 60 + endSecond;
+                    
+                    if (eventTime >= startTime && eventTime <= endTime) {
+                        if (!firstCornerInWindow || eventTime < firstCornerTime) {
+                            firstCornerInWindow = event;
+                            firstCornerTime = eventTime;
+                        }
+                    }
+                }
+            }
+            
+            console.log(`   - First corner in window: ${firstCornerInWindow ? 'Found' : 'None'}`);
+            if (firstCornerInWindow) {
+                console.log(`   - First corner team: ${firstCornerInWindow.isHome ? 'Home' : 'Away'}`);
+                console.log(`   - First corner time: ${firstCornerInWindow.minute}:${(firstCornerInWindow.second || 0).toString().padStart(2, '0')}`);
+            }
+            
+            // Determine actual outcome
+            let actualOutcome;
+            if (!firstCornerInWindow) {
+                actualOutcome = 'X'; // No corner = Draw
+            } else if (firstCornerInWindow.isHome) {
+                actualOutcome = '1'; // Home team
+            } else {
+                actualOutcome = '2'; // Away team
+            }
+            
+            console.log(`   - Actual outcome: ${actualOutcome}`);
+            console.log(`   - Bet selection: ${selection}`);
+            
+            const won = actualOutcome === selection;
+            
+            console.log(`   - Result: ${won ? 'WON' : 'LOST'}`);
+            
+            return {
+                status: won ? 'won' : 'lost',
+                actualOutcome: actualOutcome,
+                finalScore: actualOutcome,
+                timeWindow: `${startMinute}:${startSecond.toString().padStart(2, '0')}-${endMinute}:${endSecond.toString().padStart(2, '0')}`,
+                firstCornerTeam: firstCornerInWindow ? (firstCornerInWindow.isHome ? 'Home' : 'Away') : 'None',
+                firstCornerTime: firstCornerInWindow ? `${firstCornerInWindow.minute}:${(firstCornerInWindow.second || 0).toString().padStart(2, '0')}` : 'N/A',
+                matchId: matchDetails.general?.matchId,
+                reason: `First Corner ${startMinute}:${startSecond.toString().padStart(2, '0')}-${endMinute}:${endSecond.toString().padStart(2, '0')}: ${actualOutcome} → ${won ? 'WON' : 'LOST'}`,
+                payout: won ? (bet.stake * bet.odds) : 0,
+                stake: bet.stake,
+                odds: bet.odds,
+                debugInfo: {
+                    timeWindow: `${startMinute}:${startSecond}-${endMinute}:${endSecond}`,
+                    adjustedTimeWindow: `${adjustedStartMinute}:${startSecond}-${adjustedEndMinute}:${endSecond}`,
+                    firstCornerFound: !!firstCornerInWindow,
+                    firstCornerTeam: firstCornerInWindow ? (firstCornerInWindow.isHome ? 'Home' : 'Away') : 'None',
+                    actualOutcome,
+                    betSelection: selection
+                }
+            };
+        } else if (marketCode === MarketCodes.CORNERS_TOTAL_OU_TIME_WINDOW) {
+            // Total Corners Over/Under in specific time window (e.g., 50:00-59:59)
+            const selection = String(bet.outcomeLabel || bet.outcomeEnglishLabel || '').toLowerCase();
+            const marketName = String(bet.marketName || '').toLowerCase();
+            const line = parseFloat(bet.betDetails?.total || bet.hints?.line || 0);
+            
+            console.log(`🎯 CORNERS TOTAL OU TIME WINDOW MARKET: "${selection}"`);
+            console.log(`   - Market name: "${marketName}"`);
+            console.log(`   - Line: ${line}`);
+            
+            // Extract time window from market name (e.g., "50:00-59:59")
+            const timeMatch = marketName.match(/(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})/);
+            if (!timeMatch) {
+                return {
+                    status: 'cancelled',
+                    reason: 'Unable to extract time window from market name',
+                    debugInfo: { marketName }
+                };
+            }
+            
+            const startMinute = parseInt(timeMatch[1], 10);
+            const startSecond = parseInt(timeMatch[2], 10);
+            const endMinute = parseInt(timeMatch[3], 10);
+            const endSecond = parseInt(timeMatch[4], 10);
+            
+            console.log(`   - Time window: ${startMinute}:${startSecond.toString().padStart(2, '0')} - ${endMinute}:${endSecond.toString().padStart(2, '0')}`);
+            
+            // Get total corners in the specific time window
+            const homeCorners = getCornersInTimeWindow(matchDetails, 'home', startMinute, startSecond, endMinute, endSecond);
+            const awayCorners = getCornersInTimeWindow(matchDetails, 'away', startMinute, startSecond, endMinute, endSecond);
+            const totalCorners = homeCorners + awayCorners;
+            
+            console.log(`   - Home corners in window: ${homeCorners}, Away corners in window: ${awayCorners}`);
+            console.log(`   - Total corners in window: ${totalCorners}`);
+            
+            // Determine if over or under
+            const isOver = totalCorners > line;
+            const isUnder = totalCorners < line;
+            const isExact = totalCorners === line;
+            
+            console.log(`   - Total: ${totalCorners}, Line: ${line}`);
+            console.log(`   - Over: ${isOver}, Under: ${isUnder}, Exact: ${isExact}`);
+            
+            // Check if bet selection matches result
+            let won = false;
+            if (selection.includes('over') && isOver) {
+                won = true;
+            } else if (selection.includes('under') && isUnder) {
+                won = true;
+            } else if (isExact) {
+                // If exact match, typically both over and under lose (push)
+                won = false;
+            }
+            
+            console.log(`   - Bet selection: ${selection}`);
+            console.log(`   - Result: ${won ? 'WON' : 'LOST'}`);
+            
+            return {
+                status: won ? 'won' : 'lost',
+                actualOutcome: `${totalCorners}`,
+                finalScore: `${totalCorners}`,
+                timeWindow: `${startMinute}:${startSecond.toString().padStart(2, '0')}-${endMinute}:${endSecond.toString().padStart(2, '0')}`,
+                line: line,
+                matchId: matchDetails.general?.matchId,
+                reason: `Total Corners ${startMinute}:${startSecond.toString().padStart(2, '0')}-${endMinute}:${endSecond.toString().padStart(2, '0')}: ${totalCorners} vs ${line} → ${won ? 'WON' : 'LOST'}`,
+                payout: won ? (bet.stake * bet.odds) : 0,
+                stake: bet.stake,
+                odds: bet.odds,
+                debugInfo: {
+                    timeWindow: `${startMinute}:${startSecond}-${endMinute}:${endSecond}`,
+                    homeCorners,
+                    awayCorners,
+                    totalCorners,
+                    line,
+                    isOver,
+                    isUnder,
+                    isExact,
+                    betSelection: selection
+                }
+            };
+        } else if (marketCode === MarketCodes.CORNERS_MOST_TIME_WINDOW) {
+            // Most Corners in specific time window (e.g., 50:00-59:59)
+            const selection = String(bet.outcomeLabel || bet.outcomeEnglishLabel || '').toLowerCase();
+            const marketName = String(bet.marketName || '').toLowerCase();
+            
+            console.log(`🎯 CORNERS MOST TIME WINDOW MARKET: "${selection}"`);
+            console.log(`   - Market name: "${marketName}"`);
+            
+            // Extract time window from market name (e.g., "50:00-59:59")
+            const timeMatch = marketName.match(/(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})/);
+            if (!timeMatch) {
+                return {
+                    status: 'cancelled',
+                    reason: 'Unable to extract time window from market name',
+                    debugInfo: { marketName }
+                };
+            }
+            
+            const startMinute = parseInt(timeMatch[1], 10);
+            const startSecond = parseInt(timeMatch[2], 10);
+            const endMinute = parseInt(timeMatch[3], 10);
+            const endSecond = parseInt(timeMatch[4], 10);
+            
+            console.log(`   - Time window: ${startMinute}:${startSecond.toString().padStart(2, '0')} - ${endMinute}:${endSecond.toString().padStart(2, '0')}`);
+            
+            // Get corners in the specific time window
+            const homeCorners = getCornersInTimeWindow(matchDetails, 'home', startMinute, startSecond, endMinute, endSecond);
+            const awayCorners = getCornersInTimeWindow(matchDetails, 'away', startMinute, startSecond, endMinute, endSecond);
+            
+            console.log(`   - Home corners in window: ${homeCorners}, Away corners in window: ${awayCorners}`);
+            
+            // Determine result
+            let actualOutcome;
+            if (homeCorners > awayCorners) {
+                actualOutcome = '1'; // Home wins
+            } else if (homeCorners < awayCorners) {
+                actualOutcome = '2'; // Away wins
+            } else {
+                actualOutcome = 'x'; // Draw
+            }
+            
+            console.log(`   - Actual outcome: ${actualOutcome}`);
+            console.log(`   - Bet selection: ${selection}`);
+            
+            const won = actualOutcome === selection;
+            
+            console.log(`   - Result: ${won ? 'WON' : 'LOST'}`);
+            
+            return {
+                status: won ? 'won' : 'lost',
+                actualOutcome: actualOutcome,
+                finalScore: `${homeCorners}-${awayCorners}`,
+                timeWindow: `${startMinute}:${startSecond.toString().padStart(2, '0')}-${endMinute}:${endSecond.toString().padStart(2, '0')}`,
+                matchId: matchDetails.general?.matchId,
+                reason: `Most Corners ${startMinute}:${startSecond.toString().padStart(2, '0')}-${endMinute}:${endSecond.toString().padStart(2, '0')}: ${actualOutcome} (${homeCorners}-${awayCorners}) → ${won ? 'WON' : 'LOST'}`,
+                payout: won ? (bet.stake * bet.odds) : 0,
+                stake: bet.stake,
+                odds: bet.odds,
+                debugInfo: {
+                    timeWindow: `${startMinute}:${startSecond}-${endMinute}:${endSecond}`,
+                    homeCorners,
+                    awayCorners,
+                    actualOutcome,
+                    betSelection: selection
+                }
+            };
         } else if (marketCode === MarketCodes.CORNERS_MOST) {
             // Most Corners: compare team corner counts
             const sel = String(bet.outcomeLabel || '').toLowerCase();
@@ -2538,15 +2916,367 @@ export default class BetOutcomeCalculator {
             if (!playerId) {
                 return { status: 'cancelled', reason: 'Unable to resolve player for card market', debugInfo: { participantName } };
             }
-            const { cards } = getPlayerEvents(matchDetails, Number(playerId));
+            
+            console.log(`🎯 PLAYER CARD MARKET: "${participantName}"`);
+            console.log(`   - Player ID: ${playerId}`);
+            console.log(`   - Is Red Only: ${isRedOnly}`);
+            console.log(`   - Yes Selected: ${yesSelected}`);
+            
+            // Try to get cards by player ID first
+            let { cards } = getPlayerEvents(matchDetails, Number(playerId));
+            console.log(`   - Cards found by ID: ${cards ? cards.length : 0}`);
+            console.log(`   - Cards data by ID:`, cards);
+            
+            // If no cards found by ID, try to find by player name
+            if (!cards || cards.length === 0) {
+                console.log(`   - No cards found by ID, trying name matching...`);
+                const allCards = getCardEvents(matchDetails);
+                console.log(`   - All cards in match: ${allCards.length}`);
+                
+                // Find cards for this player by name matching
+                const playerCards = allCards.filter(card => {
+                    const cardPlayerName = card.player?.name || card.nameStr || card.fullName || '';
+                    const normalizedCardName = cardPlayerName.toLowerCase().trim();
+                    const normalizedBetName = participantName.toLowerCase().trim();
+                    
+                    console.log(`   - Comparing: "${normalizedCardName}" vs "${normalizedBetName}"`);
+                    
+                    // Try exact match first
+                    if (normalizedCardName === normalizedBetName) {
+                        console.log(`   - Exact name match found!`);
+                        return true;
+                    }
+                    
+                    // Try partial match
+                    if (normalizedCardName.includes(normalizedBetName) || normalizedBetName.includes(normalizedCardName)) {
+                        console.log(`   - Partial name match found!`);
+                        return true;
+                    }
+                    
+                    return false;
+                });
+                
+                console.log(`   - Cards found by name: ${playerCards.length}`);
+                console.log(`   - Cards data by name:`, playerCards);
+                
+                cards = playerCards;
+            }
+            
             const numCards = Array.isArray(cards) ? cards.length : 0;
             const hasRed = (cards || []).some(c => String(c?.card || '').toLowerCase().includes('red'));
             const didHit = isRedOnly ? hasRed : (numCards > 0);
             const won = yesSelected ? didHit : !didHit;
+            
+            console.log(`   - Num cards: ${numCards}`);
+            console.log(`   - Has red: ${hasRed}`);
+            console.log(`   - Did hit: ${didHit}`);
+            console.log(`   - Won: ${won}`);
+            
             return {
                 status: won ? 'won' : 'lost',
                 debugInfo: { playerId: Number(playerId), participantName, numCards, hasRed, isRedOnly, yesSelected },
                 reason: `Player ${isRedOnly ? 'Red Card' : 'Card'}: ${didHit ? 'occurred' : 'none'} → ${won ? 'WON' : 'LOST'}`
+            };
+            } else if (marketCode === MarketCodes.THREE_WAY_LINE) {
+                // 3-Way Line: Home/Draw/Away with goal-based handicap
+                const selection = String(bet.outcomeLabel || bet.outcomeEnglishLabel || '');
+                const handicap = bet.unibetMeta?.handicapLine || bet.hints?.line || bet.betDetails?.handicap || 0;
+                
+                console.log(`🎯 3-WAY LINE MARKET: "${selection}"`);
+                console.log(`   - Handicap: ${handicap}`);
+                
+                // Extract goal scores from match data
+                const { homeScore, awayScore } = getFinalScore(matchDetails);
+                
+                console.log(`   - Home goals: ${homeScore}, Away goals: ${awayScore}`);
+                
+                // Apply handicap to home team
+                const adjustedHomeScore = homeScore + handicap;
+                const adjustedAwayScore = awayScore;
+                
+                console.log(`   - After handicap: Home ${adjustedHomeScore}, Away ${adjustedAwayScore}`);
+                
+                // Determine result
+                let actualOutcome;
+                if (adjustedHomeScore > adjustedAwayScore) {
+                    actualOutcome = '1'; // Home wins
+                } else if (adjustedHomeScore < adjustedAwayScore) {
+                    actualOutcome = '2'; // Away wins
+                } else {
+                    actualOutcome = 'X'; // Draw
+                }
+                
+                console.log(`   - Actual outcome: ${actualOutcome}`);
+                console.log(`   - Bet selection: ${selection}`);
+                
+                const won = actualOutcome === selection;
+                
+                console.log(`   - Result: ${won ? 'WON' : 'LOST'}`);
+                
+                return {
+                    status: won ? 'won' : 'lost',
+                    actualOutcome: actualOutcome,
+                    finalScore: `${homeScore}-${awayScore}`,
+                    handicap: handicap,
+                    adjustedScore: `${adjustedHomeScore}-${adjustedAwayScore}`,
+                    matchId: matchDetails.general?.matchId,
+                    reason: `3-Way Line (handicap ${handicap}): ${actualOutcome} (${adjustedHomeScore}-${adjustedAwayScore}) → ${won ? 'WON' : 'LOST'}`,
+                    payout: won ? (bet.stake * bet.odds) : 0,
+                    stake: bet.stake,
+                    odds: bet.odds,
+                    debugInfo: {
+                        homeScore,
+                        awayScore,
+                        handicap,
+                        adjustedHomeScore,
+                        adjustedAwayScore,
+                        actualOutcome,
+                        betSelection: selection
+                    }
+                };
+            } else if (marketCode === MarketCodes.CARDS_3_WAY_LINE) {
+                // Cards 3-Way Line: Home/Draw/Away with handicap applied to card counts
+                const selection = String(bet.outcomeLabel || bet.outcomeEnglishLabel || '');
+                const handicap = bet.unibetMeta?.handicapLine || bet.hints?.line || bet.betDetails?.handicap || 0;
+                
+                console.log(`🎯 CARDS 3-WAY LINE MARKET: "${selection}"`);
+                console.log(`   - Handicap: ${handicap}`);
+                
+                // Extract card counts from match data
+                const cardsData = getTeamCards(matchDetails);
+                
+                // Extract numeric values from the cards data structure
+                const homeCards = cardsData?.home?.total || 0;
+                const awayCards = cardsData?.away?.total || 0;
+                
+                console.log(`   - Home cards: ${homeCards}, Away cards: ${awayCards}`);
+                
+                // Apply handicap to home team
+                const adjustedHomeCards = homeCards + handicap;
+                const adjustedAwayCards = awayCards;
+                
+                console.log(`   - After handicap: Home ${adjustedHomeCards}, Away ${adjustedAwayCards}`);
+                
+                // Determine result
+                let actualOutcome;
+                if (adjustedHomeCards > adjustedAwayCards) {
+                    actualOutcome = '1'; // Home wins
+                } else if (adjustedHomeCards < adjustedAwayCards) {
+                    actualOutcome = '2'; // Away wins
+                } else {
+                    actualOutcome = 'X'; // Draw
+                }
+                
+                console.log(`   - Actual outcome: ${actualOutcome}`);
+                console.log(`   - Bet selection: ${selection}`);
+                
+                const won = actualOutcome === selection;
+                
+                console.log(`   - Result: ${won ? 'WON' : 'LOST'}`);
+                
+                return {
+                    status: won ? 'won' : 'lost',
+                    actualOutcome: actualOutcome,
+                    finalScore: `${homeCards}-${awayCards}`,
+                    handicap: handicap,
+                    adjustedScore: `${adjustedHomeCards}-${adjustedAwayCards}`,
+                    matchId: matchDetails.general?.matchId,
+                    reason: `Cards 3-Way Line (handicap ${handicap}): ${actualOutcome} (${adjustedHomeCards}-${adjustedAwayCards}) → ${won ? 'WON' : 'LOST'}`,
+                    payout: won ? (bet.stake * bet.odds) : 0,
+                    stake: bet.stake,
+                    odds: bet.odds,
+                    debugInfo: {
+                        homeCards,
+                        awayCards,
+                        handicap,
+                        adjustedHomeCards,
+                        adjustedAwayCards,
+                        actualOutcome,
+                        betSelection: selection
+                    }
+                };
+            } else if (marketCode === MarketCodes.METHOD_OF_SCORING_NEXT_GOAL) {
+            // Method of scoring next goal: Shot inside box, Header, Penalty, etc.
+            const selection = String(bet.outcomeLabel || bet.outcomeEnglishLabel || '').toLowerCase();
+            const marketName = String(bet.marketName || '').toLowerCase();
+            
+            console.log(`🎯 METHOD OF SCORING NEXT GOAL MARKET: "${selection}"`);
+            console.log(`   - Market name: "${marketName}"`);
+            
+            // Extract goal number from market name (e.g., "Goal 2" -> 2)
+            const goalMatch = marketName.match(/goal\s+(\d+)/);
+            const targetGoalNumber = goalMatch ? parseInt(goalMatch[1], 10) : 1;
+            
+            console.log(`   - Target goal number: ${targetGoalNumber}`);
+            
+            // Get all goals from the match
+            const allGoals = getGoalsInWindow(matchDetails, 0, 90); // All goals in the match
+            console.log(`   - Total goals in match: ${allGoals.length}`);
+            
+            if (allGoals.length < targetGoalNumber) {
+                // Not enough goals scored - bet is void
+                return {
+                    status: 'void',
+                    actualOutcome: 'Not enough goals',
+                    finalScore: `${getFinalScore(matchDetails).homeScore}-${getFinalScore(matchDetails).awayScore}`,
+                    matchId: matchDetails.general?.matchId,
+                    reason: `Method of scoring next Goal ${targetGoalNumber}: Only ${allGoals.length} goals scored (need ${targetGoalNumber})`,
+                    payout: bet.stake, // Refund stake for void bet
+                    stake: bet.stake,
+                    odds: bet.odds,
+                    debugInfo: {
+                        targetGoalNumber,
+                        actualGoals: allGoals.length,
+                        allGoals: allGoals.map(g => ({ minute: g.minute, method: g.method, team: g.team }))
+                    }
+                };
+            }
+            
+            // Get the specific goal we're interested in
+            const targetGoal = allGoals[targetGoalNumber - 1]; // Array is 0-indexed
+            console.log(`   - Target goal: ${JSON.stringify(targetGoal)}`);
+            
+            if (!targetGoal) {
+                return {
+                    status: 'cancelled',
+                    reason: `Unable to find goal number ${targetGoalNumber}`,
+                    debugInfo: { targetGoalNumber, allGoals: allGoals.length }
+                };
+            }
+            
+            // Determine the method of scoring
+            let actualMethod = 'unknown';
+            
+            // Check for own goal first
+            if (targetGoal.raw?.shotmapEvent?.isOwnGoal === true) {
+                actualMethod = 'own goal';
+            } else if (targetGoal.raw?.shotmapEvent?.situation === 'Penalty') {
+                actualMethod = 'penalty';
+            } else if (targetGoal.raw?.shotmapEvent?.situation === 'FreeKick') {
+                actualMethod = 'free kick';
+            } else if (targetGoal.raw?.shotmapEvent?.shotType?.toLowerCase().includes('head')) {
+                actualMethod = 'header';
+            } else if (targetGoal.raw?.shotmapEvent?.isFromInsideBox === true) {
+                actualMethod = 'shot inside the box';
+            } else if (targetGoal.raw?.shotmapEvent?.isFromInsideBox === false) {
+                actualMethod = 'shot outside the box';
+            } else {
+                // Fallback to checking method field if shotmapEvent is not available
+                const goalMethod = targetGoal.method?.toLowerCase() || '';
+                
+                if (goalMethod.includes('penalty')) {
+                    actualMethod = 'penalty';
+                } else if (goalMethod.includes('free kick') || goalMethod.includes('freekick')) {
+                    actualMethod = 'free kick';
+                } else if (goalMethod.includes('own goal')) {
+                    actualMethod = 'own goal';
+                } else if (goalMethod.includes('header')) {
+                    actualMethod = 'header';
+                } else if (goalMethod.includes('shot')) {
+                    // Determine if inside or outside box based on goal data
+                    const isInsideBox = targetGoal.isInsideBox !== false; // Default to inside if not specified
+                    actualMethod = isInsideBox ? 'shot inside the box' : 'shot outside the box';
+                }
+            }
+            
+            console.log(`   - Actual method: "${actualMethod}"`);
+            console.log(`   - Bet selection: "${selection}"`);
+            
+            // Check if the method matches
+            const won = actualMethod === selection;
+            
+            console.log(`   - Result: ${won ? 'WON' : 'LOST'}`);
+            
+            return {
+                status: won ? 'won' : 'lost',
+                actualOutcome: actualMethod,
+                finalScore: `${getFinalScore(matchDetails).homeScore}-${getFinalScore(matchDetails).awayScore}`,
+                goalNumber: targetGoalNumber,
+                goalMinute: targetGoal.minute,
+                matchId: matchDetails.general?.matchId,
+                reason: `Method of scoring next Goal ${targetGoalNumber}: ${actualMethod} (bet: ${selection}) → ${won ? 'WON' : 'LOST'}`,
+                payout: won ? (bet.stake * bet.odds) : 0,
+                stake: bet.stake,
+                odds: bet.odds,
+                debugInfo: {
+                    targetGoalNumber,
+                    actualMethod,
+                    betSelection: selection,
+                    goalDetails: targetGoal
+                }
+            };
+        } else if (marketCode === MarketCodes.HALF_TIME_FULL_TIME) {
+            // Half Time/Full Time: 1/1, 1/X, 1/2, X/1, X/X, X/2, 2/1, 2/X, 2/2
+            const { homeScore: ftHome, awayScore: ftAway } = getFinalScore(matchDetails);
+            const htScores = getHalftimeScore(matchDetails);
+            
+            console.log(`🎯 HALF TIME/FULL TIME MARKET: HT: ${htScores.home}-${htScores.away}, FT: ${ftHome}-${ftAway}`);
+            console.log(`   - Bet selection: ${bet.outcomeLabel}`);
+            
+            // Determine half-time result
+            let htResult;
+            if (htScores.home > htScores.away) {
+                htResult = '1'; // Home wins half time
+            } else if (htScores.home < htScores.away) {
+                htResult = '2'; // Away wins half time
+            } else {
+                htResult = 'X'; // Half time draw
+            }
+            
+            // Determine full-time result
+            let ftResult;
+            if (ftHome > ftAway) {
+                ftResult = '1'; // Home wins full time
+            } else if (ftHome < ftAway) {
+                ftResult = '2'; // Away wins full time
+            } else {
+                ftResult = 'X'; // Full time draw
+            }
+            
+            // Parse bet selection (e.g., "1/2")
+            const selection = String(bet.outcomeLabel || bet.outcomeEnglishLabel || '');
+            const parts = selection.split('/');
+            
+            if (parts.length !== 2) {
+                return { 
+                    status: 'cancelled', 
+                    reason: 'Invalid Half Time/Full Time format - expected format like "1/2"',
+                    debugInfo: { selection, marketName: bet.marketName }
+                };
+            }
+            
+            const expectedHT = parts[0].trim();
+            const expectedFT = parts[1].trim();
+            
+            console.log(`   - Expected: HT=${expectedHT}, FT=${expectedFT}`);
+            console.log(`   - Actual: HT=${htResult}, FT=${ftResult}`);
+            
+            // Check if both half-time and full-time results match
+            const htMatch = expectedHT === htResult;
+            const ftMatch = expectedFT === ftResult;
+            const won = htMatch && ftMatch;
+            
+            console.log(`   - HT Match: ${htMatch}, FT Match: ${ftMatch}, Result: ${won ? 'WON' : 'LOST'}`);
+            
+            return {
+                status: won ? 'won' : 'lost',
+                actualOutcome: `${htResult}/${ftResult}`,
+                finalScore: `${ftHome}-${ftAway}`,
+                halfTimeScore: `${htScores.home}-${htScores.away}`,
+                matchId: matchDetails.general?.matchId,
+                reason: `Half Time/Full Time: HT: ${htResult}, FT: ${ftResult}, Expected: ${expectedHT}/${expectedFT} → ${won ? 'WON' : 'LOST'}`,
+                payout: won ? (bet.stake * bet.odds) : 0,
+                stake: bet.stake,
+                odds: bet.odds,
+                debugInfo: {
+                    selection,
+                    expectedHT,
+                    expectedFT,
+                    actualHT: htResult,
+                    actualFT: ftResult,
+                    htMatch,
+                    ftMatch
+                }
             };
         } else if (marketCode === MarketCodes.MATCH_RESULT) {
             // Match Result (Fulltime Result): 1 (Home Win), X (Draw), 2 (Away Win)
@@ -3537,3 +4267,5 @@ export default class BetOutcomeCalculator {
         }
     }
 }
+
+export default BetOutcomeCalculator;

@@ -29,6 +29,9 @@ const BettingHistoryPage = ({ userId }) => {
   // Keep filters for date range, but not bet type
   const [filters, setFilters] = useState({ dateFrom: '', dateTo: '', status: '' });
   const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
+  
+  // State for table view expansion
+  const [expandedTableBets, setExpandedTableBets] = useState(new Set());
 
   useEffect(() => {
     if (userId && user && user.role === 'admin') {
@@ -48,6 +51,19 @@ const BettingHistoryPage = ({ userId }) => {
       direction = 'desc';
     }
     setSortConfig({ key, direction });
+  };
+
+  // Handle table expansion toggle
+  const handleTableExpansionToggle = (betId) => {
+    setExpandedTableBets(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(betId)) {
+        newSet.delete(betId);
+      } else {
+        newSet.add(betId);
+      }
+      return newSet;
+    });
   };
 
   // const toggleCombinationExpansion = React.useCallback((betId, event) => {
@@ -728,7 +744,23 @@ const BettingHistoryPage = ({ userId }) => {
                             >
                               <TableCell>
                                 {isCombo && (
-                                  <ChevronRight className="h-4 w-4 text-purple-600" />
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleTableExpansionToggle(item._id);
+                                    }}
+                                    className="h-6 w-6 p-0"
+                                    type="button"
+                                  >
+                                    {expandedTableBets.has(item._id) ? (
+                                      <ChevronDown className="h-4 w-4 text-purple-600" />
+                                    ) : (
+                                      <ChevronRight className="h-4 w-4 text-purple-600" />
+                                    )}
+                                  </Button>
                                 )}
                               </TableCell>
                               <TableCell>
@@ -815,7 +847,7 @@ const BettingHistoryPage = ({ userId }) => {
                                 )}
                               </TableCell>
                             </TableRow>
-                            {isCombo && renderCombinationDetails(item)}
+                            {isCombo && expandedTableBets.has(item._id) && renderCombinationDetails(item)}
                           </React.Fragment>
                         );
                       })}

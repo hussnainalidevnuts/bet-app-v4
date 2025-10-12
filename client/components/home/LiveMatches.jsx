@@ -155,7 +155,41 @@ const LiveMatches = () => {
 
     // Transform API data to MatchCard format - show all live matches regardless of odds
     const transformedMatches = liveMatchesData
-        .map(match => transformLiveMatchData(match));
+        .map(match => transformLiveMatchData(match))
+        .filter(match => {
+            // Filter out matches above 90 minutes with all odds disabled
+            if (match.kambiLiveData?.matchClock) {
+                const currentMinute = match.kambiLiveData.matchClock.minute || 0;
+                
+                // If match is above 90 minutes, check if all odds are disabled
+                if (currentMinute > 90) {
+                    // Check if all odds are disabled (null, undefined, NaN, 'NaN', or suspended)
+                    const isOddDisabled = (odd) => {
+                        const value = odd?.value;
+                        return !value || 
+                               value === null || 
+                               value === undefined || 
+                               value === 'NaN' || 
+                               isNaN(value) || 
+                               odd?.suspended;
+                    };
+                    
+                    const homeDisabled = isOddDisabled(match.odds['1']);
+                    const drawDisabled = isOddDisabled(match.odds['X']);
+                    const awayDisabled = isOddDisabled(match.odds['2']);
+                    
+                    const allOddsDisabled = homeDisabled && drawDisabled && awayDisabled;
+                    
+                    
+                    // Filter out if all odds are disabled
+                    if (allOddsDisabled) {
+                        return false;
+                    }
+                }
+            }
+            
+            return true;
+        });
 
     if (transformedMatches.length === 0) {
         return (

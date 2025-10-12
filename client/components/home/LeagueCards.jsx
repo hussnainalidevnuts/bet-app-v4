@@ -65,6 +65,16 @@ const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButt
                 </div>
             </div>
             
+            {/* Color blocks - only for In-Play matches */}
+            {isInPlay && match.kambiLiveData?.statistics?.football && (
+                <div className="flex justify-center mb-2">
+                    <div className="flex items-center gap-2" style={{marginLeft: '-4.3rem'}}>
+                        <div className="w-2 h-2 bg-yellow-500 border-0"></div>
+                        <div className="w-2 h-2 bg-red-500 border-0"></div>
+                    </div>
+                </div>
+            )}
+            
             <Link href={`/matches/${match.id}`}>
                 <div className="cursor-pointer hover:bg-gray-50 -mx-4 px-4 py-1 rounded">
                     <div className="flex items-center justify-between">
@@ -76,6 +86,30 @@ const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButt
                                 {(match.team2 || match.awayName || '').length > 15 ? `${(match.team2 || match.awayName || '').slice(0, 15)}...` : (match.team2 || match.awayName || '')}
                             </div>
                         </div>
+                        
+                        {/* Cards display in the middle - only for In-Play matches */}
+                        {isInPlay && match.kambiLiveData?.statistics?.football && (
+                            <div className="text-xs text-gray-600 text-center mx-2">
+                                <div className="flex items-center justify-center gap-2">
+                                    {/* Color blocks on the left of card numbers */}
+                                    {/* <div className="flex flex-col gap-1">
+                                        <div className="w-3 h-3 bg-yellow-500 border-0"></div>
+                                        <div className="w-3 h-3 bg-red-500 border-0"></div>
+                                    </div> */}
+                                    {/* Card numbers */}
+                                    <div className="flex items-center justify-center gap-2">
+                                        <div className="text-xs">
+                                            <div className="text-sm">{match.kambiLiveData.statistics.football?.home?.yellowCards || 0}</div>
+                                            <div className="text-sm">{match.kambiLiveData.statistics.football?.away?.yellowCards || 0}</div>
+                                        </div>
+                                        <div className="text-xs">
+                                            <div className="text-sm">{match.kambiLiveData.statistics.football?.home?.redCards || 0}</div>
+                                            <div className="text-sm">{match.kambiLiveData.statistics.football?.away?.redCards || 0}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         
                         {/* Live score display from Kambi API - vertically on the right */}
                         {match.kambiLiveData?.score ? (
@@ -139,16 +173,24 @@ const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButt
 
                                     // Helper function to get odd value
                                     const getOddValue = (oddKey) => {
+                                        let value = null;
+                                        
                                         if (isUsingLiveOdds && liveOdds[oddKey]) {
-                                            return liveOdds[oddKey].value || liveOdds[oddKey];
-                                        }
-                                        if (displayOdds[oddKey]) {
+                                            value = liveOdds[oddKey].value || liveOdds[oddKey];
+                                        } else if (displayOdds[oddKey]) {
                                             if (typeof displayOdds[oddKey] === 'object' && displayOdds[oddKey].value !== undefined) {
-                                                return displayOdds[oddKey].value;
+                                                value = displayOdds[oddKey].value;
+                                            } else {
+                                                value = displayOdds[oddKey];
                                             }
-                                            return displayOdds[oddKey];
                                         }
+                                        
+                                        // Check if value is valid (not null, undefined, NaN, or 'NaN')
+                                        if (value === null || value === undefined || isNaN(value) || value === 'NaN') {
                                         return null;
+                                        }
+                                        
+                                        return value;
                                     };
                                     
                                     return (
@@ -157,7 +199,7 @@ const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButt
                                             {/* Home/1 Button */}
                                             <Button
                                                 size="sm"
-                                                className={getOddButtonClass({ suspended: getSuspendedStatus('home') || getSuspendedStatus('1') || !(displayOdds.home || displayOdds['1']) })}
+                                                className={getOddButtonClass({ suspended: getSuspendedStatus('home') || getSuspendedStatus('1') || (getOddValue('home') === null && getOddValue('1') === null) })}
                                                 onClick={isOddClickable({ suspended: getSuspendedStatus('home') || getSuspendedStatus('1') || !(displayOdds.home || displayOdds['1']) })
                                                     ? (e) => {
                                                         console.log('🔍 CLICKED - createBetHandler match data:', {
@@ -221,15 +263,15 @@ const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButt
                                                     }
                                                     : undefined
                                                 }
-                                                disabled={!isOddClickable({ suspended: getSuspendedStatus('home') || getSuspendedStatus('1') || !(displayOdds.home || displayOdds['1']) })}
+                                                disabled={!isOddClickable({ suspended: getSuspendedStatus('home') || getSuspendedStatus('1') || (getOddValue('home') === null && getOddValue('1') === null) })}
                                             >
-                                                {(getSuspendedStatus('home') || getSuspendedStatus('1') || !(displayOdds.home || displayOdds['1'])) ? '--' : (getOddValue('home') || getOddValue('1'))}
+                                                {(getSuspendedStatus('home') || getSuspendedStatus('1') || (getOddValue('home') === null && getOddValue('1') === null)) ? '--' : (getOddValue('home') || getOddValue('1'))}
                                             </Button>
                                             
                                             {/* Draw/X Button */}
                                             <Button
                                                 size="sm"
-                                                className={getOddButtonClass({ suspended: getSuspendedStatus('draw') || getSuspendedStatus('X') || !(displayOdds.draw || displayOdds['X']) })}
+                                                className={getOddButtonClass({ suspended: getSuspendedStatus('draw') || getSuspendedStatus('X') || (getOddValue('draw') === null && getOddValue('X') === null) })}
                                                 onClick={isOddClickable({ suspended: getSuspendedStatus('draw') || getSuspendedStatus('X') || !(displayOdds.draw || displayOdds['X']) })
                                                     ? (e) => {
                                                         console.log('🔍 DRAW CLICKED - createBetHandler match data:', {
@@ -293,15 +335,15 @@ const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButt
                                                     }
                                                     : undefined
                                                 }
-                                                disabled={!isOddClickable({ suspended: getSuspendedStatus('draw') || getSuspendedStatus('X') || !(displayOdds.draw || displayOdds['X']) })}
+                                                disabled={!isOddClickable({ suspended: getSuspendedStatus('draw') || getSuspendedStatus('X') || (getOddValue('draw') === null && getOddValue('X') === null) })}
                                             >
-                                                {(getSuspendedStatus('draw') || getSuspendedStatus('X') || !(displayOdds.draw || displayOdds['X'])) ? '--' : (getOddValue('draw') || getOddValue('X'))}
+                                                {(getSuspendedStatus('draw') || getSuspendedStatus('X') || (getOddValue('draw') === null && getOddValue('X') === null)) ? '--' : (getOddValue('draw') || getOddValue('X'))}
                                             </Button>
                                             
                                             {/* Away/2 Button */}
                                             <Button
                                                 size="sm"
-                                                className={getOddButtonClass({ suspended: getSuspendedStatus('away') || getSuspendedStatus('2') || !(displayOdds.away || displayOdds['2']) })}
+                                                className={getOddButtonClass({ suspended: getSuspendedStatus('away') || getSuspendedStatus('2') || (getOddValue('away') === null && getOddValue('2') === null) })}
                                                 onClick={isOddClickable({ suspended: getSuspendedStatus('away') || getSuspendedStatus('2') || !(displayOdds.away || displayOdds['2']) })
                                                     ? (e) => {
                                                         console.log('🔍 AWAY CLICKED - createBetHandler match data:', {
@@ -365,9 +407,9 @@ const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButt
                                                     }
                                                     : undefined
                                                 }
-                                                disabled={!isOddClickable({ suspended: getSuspendedStatus('away') || getSuspendedStatus('2') || !(displayOdds.away || displayOdds['2']) })}
+                                                disabled={!isOddClickable({ suspended: getSuspendedStatus('away') || getSuspendedStatus('2') || (getOddValue('away') === null && getOddValue('2') === null) })}
                                             >
-                                                {(getSuspendedStatus('away') || getSuspendedStatus('2') || !(displayOdds.away || displayOdds['2'])) ? '--' : (getOddValue('away') || getOddValue('2'))}
+                                                {(getSuspendedStatus('away') || getSuspendedStatus('2') || (getOddValue('away') === null && getOddValue('2') === null)) ? '--' : (getOddValue('away') || getOddValue('2'))}
                                             </Button>
                                             {isUsingLiveOdds && (
                                                 <div className="text-xs text-green-500 ml-1">
@@ -455,7 +497,7 @@ const LeagueCard = ({ league, isInPlay = false, viewAllText = null, hideOdds = f
 
     const getOddButtonClass = (odd) => {
         const baseClass = "w-14 h-8 p-0 text-xs font-bold betting-button";
-        if (!buttonsReady || (isInPlay && odd.suspended)) {
+        if (!buttonsReady || odd.suspended) {
             return `${baseClass} opacity-60 cursor-not-allowed bg-gray-400 hover:bg-gray-400`;
         }
         return `${baseClass} bg-emerald-600 hover:bg-emerald-700`;
@@ -541,25 +583,7 @@ const LeagueCards = ({
 }) => {
     const scrollRef = useRef(null);
 
-    // Debug: Log what data is being passed to LeagueCards component
-    console.log('🔍 LeagueCards component received data:', {
-        title,
-        isInPlay,
-        useReduxData,
-        reduxDataLength: reduxData?.length,
-        reduxData: reduxData,
-        'first match sample': reduxData?.[0]?.matches?.[0] || reduxData?.[0]
-    });
 
-    // Debug: Log when In-Play section is being rendered
-    if (isInPlay) {
-        console.log('🔍 IN-PLAY SECTION RENDERED:', {
-            title,
-            reduxDataLength: reduxData?.length,
-            'first league': reduxData?.[0],
-            'first match': reduxData?.[0]?.matches?.[0]
-        });
-    }
 
    
 
@@ -784,7 +808,52 @@ const LeagueCards = ({
                         source: 'LeagueCards'
                     };
                     
-                }).filter(match => match !== null); // Filter out null matches
+                }).filter(match => {
+                    if (match === null) return false; // Filter out null matches
+                    
+                    // For In-Play matches, filter out matches above 90 minutes with all odds disabled
+                    if (isInPlay) {
+                        // Check multiple possible time sources
+                        let currentMinute = 0;
+                        
+                        if (match.kambiLiveData?.matchClock?.minute) {
+                            currentMinute = match.kambiLiveData.matchClock.minute;
+                        } else if (match.timing?.minute) {
+                            currentMinute = match.timing.minute;
+                        } else if (match.liveData?.minute) {
+                            currentMinute = match.liveData.minute;
+                        }
+                        
+                        
+                        // If match is above 90 minutes, check if all odds are disabled
+                        if (currentMinute > 90) {
+                            // Check if all odds are disabled (null, undefined, NaN, 'NaN', or suspended)
+                            const isOddDisabled = (odd) => {
+                                const value = odd?.value;
+                                return !value || 
+                                       value === null || 
+                                       value === undefined || 
+                                       value === 'NaN' || 
+                                       isNaN(value) || 
+                                       odd?.suspended;
+                            };
+                            
+                            const homeDisabled = isOddDisabled(match.odds['1']);
+                            const drawDisabled = isOddDisabled(match.odds['X']);
+                            const awayDisabled = isOddDisabled(match.odds['2']);
+                            
+                            const allOddsDisabled = homeDisabled && drawDisabled && awayDisabled;
+                            
+                            
+                            // Filter out if all odds are disabled
+                            if (allOddsDisabled) {
+                                return false;
+                            }
+                        }
+                    }
+                    
+                    return true;
+                });
     
                 // Get groupId from the first match to use for Fotmob logo and as league ID
                 const firstMatch = leagueData.matches?.[0];

@@ -35,7 +35,7 @@ function getGoalEvents(matchDetails) {
     return [...homeGoals, ...awayGoals];
 }
 
-function getCardEvents(matchDetails) {
+export function getCardEvents(matchDetails) {
     // Cards are provided as generic Card events under header.events.events
     const eventsArray = matchDetails?.header?.events?.events;
     if (Array.isArray(eventsArray)) {
@@ -313,6 +313,14 @@ export function findPlayerIdByName(matchDetails, participantName) {
 
 export function getPlayerEvents(matchDetails, playerId) {
     const goals = getGoalEvents(matchDetails).filter(e => e?.playerId === playerId);
-    const cards = getCardEvents(matchDetails).filter(e => e?.playerId === playerId);
+    const allCards = getCardEvents(matchDetails);
+    console.log(`🔍 getPlayerEvents for playerId ${playerId}:`);
+    console.log(`   - All cards found: ${allCards.length}`);
+    console.log(`   - All cards data:`, allCards);
+    
+    const cards = allCards.filter(e => e?.playerId === playerId);
+    console.log(`   - Cards for player ${playerId}: ${cards.length}`);
+    console.log(`   - Player cards data:`, cards);
+    
     return { goals, cards };
 }

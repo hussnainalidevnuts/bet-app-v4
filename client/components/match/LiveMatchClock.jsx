@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Clock, Tv } from 'lucide-react';
 import apiClient from '@/config/axios';
 
-const LiveMatchClock = ({ matchId, isLive = false, initialLiveData = null, onScoreUpdate }) => {
+const LiveMatchClock = ({ matchId, isLive = false, initialLiveData = null, onScoreUpdate, onLiveDataUpdate }) => {
     const [liveData, setLiveData] = useState(initialLiveData);
     const [currentTime, setCurrentTime] = useState(null);
     const [isRunning, setIsRunning] = useState(false);
@@ -34,12 +34,12 @@ const LiveMatchClock = ({ matchId, isLive = false, initialLiveData = null, onSco
                     console.log('📊 Score home:', response.data.liveData.score.home);
                     console.log('📊 Score away:', response.data.liveData.score.away);
                     onScoreUpdate(response.data.liveData.score);
-                } else {
-                    console.log('📊 No score data or callback:', { 
-                        hasCallback: !!onScoreUpdate, 
-                        hasScore: !!response.data.liveData.score,
-                        scoreData: response.data.liveData.score 
-                    });
+                }
+
+                // Update live data if callback provided
+                if (onLiveDataUpdate) {
+                    console.log('📊 Updating live data via callback:', response.data.liveData);
+                    onLiveDataUpdate(response.data.liveData);
                 }
                 
                 // Force immediate score update

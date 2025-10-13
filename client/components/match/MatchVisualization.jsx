@@ -28,14 +28,53 @@ const MatchVisualization = ({ matchData }) => {
         return matchTime <= now && now < matchEnd;
     })();
 
+
     // Countdown timer state
-    const [countdown, setCountdown] = useState(getCountdownToKickoff(matchData));
+    const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0 });
 
     useEffect(() => {
         if (isLive) return; // No timer if live
-        const interval = setInterval(() => {
-            setCountdown(getCountdownToKickoff(matchData));
-        }, 1000);
+        
+        // Get the match start time once
+        const startTime = matchData?.starting_at || matchData?.start || matchData?.kickoff || matchData?.date;
+        if (!startTime) return;
+        
+        let kickoff;
+        try {
+            if (startTime.includes('T')) {
+                kickoff = new Date(startTime.endsWith('Z') ? startTime : startTime + 'Z');
+            } else {
+                kickoff = new Date(startTime.replace(' ', 'T') + 'Z');
+            }
+        } catch (error) {
+            return;
+        }
+        
+        const updateCountdown = () => {
+            const now = new Date();
+            let diff = Math.max(0, kickoff.getTime() - now.getTime());
+            
+            if (diff <= 0) {
+                setCountdown({ days: 0, hours: 0, minutes: 0 });
+                return;
+            }
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            diff -= days * 1000 * 60 * 60 * 24;
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            diff -= hours * 1000 * 60 * 60;
+            const minutes = Math.floor(diff / (1000 * 60));
+            
+            setCountdown({ days, hours, minutes });
+        };
+        
+        // Update immediately
+        updateCountdown();
+        
+        // Set up interval that recalculates based on actual time difference
+        // Update every minute since we're not showing seconds
+        const interval = setInterval(updateCountdown, 60000);
+        
         return () => clearInterval(interval);
     }, [matchData, isLive]);
 
@@ -132,6 +171,14 @@ const MatchVisualization = ({ matchData }) => {
                                             <div className="text-xs font-bold text-gray-800">KICKOFF IN</div>
                                         </div>
                                         <div className="flex items-center justify-center space-x-1 text-sm font-bold">
+                                            {countdown.days > 0 && (
+                                                <>
+                                                    <div className="bg-gray-900 text-white px-1.5 py-0.5 rounded shadow text-xs">
+                                                        {String(countdown.days).padStart(2, '0')}
+                                                    </div>
+                                                    <span className="text-gray-600 text-xs">:</span>
+                                                </>
+                                            )}
                                             <div className="bg-gray-900 text-white px-1.5 py-0.5 rounded shadow text-xs">
                                                 {String(countdown.hours).padStart(2, '0')}
                                             </div>
@@ -139,15 +186,11 @@ const MatchVisualization = ({ matchData }) => {
                                             <div className="bg-gray-900 text-white px-1.5 py-0.5 rounded shadow text-xs">
                                                 {String(countdown.minutes).padStart(2, '0')}
                                             </div>
-                                            <span className="text-gray-600 text-xs">:</span>
-                                            <div className="bg-gray-900 text-white px-1.5 py-0.5 rounded shadow text-xs">
-                                                {String(countdown.seconds).padStart(2, '0')}
-                                            </div>
                                         </div>
-                                        <div className="flex justify-between text-xs text-gray-500 mt-0.5 px-0.5">
+                                        <div className={`flex justify-between text-xs text-gray-500 mt-0.5 px-0.5 ${countdown.days > 0 ? 'gap-2' : 'gap-4'}`}>
+                                            {countdown.days > 0 && <span>DAYS</span>}
                                             <span>HRS</span>
                                             <span>MIN</span>
-                                            <span>SEC</span>
                                         </div>
                                     </>
                                 )}

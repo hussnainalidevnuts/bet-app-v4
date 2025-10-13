@@ -395,27 +395,44 @@ export const debugTimezone = (dateTime) => {
 };
 
 /**
- * Get countdown to kickoff (hours, minutes, seconds) from a match object using starting_at
+ * Get countdown to kickoff (days, hours, minutes, seconds) from a match object using starting_at
  * @param {Object} match - Match object with starting_at field
- * @returns {Object} { hours, minutes, seconds } until kickoff, or zeros if started or invalid
+ * @returns {Object} { days, hours, minutes, seconds } until kickoff, or zeros if started or invalid
  */
 export const getCountdownToKickoff = (match) => {
-  if (!match || !match.starting_at) return { hours: 0, minutes: 0, seconds: 0 };
-  let kickoff;
-  if (match.starting_at.includes('T')) {
-    kickoff = new Date(match.starting_at.endsWith('Z') ? match.starting_at : match.starting_at + 'Z');
-  } else {
-    kickoff = new Date(match.starting_at.replace(' ', 'T') + 'Z');
+  if (!match) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  
+  // Try different field names for match start time
+  const startTime = match.starting_at || match.start || match.kickoff || match.date;
+  if (!startTime) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
   }
+  
+  let kickoff;
+  try {
+    if (startTime.includes('T')) {
+      kickoff = new Date(startTime.endsWith('Z') ? startTime : startTime + 'Z');
+    } else {
+      kickoff = new Date(startTime.replace(' ', 'T') + 'Z');
+    }
+  } catch (error) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  }
+  
   const now = new Date();
   let diff = Math.max(0, kickoff.getTime() - now.getTime());
-  if (diff <= 0) return { hours: 0, minutes: 0, seconds: 0 };
+  
+  if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  diff -= days * 1000 * 60 * 60 * 24;
   const hours = Math.floor(diff / (1000 * 60 * 60));
   diff -= hours * 1000 * 60 * 60;
   const minutes = Math.floor(diff / (1000 * 60));
   diff -= minutes * 1000 * 60;
   const seconds = Math.floor(diff / 1000);
-  return { hours, minutes, seconds };
+  
+  return { days, hours, minutes, seconds };
 };
 
 /**

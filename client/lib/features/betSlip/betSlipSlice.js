@@ -17,6 +17,12 @@ const betSlipSlice = createSlice({
     totalStake: 0,
     potentialReturn: 0,
     lastError: null, // For storing error messages like "same market bet exists"
+    oddsChangeNotification: {
+      message: '',
+      timestamp: null,
+      show: false
+    },
+    placeBetDisabled: false, // For disabling place bet button when odds change
   },
   reducers: {
     addBet: (state, action) => {
@@ -281,6 +287,70 @@ const betSlipSlice = createSlice({
       state.totalStake = Math.round(totalStake * 100) / 100;
       state.potentialReturn = Math.round(potentialReturn * 100) / 100;
     },
+
+    // New action to update odds in betslip when they change on match detail page
+    updateBetOdds: (state, action) => {
+      const { matchId, oddId, newOdds } = action.payload;
+      
+      // Find and update the bet with matching matchId and oddId
+      const betIndex = state.bets.findIndex(
+        bet => bet.match.id === matchId && bet.oddId === oddId
+      );
+      
+      if (betIndex !== -1) {
+        const oldOdds = state.bets[betIndex].odds;
+        const newOddsValue = parseFloat(newOdds);
+        
+        // Only update if odds have actually changed
+        if (Math.abs(newOddsValue - oldOdds) > 0.001) {
+          state.bets[betIndex].odds = newOddsValue;
+          
+          // Add a flag to indicate odds were recently updated (for visual feedback)
+          state.bets[betIndex].oddsUpdated = true;
+          
+          // Show notification and disable place bet button
+          state.oddsChangeNotification = {
+            message: `Odds changed from ${oldOdds} to ${newOddsValue}. Please review your bet.`,
+            timestamp: Date.now(),
+            show: true
+          };
+          state.placeBetDisabled = true;
+          
+          console.log(`🔄 Updated odds for bet ${state.bets[betIndex].id}: ${oldOdds} → ${newOddsValue}`);
+          
+          // Clear the oddsUpdated flag after a short delay (handled in component)
+        }
+      }
+    },
+
+    // Action to clear the oddsUpdated flag (for visual feedback)
+    clearOddsUpdatedFlag: (state, action) => {
+      const { betId } = action.payload;
+      const betIndex = state.bets.findIndex(bet => bet.id === betId);
+      if (betIndex !== -1) {
+        state.bets[betIndex].oddsUpdated = false;
+      }
+    },
+
+    // Action to show odds change notification and disable place bet button
+    showOddsChangeNotification: (state, action) => {
+      state.oddsChangeNotification = {
+        message: action.payload.message || 'Odds have changed. Please review your bet.',
+        timestamp: Date.now(),
+        show: true
+      };
+      state.placeBetDisabled = true;
+    },
+
+    // Action to hide odds change notification and re-enable place bet button
+    hideOddsChangeNotification: (state) => {
+      state.oddsChangeNotification = {
+        message: '',
+        timestamp: null,
+        show: false
+      };
+      state.placeBetDisabled = false;
+    },
   },
 });
 
@@ -299,6 +369,10 @@ export const {
   setError,
   clearError,
   calculateTotals,
+  updateBetOdds,
+  clearOddsUpdatedFlag,
+  showOddsChangeNotification,
+  hideOddsChangeNotification,
 } = betSlipSlice.actions;
 
 // Selectors
@@ -310,6 +384,8 @@ export const selectActiveTab = (state) => state.betSlip.activeTab;
 export const selectTotalStake = (state) => state.betSlip.totalStake;
 export const selectPotentialReturn = (state) => state.betSlip.potentialReturn;
 export const selectLastError = (state) => state.betSlip.lastError;
+export const selectOddsChangeNotification = (state) => state.betSlip.oddsChangeNotification;
+export const selectPlaceBetDisabled = (state) => state.betSlip.placeBetDisabled;
 
 // Helper function to get match data from multiple sources (match detail page or league page)
 const getMatchDataFromState = (matchId, matchesState, leaguesState) => {

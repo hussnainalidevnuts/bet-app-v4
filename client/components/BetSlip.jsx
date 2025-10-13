@@ -12,6 +12,8 @@ import {
     selectBetSlipExpanded,
     selectActiveTab,
     selectLastError,
+    selectOddsChangeNotification,
+    selectPlaceBetDisabled,
     toggleBetSlip,
     collapseBetSlip,
     closeBetSlip,
@@ -24,7 +26,9 @@ import {
     setError,
     clearError,
     calculateTotals,
-    placeBetThunk
+    placeBetThunk,
+    clearOddsUpdatedFlag,
+    hideOddsChangeNotification
 } from '@/lib/features/betSlip/betSlipSlice';
 import { selectIsAuthenticated, selectUser } from '@/lib/features/auth/authSlice';
 import LoginDialog from '@/components/auth/LoginDialog';
@@ -39,6 +43,8 @@ const BetSlip = () => {
     const isExpanded = useSelector(selectBetSlipExpanded);
     const activeTab = useSelector(selectActiveTab);
     const lastError = useSelector(selectLastError);
+    const oddsChangeNotification = useSelector(selectOddsChangeNotification);
+    const placeBetDisabled = useSelector(selectPlaceBetDisabled);
     const isAuthenticated = useSelector(selectIsAuthenticated);
     const user = useSelector(selectUser);
     const betSlipRef = useRef(null);
@@ -85,6 +91,35 @@ const BetSlip = () => {
     useEffect(() => {
         dispatch(calculateTotals());
     }, [bets, betSlip.stake, activeTab, dispatch]);
+
+    // Recalculate totals when odds change (for real-time odds updates)
+    useEffect(() => {
+        dispatch(calculateTotals());
+    }, [bets.map(bet => bet.odds).join(','), dispatch]);
+
+    // Clear oddsUpdated flags after a delay (for visual feedback)
+    useEffect(() => {
+        bets.forEach(bet => {
+            if (bet.oddsUpdated) {
+                const timer = setTimeout(() => {
+                    dispatch(clearOddsUpdatedFlag({ betId: bet.id }));
+                }, 2000); // Clear after 2 seconds
+                
+                return () => clearTimeout(timer);
+            }
+        });
+    }, [bets, dispatch]);
+
+    // Handle odds change notification timeout
+    useEffect(() => {
+        if (oddsChangeNotification.show) {
+            const timer = setTimeout(() => {
+                dispatch(hideOddsChangeNotification());
+            }, 2000); // Hide notification and re-enable button after 2 seconds
+            
+            return () => clearTimeout(timer);
+        }
+    }, [oddsChangeNotification.show, dispatch]);
 
     // Show error toast and clear error
     useEffect(() => {
@@ -314,6 +349,16 @@ const BetSlip = () => {
 
                         {/* Footer */}
                         <div className="border-t border-gray-700 px-3 py-2 transition-all duration-300">
+                            {/* Odds Change Notification */}
+                            {oddsChangeNotification.show && (
+                                <div className="mb-3 p-2 bg-yellow-600 border border-yellow-500 rounded text-xs text-white animate-pulse">
+                                    <div className="flex items-center gap-2">
+                                        <span>⚠️</span>
+                                        <span>{oddsChangeNotification.message}</span>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Clear Betslip */}
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-xs text-gray-400">Clear betslip</span>
@@ -358,8 +403,12 @@ const BetSlip = () => {
                                 </Button>
                             ) : (
                                 <Button
-                                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 transition-all duration-200"
-                                    disabled={betSlip.totalStake === 0 || isPlacingBet}
+                                    className={`w-full font-bold py-2 transition-all duration-200 ${
+                                        placeBetDisabled 
+                                            ? 'bg-gray-500 text-gray-300 cursor-not-allowed' 
+                                            : 'bg-yellow-500 hover:bg-yellow-600 text-black'
+                                    }`}
+                                    disabled={betSlip.totalStake === 0 || isPlacingBet || placeBetDisabled}
                                     onClick={handlePlaceBet}
                                 >
                                     {isPlacingBet ? (
@@ -367,6 +416,8 @@ const BetSlip = () => {
                                             <Loader2 className="animate-spin h-5 w-5 mr-2 text-black" />
                                             Placing Bet...
                                         </span>
+                                    ) : placeBetDisabled ? (
+                                        'Odds Changed - Reviewing...'
                                     ) : (
                                         'Place Bet'
                                     )}
@@ -407,8 +458,11 @@ const SinglesBets = ({ bets, stakes, onStakeChange, onRemoveBet }) => {
 
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2 flex-1">
-                            <div className="bg-yellow-500 text-black px-2 py-1 rounded text-xs font-bold transition-colors duration-200 hover:bg-yellow-400">
+                            <div className={`bg-yellow-500 text-black px-2 py-1 rounded text-xs font-bold transition-all duration-500 hover:bg-yellow-400 ${
+                                bet.oddsUpdated ? 'animate-pulse bg-green-500' : ''
+                            }`}>
                                 {bet.odds}
+                                {bet.oddsUpdated && <span className="ml-1 text-[8px]">🔄</span>}
                             </div>
                             <Input
                                 type="number"
@@ -458,8 +512,11 @@ const CombinationBet = ({ bets, stake, onStakeChange, onRemoveBet }) => {
                             </div>
                             <div className="flex items-center justify-between mt-1">
                                 <span className="text-xs text-gray-400">{bet.type}</span>
-                                <div className="bg-yellow-500 text-black px-1.5 py-0.5 rounded text-xs font-bold transition-all duration-200 hover:bg-yellow-400 hover:scale-105">
+                                <div className={`bg-yellow-500 text-black px-1.5 py-0.5 rounded text-xs font-bold transition-all duration-500 hover:bg-yellow-400 hover:scale-105 ${
+                                    bet.oddsUpdated ? 'animate-pulse bg-green-500' : ''
+                                }`}>
                                     {bet.odds}
+                                    {bet.oddsUpdated && <span className="ml-1 text-[8px]">🔄</span>}
                                 </div>
                             </div>
                         </div>

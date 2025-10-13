@@ -24,12 +24,13 @@ const isMatchLive = (match) => {
 };
 
 // Live Timer Component - Now using LiveMatchClock
-const LiveTimer = ({ matchId, isLive, onScoreUpdate }) => {
+const LiveTimer = ({ matchId, isLive, onScoreUpdate, onLiveDataUpdate }) => {
     return (
         <LiveMatchClock 
             matchId={matchId} 
             isLive={isLive} 
             onScoreUpdate={onScoreUpdate}
+            onLiveDataUpdate={onLiveDataUpdate}
         />
     );
 };
@@ -58,6 +59,7 @@ const MatchHeader = ({ matchData, onScoreUpdate }) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
     const [currentScore, setCurrentScore] = useState('0-0')
     const [fetchedLiveData, setFetchedLiveData] = useState(null)
+    const [liveMatchClockData, setLiveMatchClockData] = useState(null)
     const triggetRef = useRef(null)
     const router = useRouter()
 
@@ -71,14 +73,22 @@ const MatchHeader = ({ matchData, onScoreUpdate }) => {
         
         try {
             console.log('🔍 Fetching live data for match:', matchData.id);
-            const response = await apiClient.get(`/api/live-matches/${matchData.id}/live`);
+            const response = await apiClient.get(`/matches/${matchData.id}/live`);
+            
+            // Log the complete API response for live score and time
+            
             
             if (response.data?.success && response.data?.liveData) {
-                console.log('✅ Live data fetched:', response.data.liveData);
+                
                 setFetchedLiveData(response.data.liveData);
+            } else {
+                console.log('⚠️ No live data in response or success=false');
+                console.log('⚠️ Response success:', response.data?.success);
+                console.log('⚠️ Response liveData:', response.data?.liveData);
             }
         } catch (error) {
             console.error('❌ Error fetching live data:', error);
+           
         }
     }
 
@@ -126,11 +136,13 @@ const MatchHeader = ({ matchData, onScoreUpdate }) => {
         'matchData.leagueId': matchData?.leagueId
     });
 
+    // Log the complete matchData API response for live score and time
+   
     // Get match time/score
     const matchTime = matchData.start ? formatToLocalTime(matchData.start) : 'TBD';
     
-    // Get live data if available
-    const liveData = matchData.liveData;
+    // Get live data if available - prioritize liveMatchClockData for real-time updates
+    const liveData = liveMatchClockData || fetchedLiveData || matchData.liveData;
     const score = currentScore;
     const period = liveData?.period || '1st Half';
     const minute = liveData?.minute || '0';
@@ -148,24 +160,32 @@ const MatchHeader = ({ matchData, onScoreUpdate }) => {
         }
     };
 
-    // Initialize score from matchData
+    // Handle live data updates from LiveMatchClock
+    const handleLiveDataUpdate = (liveData) => {
+        // console.log('📊 handleLiveDataUpdate called with:', liveData);
+        setLiveMatchClockData(liveData);
+    };
+
+    // Initialize score from matchData and update when fetchedLiveData changes
     useEffect(() => {
-        console.log('📊 Initializing score from matchData:', matchData);
-        console.log('📊 matchData.liveData:', matchData.liveData);
-        console.log('📊 matchData.liveData?.score:', matchData.liveData?.score);
         
-        if (matchData.liveData?.score) {
-            const scoreData = matchData.liveData.score;
+       
+        
+        // Prioritize fetchedLiveData for real-time updates
+        const scoreData = fetchedLiveData?.score || matchData.liveData?.score;
+        
+        if (scoreData) {
             const homeScore = scoreData?.home ?? '0';
             const awayScore = scoreData?.away ?? '0';
             const newScore = `${homeScore} - ${awayScore}`;
-            console.log('📊 Initial score set:', newScore);
+            console.log('📊 Score set from:', fetchedLiveData ? 'fetchedLiveData' : 'matchData.liveData');
+            console.log('📊 Score set to:', newScore);
             setCurrentScore(newScore);
         } else {
             console.log('📊 No live data score, setting default: 0 - 0');
             setCurrentScore('0 - 0');
         }
-    }, [matchData.liveData?.score]);
+    }, [matchData.liveData?.score, fetchedLiveData?.score]);
 
     // Debug current score state
     useEffect(() => {
@@ -238,36 +258,45 @@ const MatchHeader = ({ matchData, onScoreUpdate }) => {
                             <div className="text-4xl font-bold text-gray-800">
                                 {score}
                             </div>
-                            <LiveTimer matchId={matchData.id} isLive={isLive} onScoreUpdate={handleScoreUpdate} />
+                            <LiveTimer matchId={matchData.id} isLive={isLive} onScoreUpdate={handleScoreUpdate} onLiveDataUpdate={handleLiveDataUpdate} />
                             
                             {/* Card details - only for live matches with statistics */}
                             {console.log('🔍 MatchHeader - Complete match data:', matchData)}
                             {console.log('🔍 MatchHeader - Live data:', liveData)}
+                            {console.log('🔍 MatchHeader - Fetched live data:', fetchedLiveData)}
                             {console.log('🔍 MatchHeader - Checking card data:', {
                                 isLive,
                                 hasLiveData: !!liveData,
-                                hasStatistics: !!liveData?.statistics,
-                                hasFootball: !!liveData?.statistics?.football,
+                                hasFetchedLiveData: !!fetchedLiveData,
+                                hasLiveMatchClockData: !!liveMatchClockData,
+                                hasStatistics: !!(fetchedLiveData?.statistics || liveData?.statistics),
+                                hasFootball: !!(fetchedLiveData?.statistics?.football || liveData?.statistics?.football),
+                                liveMatchClockData: liveMatchClockData,
+                                fetchedLiveData: fetchedLiveData,
                                 liveData: liveData
                             })}
-                            {(liveData?.statistics || isLive) && (
+                            {isLive && (
                                 <div className="flex flex-col items-center gap-1 mt-2 text-sm">
-                                    {/* Yellow cards */}
+                                    {/* Yellow cards - prioritize liveMatchClockData */}
                                     <div className="flex items-center gap-1">
                                         <div className="w-3 h-3 bg-yellow-500 border-0"></div>
                                         <span className="font-semibold text-gray-800">
-                                            {liveData?.statistics?.football?.home?.yellowCards || 
-                                             liveData?.statistics?.home?.yellowCards || 0} - {liveData?.statistics?.football?.away?.yellowCards || 
-                                             liveData?.statistics?.away?.yellowCards || 0}
+                                            {(liveMatchClockData?.statistics?.football?.home?.yellowCards || 
+                                              fetchedLiveData?.statistics?.football?.home?.yellowCards || 
+                                              liveData?.statistics?.football?.home?.yellowCards || 0)} - {(liveMatchClockData?.statistics?.football?.away?.yellowCards || 
+                                              fetchedLiveData?.statistics?.football?.away?.yellowCards || 
+                                              liveData?.statistics?.football?.away?.yellowCards || 0)}
                                         </span>
                                     </div>
-                                    {/* Red cards */}
+                                    {/* Red cards - prioritize liveMatchClockData */}
                                     <div className="flex items-center gap-1">
                                         <div className="w-3 h-3 bg-red-500 border-0"></div>
                                         <span className="font-semibold text-gray-800">
-                                            {liveData?.statistics?.football?.home?.redCards || 
-                                             liveData?.statistics?.home?.redCards || 0} - {liveData?.statistics?.football?.away?.redCards || 
-                                             liveData?.statistics?.away?.redCards || 0}
+                                            {(liveMatchClockData?.statistics?.football?.home?.redCards || 
+                                              fetchedLiveData?.statistics?.football?.home?.redCards || 
+                                              liveData?.statistics?.football?.home?.redCards || 0)} - {(liveMatchClockData?.statistics?.football?.away?.redCards || 
+                                              fetchedLiveData?.statistics?.football?.away?.redCards || 
+                                              liveData?.statistics?.football?.away?.redCards || 0)}
                                         </span>
                                     </div>
                                 </div>

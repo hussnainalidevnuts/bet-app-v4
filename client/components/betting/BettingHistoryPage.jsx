@@ -231,8 +231,11 @@ const BettingHistoryPage = ({ userId }) => {
                         </Badge>
                       </TableCell>
                       <TableCell className="max-w-32">
-                        <div className="truncate" title={leg.teams}>
-                          {leg.teams || "-"}
+                        <div className="truncate" title={leg.teams || (leg.homeTeam && leg.awayTeam ? `${leg.homeTeam} vs ${leg.awayTeam}` : null) || (leg.match?.homeTeam && leg.match?.awayTeam ? `${leg.match.homeTeam} vs ${leg.match.awayTeam}` : null)}>
+                          {leg.teams || 
+                           (leg.homeTeam && leg.awayTeam ? `${leg.homeTeam} vs ${leg.awayTeam}` : null) ||
+                           (leg.match?.homeTeam && leg.match?.awayTeam ? `${leg.match.homeTeam} vs ${leg.match.awayTeam}` : null) ||
+                           "Teams information not available"}
                         </div>
                       </TableCell>
                       <TableCell className="max-w-32">
@@ -794,17 +797,22 @@ const BettingHistoryPage = ({ userId }) => {
                               </TableCell>
                               <TableCell className="max-w-48">
                                 <div className="truncate" title={isCombo ? `Combination Bet (${item.combination.length} legs)` : (
-                                  item.teams || 
+                                  (item.teams && item.teams !== "Teams information not available" ? item.teams : null) ||
                                   item.match?.name || 
                                   (item.unibetMeta?.eventName && item.unibetMeta.eventName !== 'Combination Bet' ? item.unibetMeta.eventName : null) ||
-                                  (item.unibetMeta?.homeName && item.unibetMeta?.awayName ? `${item.unibetMeta.homeName} vs ${item.unibetMeta.awayName}` : null)
+                                  (item.unibetMeta?.homeName && item.unibetMeta?.awayName ? `${item.unibetMeta.homeName} vs ${item.unibetMeta.awayName}` : null) ||
+                                  (item.homeTeam && item.awayTeam ? `${item.homeTeam} vs ${item.awayTeam}` : null) ||
+                                  (item.match?.homeTeam && item.match?.awayTeam ? `${item.match.homeTeam} vs ${item.match.awayTeam}` : null) ||
+                                  "Teams information not available"
                                 )}>
                                   {isCombo ? `Combination (${item.combination.length} legs)` : (
-                                    item.teams || 
+                                    (item.teams && item.teams !== "Teams information not available" ? item.teams : null) ||
                                     item.match?.name || 
                                     (item.unibetMeta?.eventName && item.unibetMeta.eventName !== 'Combination Bet' ? item.unibetMeta.eventName : null) ||
                                     (item.unibetMeta?.homeName && item.unibetMeta?.awayName ? `${item.unibetMeta.homeName} vs ${item.unibetMeta.awayName}` : null) ||
-                                    "-"
+                                    (item.homeTeam && item.awayTeam ? `${item.homeTeam} vs ${item.awayTeam}` : null) ||
+                                    (item.match?.homeTeam && item.match?.awayTeam ? `${item.match.homeTeam} vs ${item.match.awayTeam}` : null) ||
+                                    "Teams information not available"
                                   )}
                                 </div>
                               </TableCell>

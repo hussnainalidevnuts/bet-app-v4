@@ -13,6 +13,18 @@ import {
 } from '@/components/ui/accordion';
 import { formatToLocalTime } from '@/lib/utils';
 import LiveMatchTimer from '@/components/shared/LiveMatchTimer';
+import { useLiveOddsSync } from '@/hooks/useLiveOddsSync';
+
+// Component to wrap each match with odds synchronization
+const MatchWithOddsSync = ({ match, children, isInPlay = false }) => {
+    // Enable real-time odds synchronization for live matches in InPlayPage
+    // This ensures bets placed from In-Play page get odds updates
+    if (isInPlay && match.isLive) {
+        useLiveOddsSync(match.id);
+    }
+    
+    return children;
+};
 
 const MatchListPage = ({ config }) => {
     const {
@@ -258,7 +270,12 @@ const MatchListPage = ({ config }) => {
                                                     if (!match || !match.id) return null;
                                                     
                                                     return (
-                                                        <div key={match.id} className="px-4 py-3 hover:bg-gray-50 transition-colors">
+                                                        <MatchWithOddsSync 
+                                                            key={match.id} 
+                                                            match={match} 
+                                                            isInPlay={pageTitle === 'Live Matches'}
+                                                        >
+                                                            <div className="px-4 py-3 hover:bg-gray-50 transition-colors">
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex-1">
                                                                     {/* Match Time/Date and Indicator */}
@@ -400,6 +417,7 @@ const MatchListPage = ({ config }) => {
                                                                 )}
                                                             </div>
                                                         </div>
+                                                        </MatchWithOddsSync>
                                                     );
                                                 })}
                                             </div>

@@ -20,6 +20,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react"
+import { useOddsSync } from "@/hooks/useOddsSync"
 
 const isMatchLive = (match) => {
     if (!match || !match.start) return false;
@@ -39,6 +40,9 @@ const MatchDetailPage = ({ matchId }) => {
     
     // Use new clean API by default, fallback to old API if needed
     const useNewAPI = true;
+    
+    // Enable real-time odds synchronization between match detail and betslip
+    useOddsSync(matchId);
     
     const {
         matchData,

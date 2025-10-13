@@ -324,7 +324,7 @@ class BetOutcomeCalculator {
                 
                 const filteredLeagues = mergedLeagues.map(league => {
                     const exactDateMatches = [];
-                    const within24hMatches = [];
+                    const within25hMatches = [];
                     
                     (league.matches || []).forEach(match => {
                         let matchDate;
@@ -351,19 +351,19 @@ class BetOutcomeCalculator {
                         if (matchDateStr === filterDate) {
                             exactDateMatches.push(match);
                         } else {
-                            // Only check 24-hour window if no exact date matches found
+                            // Only check 25-hour window if no exact date matches found
                             const betDate = new Date(filterDate);
                             const timeDifference = Math.abs(matchDate.getTime() - betDate.getTime());
                             const hoursDifference = timeDifference / (1000 * 60 * 60);
                             
-                            if (hoursDifference <= 24) {
-                                within24hMatches.push(match);
+                            if (hoursDifference <= 25) {
+                                within25hMatches.push(match);
                             }
                         }
                     });
                     
-                    // Simple logic: Use exact date matches if found, otherwise use 24h window
-                    const filteredMatches = exactDateMatches.length > 0 ? exactDateMatches : within24hMatches;
+                    // Simple logic: Use exact date matches if found, otherwise use 25h window
+                    const filteredMatches = exactDateMatches.length > 0 ? exactDateMatches : within25hMatches;
                     matchesForDate += filteredMatches.length;
                     
                     // Debug logging for Primera B league
@@ -371,7 +371,7 @@ class BetOutcomeCalculator {
                         console.log(`   🔍 DEBUG: Primera B league (${league.id}) filtering:`);
                         console.log(`   - Total matches in league: ${(league.matches || []).length}`);
                         console.log(`   - Exact date matches (${filterDate}): ${exactDateMatches.length}`);
-                        console.log(`   - Within 24h matches: ${within24hMatches.length}`);
+                        console.log(`   - Within 25h matches: ${within25hMatches.length}`);
                         console.log(`   - Final filtered matches: ${filteredMatches.length}`);
                         
                         // Show all matches in this league
@@ -756,15 +756,26 @@ class BetOutcomeCalculator {
                 matchingResult.debugInfo.searchSteps.push(`✅ Group league: searching ${similarLeagues.length} groups with ${allMatchesToSearch.length} total matches`);
             } else {
                 console.log(`✅ COMPLETE LEAGUE DETECTED: ${fotmobLeague.name} (id=${fotmobLeague.id})`);
-                console.log(`🔍 Using exact league matches only (no group search needed)`);
+                console.log(`🔍 Searching ALL leagues with primaryId ${fotmobLeagueId} (not just the first one)`);
                 
-                // For complete leagues, use only the exact league matches
-                if (fotmobLeague.matches && fotmobLeague.matches.length > 0) {
-                    allMatchesToSearch.push(...fotmobLeague.matches);
-                }
-                console.log(`🔍 Matches from complete league: ${fotmobLeague.matches?.length || 0}`);
+                // Find ALL leagues with the same primaryId (not just the first one)
+                const allLeaguesWithSamePrimaryId = fotmobData.leagues.filter(league => league.primaryId === fotmobLeagueId);
+                console.log(`📋 Found ${allLeaguesWithSamePrimaryId.length} leagues with primaryId ${fotmobLeagueId}:`);
+                allLeaguesWithSamePrimaryId.forEach(league => {
+                    console.log(`   - ${league.name}: id=${league.id}, matches=${league.matches?.length || 0}`);
+                });
                 
-                matchingResult.debugInfo.searchSteps.push(`✅ Complete league: using exact league with ${allMatchesToSearch.length} matches`);
+                // For complete leagues, search ALL leagues with the same primaryId
+                allLeaguesWithSamePrimaryId.forEach(league => {
+                    if (league.matches && league.matches.length > 0) {
+                        allMatchesToSearch.push(...league.matches);
+                        console.log(`   ✅ Added ${league.matches.length} matches from ${league.name}`);
+                    }
+                });
+                
+                console.log(`🔍 Total matches from all leagues with primaryId ${fotmobLeagueId}: ${allMatchesToSearch.length}`);
+                
+                matchingResult.debugInfo.searchSteps.push(`✅ Complete league: searching ${allLeaguesWithSamePrimaryId.length} leagues with primaryId ${fotmobLeagueId}, total matches: ${allMatchesToSearch.length}`);
             }
         } else {
             // Fallback: exact league not found, search similar leagues
@@ -797,14 +808,14 @@ class BetOutcomeCalculator {
         for (const match of allMatchesToSearch) {
             const matchDate = new Date(match.status?.utcTime || match.time);
             const timeDiff = Math.abs(matchDate.getTime() - betDate.getTime());
-            const timeWindow = 24 * 60 * 60 * 1000; // 24 hours
+            const timeWindow = 25 * 60 * 60 * 1000; // 25 hours
 
             console.log(`\n📅 Checking match: ${match.home?.name || 'Unknown'} vs ${match.away?.name || 'Unknown'}`);
             console.log(`   - Match date: ${matchDate.toISOString()}`);
             console.log(`   - Time difference: ${timeDiff}ms (${(timeDiff / (60 * 60 * 1000)).toFixed(2)} hours)`);
 
             if (timeDiff > timeWindow) {
-                console.log(`   ❌ Skipped: Outside 24-hour window`);
+                console.log(`   ❌ Skipped: Outside 25-hour window`);
                 continue;
             }
 

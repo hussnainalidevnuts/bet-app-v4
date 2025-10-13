@@ -15,10 +15,17 @@ import { selectIsConnected } from '@/lib/features/websocket/websocketSlice';
 import { useLiveOdds } from '@/hooks/useLiveOdds';
 import { getFotmobLogoByUnibetId } from '@/lib/leagueUtils';
 import LiveMatchTimer from '@/components/shared/LiveMatchTimer';
+import { useLiveOddsSync } from '@/hooks/useLiveOddsSync';
 
 // Match Item Component
 const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButtonClass, isOddClickable, hideOdds = false }) => {
     const liveOdds = useLiveOdds(match.id);
+    
+    // Enable real-time odds synchronization for live matches in LeagueCards
+    // This ensures bets placed from In-Play section get odds updates
+    if (isInPlay && match.isLive) {
+        useLiveOddsSync(match.id);
+    }
     
     
     return (

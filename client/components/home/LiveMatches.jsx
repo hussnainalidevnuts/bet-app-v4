@@ -7,6 +7,7 @@ import LiveMatchCard from './LiveMatchCard';
 import TopPicksSkeleton from '../Skeletons/TopPicksSkeleton';
 import { selectLiveMatchesRaw, selectLiveMatchesLoading, selectLiveMatchesWarning, selectLiveMatchesCacheAge, fetchLiveMatches, silentUpdateLiveMatches } from '@/lib/features/matches/liveMatchesSlice';
 import { getFotmobLogoByUnibetId } from '@/lib/leagueUtils';
+import { useLiveOddsSync } from '@/hooks/useLiveOddsSync';
 
 // Helper function to transform Unibet API data to MatchCard format
 const transformLiveMatchData = (apiMatch) => {
@@ -131,6 +132,12 @@ const LiveMatches = () => {
     const warning = useSelector(selectLiveMatchesWarning);
     const cacheAge = useSelector(selectLiveMatchesCacheAge);
 
+    // Create a component that handles odds sync for a single match
+    const LiveMatchWithSync = ({ match }) => {
+        useLiveOddsSync(match.id);
+        return <LiveMatchCard match={match} />;
+    };
+
     // Auto-refresh live odds every 2 seconds
     useEffect(() => {
         // Initial fetch with loading state
@@ -232,7 +239,7 @@ const LiveMatches = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {transformedMatches.slice(0, 8).map((match) => (
-                    <LiveMatchCard 
+                    <LiveMatchWithSync 
                         key={`${match.id}-${match.odds?.['1']?.value}-${match.odds?.['X']?.value}-${match.odds?.['2']?.value}`} 
                         match={match} 
                     />

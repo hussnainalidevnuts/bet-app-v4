@@ -491,6 +491,7 @@ export default function BetManagement() {
       </Card>
     );
   });
+  AdminBetCard.displayName = 'AdminBetCard';
 
   // Mobile combination bet legs component (inline within parent card)
   const AdminCombinationDetailsCard = ({ bet }) => {

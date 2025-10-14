@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { apiClient } from '@/config/axios';
+import apiClient from '@/config/axios';
 
 const LiveMatchTimer = ({ matchId, initialTime = null, initialPeriod = null, isRunning = false }) => {
     const [currentTime, setCurrentTime] = useState(initialTime || { minute: 0, second: 0 });
@@ -43,7 +43,7 @@ const LiveMatchTimer = ({ matchId, initialTime = null, initialPeriod = null, isR
         const syncWithAPI = async () => {
             try {
                 console.log(`🔄 LiveMatchTimer: Syncing with API for match ${matchId}`);
-                const response = await apiClient.get(`/api/matches/${matchId}/live`);
+                const response = await apiClient.get(`/matches/${matchId}/live`);
                 
                 if (response.data.success && response.data.liveData) {
                     const { matchClock, score } = response.data.liveData;

@@ -9,6 +9,12 @@ import { selectLiveMatchesRaw, selectLiveMatchesLoading, selectLiveMatchesWarnin
 import { getFotmobLogoByUnibetId } from '@/lib/leagueUtils';
 import { useLiveOddsSync } from '@/hooks/useLiveOddsSync';
 
+// Component that handles odds sync for a single match - defined outside to prevent remounting
+const LiveMatchWithSync = ({ match }) => {
+    useLiveOddsSync(match.id);
+    return <LiveMatchCard match={match} />;
+};
+
 // Helper function to transform Unibet API data to MatchCard format
 const transformLiveMatchData = (apiMatch) => {
     // Extract team names from the match data
@@ -132,11 +138,6 @@ const LiveMatches = () => {
     const warning = useSelector(selectLiveMatchesWarning);
     const cacheAge = useSelector(selectLiveMatchesCacheAge);
 
-    // Create a component that handles odds sync for a single match
-    const LiveMatchWithSync = ({ match }) => {
-        useLiveOddsSync(match.id);
-        return <LiveMatchCard match={match} />;
-    };
 
     // Auto-refresh live odds every 2 seconds
     useEffect(() => {

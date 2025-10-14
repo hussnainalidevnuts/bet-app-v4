@@ -72,12 +72,13 @@ const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButt
                 </div>
             </div>
             
-            {/* Color blocks - only for In-Play matches */}
-            {isInPlay && match.kambiLiveData?.statistics?.football && (
+            {/* Color blocks - always show in In-Play context (defaults to 0-0) */}
+            {isInPlay && (
                 <div className="flex justify-center mb-2">
-                    <div className="flex items-center gap-2" style={{marginLeft: '-4.3rem'}}>
+                    <div className="flex items-center gap-2" style={{marginLeft: '-4.9rem'}}>
                         <div className="w-2 h-2 bg-yellow-500 border-0"></div>
                         <div className="w-2 h-2 bg-red-500 border-0"></div>
+                        <div className="text-[10px] leading-none">🚩</div>
                     </div>
                 </div>
             )}
@@ -94,24 +95,36 @@ const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButt
                             </div>
                         </div>
                         
-                        {/* Cards display in the middle - only for In-Play matches */}
-                        {isInPlay && match.kambiLiveData?.statistics?.football && (
+                        {/* Cards + Corners display in the middle - always show in In-Play (default 0-0) */}
+                        {isInPlay && (
                             <div className="text-xs text-gray-600 text-center mx-2">
                                 <div className="flex items-center justify-center gap-2">
-                                    {/* Color blocks on the left of card numbers */}
-                                    {/* <div className="flex flex-col gap-1">
-                                        <div className="w-3 h-3 bg-yellow-500 border-0"></div>
-                                        <div className="w-3 h-3 bg-red-500 border-0"></div>
-                                    </div> */}
-                                    {/* Card numbers */}
                                     <div className="flex items-center justify-center gap-2">
+                                        {/* Debug: single console for cards/corners structure */}
+                                        {match?.kambiLiveData?.statistics?.football && console.log('🔍 LeagueCards stats:', {
+                                            matchId: match.id,
+                                            home: {
+                                                yellowCards: match.kambiLiveData.statistics.football.home?.yellowCards,
+                                                redCards: match.kambiLiveData.statistics.football.home?.redCards,
+                                                corners: match.kambiLiveData.statistics.football.home?.corners,
+                                            },
+                                            away: {
+                                                yellowCards: match.kambiLiveData.statistics.football.away?.yellowCards,
+                                                redCards: match.kambiLiveData.statistics.football.away?.redCards,
+                                                corners: match.kambiLiveData.statistics.football.away?.corners,
+                                            }
+                                        })}
                                         <div className="text-xs">
-                                            <div className="text-sm">{match.kambiLiveData.statistics.football?.home?.yellowCards || 0}</div>
-                                            <div className="text-sm">{match.kambiLiveData.statistics.football?.away?.yellowCards || 0}</div>
+                                            <div className="text-sm">{match.kambiLiveData?.statistics?.football?.home?.yellowCards || 0}</div>
+                                            <div className="text-sm">{match.kambiLiveData?.statistics?.football?.away?.yellowCards || 0}</div>
                                         </div>
                                         <div className="text-xs">
-                                            <div className="text-sm">{match.kambiLiveData.statistics.football?.home?.redCards || 0}</div>
-                                            <div className="text-sm">{match.kambiLiveData.statistics.football?.away?.redCards || 0}</div>
+                                            <div className="text-sm">{match.kambiLiveData?.statistics?.football?.home?.redCards || 0}</div>
+                                            <div className="text-sm">{match.kambiLiveData?.statistics?.football?.away?.redCards || 0}</div>
+                                        </div>
+                                        <div className="text-xs">
+                                            <div className="text-sm">{match.kambiLiveData?.statistics?.football?.home?.corners || 0}</div>
+                                            <div className="text-sm">{match.kambiLiveData?.statistics?.football?.away?.corners || 0}</div>
                                         </div>
                                     </div>
                                 </div>

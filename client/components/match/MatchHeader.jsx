@@ -299,6 +299,17 @@ const MatchHeader = ({ matchData, onScoreUpdate }) => {
                                               liveData?.statistics?.football?.away?.redCards || 0)}
                                         </span>
                                     </div>
+                                    {/* Corners - prioritize liveMatchClockData */}
+                                    <div className="flex items-center gap-1">
+                                        <div className="text-red-600">🚩</div>
+                                        <span className="font-semibold text-gray-800">
+                                            {(liveMatchClockData?.statistics?.football?.home?.corners || 
+                                              fetchedLiveData?.statistics?.football?.home?.corners || 
+                                              liveData?.statistics?.football?.home?.corners || 0)} - {(liveMatchClockData?.statistics?.football?.away?.corners || 
+                                              fetchedLiveData?.statistics?.football?.away?.corners || 
+                                              liveData?.statistics?.football?.away?.corners || 0)}
+                                        </span>
+                                    </div>
                                 </div>
                             )}
                         </div>

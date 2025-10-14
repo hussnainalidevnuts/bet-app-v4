@@ -120,7 +120,7 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
       .catch(() => {
         setTimeout(() => dispatch(resetErrorState()), 100);
       });
-  }, [dispatch]);
+  }, [dispatch, pageSize]);
 
   // Effect to handle search query changes from parent
   useEffect(() => {

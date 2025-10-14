@@ -10,6 +10,15 @@ import { Tv } from 'lucide-react';
 
 const LiveMatchCard = ({ match }) => {
     const { createBetHandler } = useBetting();
+    // Debug: single console to inspect cards/corners structure
+    if (match?.kambiLiveData?.statistics?.football) {
+        const f = match.kambiLiveData.statistics.football;
+        // home/away yellow, red, corners
+        // console.log('🔍 LiveMatchCard stats:', {
+        //     matchId: match.id,
+        //     f
+        //     });
+    }
 
     return (
         <Link href={`/matches/${match.id}`}>
@@ -51,28 +60,31 @@ const LiveMatchCard = ({ match }) => {
                             <div className="text-sm truncate">{match.team2}</div>
                         </div>
                         
-                        {/* Cards display - 10% width */}
+                        {/* Cards display - 10% width (always show, defaulting to 0-0) */}
                         <div className="w-1/10 text-center">
-                            {match.kambiLiveData?.statistics && (
-                                <div className="flex flex-col items-center justify-center gap-1">
-                                    {/* Color blocks on top */}
-                                    <div className="flex items-center justify-center gap-2">
-                                        <div className="w-2 h-2 bg-yellow-500 border-0"></div>
-                                        <div className="w-2 h-2 bg-red-500 border-0"></div>
+                            <div className="flex flex-col items-center justify-center gap-1">
+                                {/* Color blocks on top */}
+                                <div className="flex items-center justify-center gap-2">
+                                    <div className="w-2 h-2 bg-yellow-500 border-0"></div>
+                                    <div className="w-2 h-2 bg-red-500 border-0"></div>
+                                    <div className="text-[10px] leading-none">🚩</div>
+                                </div>
+                                {/* Card numbers below */}
+                                <div className="flex items-center justify-center gap-2">
+                                    <div className="text-[10px]">
+                                        <div className="text-xs">{match.kambiLiveData?.statistics?.football?.home?.yellowCards || 0}</div>
+                                        <div className="text-xs">{match.kambiLiveData?.statistics?.football?.away?.yellowCards || 0}</div>
                                     </div>
-                                    {/* Card numbers below */}
-                                    <div className="flex items-center justify-center gap-2">
-                                        <div className="text-[10px]">
-                                            <div className="text-xs">{match.kambiLiveData.statistics.football?.home?.yellowCards || 0}</div>
-                                            <div className="text-xs">{match.kambiLiveData.statistics.football?.away?.yellowCards || 0}</div>
-                                        </div>
-                                        <div className="text-[10px]">
-                                            <div className="text-xs">{match.kambiLiveData.statistics.football?.home?.redCards || 0}</div>
-                                            <div className="text-xs">{match.kambiLiveData.statistics.football?.away?.redCards || 0}</div>
-                                        </div>
+                                    <div className="text-[10px]">
+                                        <div className="text-xs">{match.kambiLiveData?.statistics?.football?.home?.redCards || 0}</div>
+                                        <div className="text-xs">{match.kambiLiveData?.statistics?.football?.away?.redCards || 0}</div>
+                                    </div>
+                                    <div className="text-[10px]">
+                                        <div className="text-xs">{match.kambiLiveData?.statistics?.football?.home?.corners || 0}</div>
+                                        <div className="text-xs">{match.kambiLiveData?.statistics?.football?.away?.corners || 0}</div>
                                     </div>
                                 </div>
-                            )}
+                            </div>
                         </div>
                         
                         {/* Live score display - 10% width */}

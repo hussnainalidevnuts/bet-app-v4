@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useBetting } from '@/hooks/useBetting';
 import LiveMatchTimer from '@/components/shared/LiveMatchTimer';
 import { Tv } from 'lucide-react';
+import { getFotmobLogoByUnibetId } from '@/lib/leagueUtils';
 
 const LiveMatchCard = ({ match }) => {
     const { createBetHandler } = useBetting();
@@ -47,7 +48,16 @@ const LiveMatchCard = ({ match }) => {
                 <div className="p-4">
                     <div className='flex align-center gap-2 justify-between mb-2'>
                         <div className="flex items-center gap-2">
-                            <img src={`${match.league.imageUrl}`} className='w-4 h-4' alt="" />
+                            {(getFotmobLogoByUnibetId(match.league.id) || match.league.imageUrl) ? (
+                                <img 
+                                    src={getFotmobLogoByUnibetId(match.league.id) || match.league.imageUrl} 
+                                    className='w-4 h-4 object-contain' 
+                                    alt={match.league.name}
+                                    onError={e => { e.target.style.display = 'none'; }}
+                                />
+                            ) : match.league.icon ? (
+                                <span className="text-green-400 text-sm">{match.league.icon}</span>
+                            ) : null}
                             <div className="text-xs text-gray-500">
                                 {match.league.country ? `${match.league.name} (${match.league.country})` : match.league.name}
                             </div>

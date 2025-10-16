@@ -1,7 +1,7 @@
 {
     "viewId": "filter/football/all/allGroups",
     "session": false,
-    "apiUrl": "https://www.unibet.com.au/sportsbook-feeds/views/filter/football/all/allGroups?includeParticipants=true&useCombined=true&ncid=1759228258",
+    "apiUrl": "https://www.unibet.com.au/sportsbook-feeds/views/filter/football/all/allGroups?includeParticipants=true&useCombined=true",
     "layout": {
         "sections": [
             {

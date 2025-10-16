@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useBetting } from '@/hooks/useBetting';
 import { getBetLabel } from '@/lib/utils';
+import { getFotmobLogoByUnibetId } from '@/lib/leagueUtils';
 
 const MatchCard = ({ match }) => {
     const { createBetHandler } = useBetting();
@@ -20,7 +21,16 @@ const MatchCard = ({ match }) => {
                 <div className="p-4">
 
                     <div className='flex align-center gap-2 justify-start mb-2 '>
-                        <img src={`${match.league.imageUrl}`} className='w-4 h-4' alt="" />
+                        {(getFotmobLogoByUnibetId(match.league.id) || match.league.imageUrl) ? (
+                            <img 
+                                src={getFotmobLogoByUnibetId(match.league.id) || match.league.imageUrl} 
+                                className='w-4 h-4 object-contain' 
+                                alt={match.league.name}
+                                onError={e => { e.target.style.display = 'none'; }}
+                            />
+                        ) : match.league.icon ? (
+                            <span className="text-green-400 text-sm">{match.league.icon}</span>
+                        ) : null}
                         <div className="text-xs text-gray-500 ">{match.league.name}</div>
                     </div>
 

@@ -150,6 +150,18 @@ const UNIBET_TO_FOTMOB_MAPPING = {
   '1000176396': '9089', // OBOS Damallsvenskan (W)
   '1000095021': '163', // Challenge League
   '2000076226': '9498', // Thai League 2
+  '1000093570': '114', // International Friendly Matches
+  '2000065880': '10437', // UEFA Championship Qualification U21
+  '2000086369': '10198', // World Cup Qualifying - North, Central & Caribbean
+  '2000054642': '8947', // Isthmian League Premier Division
+  '2000054030': '8947', // Northern League Premier Division
+  '2000052846': '8947', // Southern League Premier Division
+  '2000066138': '10609', // AFC Asian Cup Qualification
+  '1000383729': '256', // Elitedivisionen (W)
+  // '1000094988': '9375', // Women's Championship
+  '2000051466': '9375', // Women's Championship (alternative ID)
+  '2010205606': '11129', // Europa Cup (W)
+  
 };
 
 export const getFotmobLogoByUnibetId = (unibetId) => {

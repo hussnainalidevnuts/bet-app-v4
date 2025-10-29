@@ -27,6 +27,8 @@ const BettingTabs = ({ matchData }) => {
         stats: { total_categories: 0, total_odds: 0 }
     };
 
+    // (moved player YES renderer inline inside renderSections to avoid hoisting issues)
+
     // Use the categories from classification, sorted by priority
     const categories = useMemo(() => {
         const cats = classification.categories || [];
@@ -268,6 +270,9 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
             (sectionTitle.toLowerCase().includes('3-way line') ||
                 sectionTitle.toLowerCase().includes('3 way line'));
 
+        const isHalfTimeFullTimeMarket = sectionTitle &&
+            (sectionTitle.toLowerCase().includes('half time/full time'));
+        if (isHalfTimeFullTimeMarket) return "grid-cols-1";
         const isShotsMarket = sectionTitle &&
             (sectionTitle.toLowerCase().includes('shots'));
 
@@ -1355,16 +1360,16 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
                     {rows.map(([playerName, markets]) => (
                         <div key={playerName} className="flex flex-col gap-1">
                             {/* Player name as label */}
-                            <div className="text-sm font-medium text-gray-700 px-2">{playerName}</div>
+                            <div className="text-sm font-medium text-gray-700 px-2 pt-4">{playerName}</div>
 
                             {/* Odds buttons side by side */}
                             <div className="grid grid-cols-2 gap-1">
                                 {/* First Goal Scorer */}
                                 <div className="flex-1">
                                     {markets.firstGoalScorer ? (
-                                        <BettingOptionButton
-                                            key={`first-goal-${playerName}`}
-                                            label={''}
+                                    <BettingOptionButton
+                                        key={`first-goal-${playerName}`}
+                                        label={playerName}
                                             value={markets.firstGoalScorer.value}
                                             sectionType={markets.firstGoalScorer.marketId || 'market'}
                                             optionId={markets.firstGoalScorer?.id}
@@ -1378,7 +1383,7 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
                                             halfIndicator={markets.firstGoalScorer.halfIndicator}
                                             thresholds={markets.firstGoalScorer.thresholds}
                                             total={markets.firstGoalScorer.total}
-                                            name={''}
+                                        name={playerName}
                                             marketDescription={markets.firstGoalScorer.marketDescription || 'First Goal Scorer'}
                                             suspended={markets.firstGoalScorer.suspended}
                                             marketId={markets.firstGoalScorer.marketId}
@@ -1394,9 +1399,9 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
                                 {/* To Score */}
                                 <div className="flex-1">
                                     {markets.toScore ? (
-                                        <BettingOptionButton
-                                            key={`to-score-${playerName}`}
-                                            label={''}
+                                    <BettingOptionButton
+                                        key={`to-score-${playerName}`}
+                                        label={playerName}
                                             value={markets.toScore.value}
                                             sectionType={markets.toScore.marketId || 'market'}
                                             optionId={markets.toScore?.id}
@@ -1410,7 +1415,7 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
                                             halfIndicator={markets.toScore.halfIndicator}
                                             thresholds={markets.toScore.thresholds}
                                             total={markets.toScore.total}
-                                            name={''}
+                                        name={playerName}
                                             marketDescription={markets.toScore.marketDescription || 'To Score'}
                                             suspended={markets.toScore.suspended}
                                             marketId={markets.toScore.marketId}
@@ -1432,9 +1437,117 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
 
     // Render market sections
     const renderSections = (category) => {
-        // Special handling for Goal Scorer categories (First Goal Scorer + To Score)
+        // Local helper: render a player-based YES market section (e.g., To Score Or Assist)
+        const renderYesSection = (section) => {
+            const options = section.options || [];
+            const rows = [];
+            // Helper to sanitize market title by removing trailing team names
+            const escapeRegex = (s) => String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const cleanMarketTitle = (title) => {
+                let t = String(title || '');
+                const team1 = matchData?.participants?.[0]?.name || '';
+                const team2 = matchData?.participants?.[1]?.name || '';
+                const patterns = [];
+                if (team1) {
+                    patterns.push(new RegExp(`\\s*[—-]\\s*${escapeRegex(team1)}$`, 'i'));
+                    patterns.push(new RegExp(`\\s*by\\s+${escapeRegex(team1)}$`, 'i'));
+                }
+                if (team2) {
+                    patterns.push(new RegExp(`\\s*[—-]\\s*${escapeRegex(team2)}$`, 'i'));
+                    patterns.push(new RegExp(`\\s*by\\s+${escapeRegex(team2)}$`, 'i'));
+                }
+                patterns.forEach((rx) => { t = t.replace(rx, ''); });
+                return t.trim();
+            };
+            options.forEach(opt => {
+                const playerName = typeof opt.name === 'string' ? opt.name : undefined;
+                if (!playerName) return;
+                const samePlayerOpts = options.filter(o => o.name === playerName);
+                const isOnly = samePlayerOpts.length === 1;
+                const labelLower = String(opt.label || '').toLowerCase();
+                const isYes = labelLower === 'yes' || labelLower === 'ot_yes';
+                if (isYes || isOnly) rows.push({ playerName, option: opt });
+            });
+            if (!rows.length) return null;
+            return (
+                <div key={`p-yes-${section.id}`} className="bg-white border overflow-hidden transition-all duration-200">
+                    <div className="px-4 py-2.5">
+                        <h3 className="text-sm font-semibold text-gray-800">{cleanMarketTitle(section.title)}</h3>
+                    </div>
+                    {/* Column header with top/bottom borders like screenshot */}
+                    <div className="px-4 py-2 text-xs font-semibold text-gray-700 flex justify-end border-y border-gray-200 mb-4">
+                        <div className="w-56 min-[400px]:w-30 sm:w-72 text-center">Yes</div>
+                    </div>
+                    <div className="px-3 pb-3 space-y-2">
+                        {rows.map(({ playerName, option }) => (
+                            <div key={`p-yes-row-${section.id}-${option.id}`} className="flex items-center justify-between gap-3">
+                                <div className="text-sm text-gray-800 px-2 py-1">{playerName}</div>
+                                {/* Wider odds button container */}
+                                <div className="w-56 min-[400px]:w-30 sm:w-72">
+                                    <BettingOptionButton
+                                        label={playerName}
+                                        value={option.value}
+                                        sectionType={section?.type || 'market'}
+                                        optionId={option?.id}
+                                        matchData={matchData}
+                                        isResultOption={false}
+                                        isHandicapOption={false}
+                                        isHalfTimeOption={false}
+                                        isOverUnderOption={false}
+                                        isGoalScorerOption={true}
+                                        handicapValue={option.handicap}
+                                        halfIndicator={option.halfIndicator}
+                                        thresholds={option.thresholds}
+                                        total={option.total}
+                                        name={playerName}
+                                        marketDescription={section.title}
+                                        suspended={option.suspended}
+                                        marketId={option.marketId}
+                                        onlyOdds={true}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+        // Helper: recognize player YES-style markets
+        const titleMatches = (t) => {
+            const s = (t || '').toLowerCase();
+            if (!s) return false;
+            if (s.includes('first goal scorer')) return false;
+            if (s === 'to score') return false;
+            return (
+                s.includes('to score or assist') ||
+                s.includes('to assist') ||
+                s.includes('to score at least') ||
+                s.includes('to score from') ||
+                s.includes('header') ||
+                s.includes('outside the penalty') ||
+                s.includes('penalty')
+            );
+        };
+
+        // Special handling for Goal Scorer categories (First GS + To Score) and attach additional player YES sections if present
         if (category.label?.toLowerCase().includes('scorer') || category.label?.toLowerCase().includes('goal scorer')) {
-            return renderGoalScorerCategory(category);
+            const otherPlayerSections = (category.markets || []).filter(sec => titleMatches(sec.title));
+            return (
+                <div className="space-y-3">
+                    {renderGoalScorerCategory(category)}
+                    {otherPlayerSections.map(sec => renderYesSection(sec))}
+                </div>
+            );
+        }
+
+        // Categories like "Player Specials" that only contain player YES-style markets
+        const playerYesSections = (category.markets || []).filter(sec => titleMatches(sec.title));
+        if (playerYesSections.length > 0) {
+            return (
+                <div className="space-y-3">
+                    {playerYesSections.map(sec => renderYesSection(sec))}
+                </div>
+            );
         }
 
         // Detect if this is a player-based market (Player Shots, Player Shots on Target, Goalscorer, etc.)
@@ -1774,6 +1887,28 @@ const BettingOptionButton = ({
                     <span className="bg-white/30 px-1 rounded text-[8px] min-[400px]:text-[9px]">{handicapValue}</span>
                 </div>
             );
+        }
+
+        // Half Time/Full Time: replace 1/2/X with Team1/Team2/Draw
+        if (
+            marketDescription &&
+            marketDescription.toLowerCase().includes('half time/full time') &&
+            typeof label === 'string'
+        ) {
+            const t1 = matchData?.participants?.[0]?.name || 'Home';
+            const t2 = matchData?.participants?.[1]?.name || 'Away';
+            const mapToken = (tok) => {
+                const s = String(tok).trim().toUpperCase();
+                if (s === '1') return t1;
+                if (s === '2') return t2;
+                if (s === 'X') return 'Draw';
+                return tok;
+            };
+            if (label.includes('/')) {
+                const parts = label.split('/').map(mapToken);
+                return parts.join(' / ');
+            }
+            return mapToken(label);
         }
 
         // For Winning Margin markets: show team name and name as badge if present

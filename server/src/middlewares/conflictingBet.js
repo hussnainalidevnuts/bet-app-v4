@@ -78,8 +78,8 @@ export const preventConflictingBet = async (req, res, next) => {
       
       // Get all pending combination bets for this user
       const existingCombinationBets = await Bet.find({
-        userId,
-        status: 'pending',
+          userId,
+          status: 'pending',
         combination: { $exists: true, $ne: [] }
       });
 
@@ -121,12 +121,12 @@ export const preventConflictingBet = async (req, res, next) => {
           } else {
             // New combination is an EXACT MATCH - BLOCK
             console.log('[conflictingBet] ❌ New combination is exact match of existing combination', existingBet._id);
-            return res.status(400).json({ 
-              success: false, 
+          return res.status(400).json({ 
+            success: false, 
               message: 'You already have a pending combination bet with the exact same selections.' 
-            });
-          }
-        } else {
+          });
+        }
+      } else {
           // Check if new combination is a subset (all new legs exist in existing, but existing has more)
           const allNewLegsPresent = Array.from(newCombinationLegs).every(legKey => 
             existingCombinationLegs.has(legKey)

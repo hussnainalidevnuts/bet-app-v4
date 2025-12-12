@@ -167,13 +167,38 @@ export class FotmobController {
             }
 
             const days = req.body.days || 20; // Default 20 days (21 total including yesterday)
+            const forceRefresh = req.body.forceRefresh || false; // Force refresh flag (for 9:30 PM and server start)
             const startDate = new Date();
-            const cacheData = {};
+            
+            // Load existing cache to check what data we already have
+            const multiDayFile = path.join(STORAGE_PATH, 'fotmob_multiday_cache.json');
+            let existingCache = {};
+            if (fs.existsSync(multiDayFile) && !forceRefresh) {
+                try {
+                    existingCache = JSON.parse(fs.readFileSync(multiDayFile, 'utf8'));
+                    console.log(`[FotMob] Loaded existing cache with ${Object.keys(existingCache).length} dates`);
+                } catch (error) {
+                    console.warn(`[FotMob] Could not load existing cache, will refresh all dates:`, error.message);
+                    existingCache = {};
+                }
+            } else if (forceRefresh) {
+                console.log(`[FotMob] Force refresh enabled - will refresh all dates regardless of existing cache`);
+            } else {
+                console.log(`[FotMob] No existing cache found - will fetch all dates`);
+            }
+            
+            const cacheData = { ...existingCache }; // Start with existing cache
 
             console.log(`[FotMob] Building multi-day cache for ${days + 1} days (including 1 previous day)`);
             console.log(`[FotMob] Start date: ${startDate.toISOString()}`);
             console.log(`[FotMob] Days to fetch: ${days + 1}`);
+            console.log(`[FotMob] Force refresh: ${forceRefresh}`);
 
+            // Track if any actual refresh happened
+            let actualRefreshHappened = false;
+            let datesRefreshed = 0;
+            let datesSkipped = 0;
+            
             // Start from yesterday (i = -1) to include previous day
             for (let i = -1; i < days; i++) {
                 const date = new Date(startDate);
@@ -182,6 +207,21 @@ export class FotmobController {
                 const dateFormatted = date.toISOString().split('T')[0]; // YYYY-MM-DD format
 
                 console.log(`\n[FotMob] Processing date ${i + 2}/${days + 1}: ${dateFormatted} (${dateStr})`);
+
+                // Check if we already have valid data for this date (unless force refresh)
+                if (!forceRefresh && cacheData[dateStr]) {
+                    const existingLeagues = cacheData[dateStr]?.leagues || [];
+                    const existingMatchCount = existingLeagues.reduce((sum, league) => sum + (league.matches?.length || 0), 0);
+                    
+                    // Check if data is valid (has leagues with matches)
+                    if (Array.isArray(existingLeagues) && existingLeagues.length > 0 && existingMatchCount > 0) {
+                        console.log(`✅ Cache already has valid data for ${dateStr} (${existingMatchCount} matches across ${existingLeagues.length} leagues) - skipping API call`);
+                        datesSkipped++;
+                        continue; // Skip this date, use existing cache
+                    } else {
+                        console.log(`⚠️ Cache exists for ${dateStr} but data is invalid/empty - will refresh`);
+                    }
+                }
 
                 try {
                     console.log(`[FotMob] Calling FotMob API for date: ${dateStr}`);
@@ -222,10 +262,14 @@ export class FotmobController {
                         
                         // Save in correct format that getCachedDailyMatches expects
                         cacheData[dateStr] = { leagues: apiData.leagues };
+                        actualRefreshHappened = true; // Mark that actual refresh happened
+                        datesRefreshed++;
                     } else {
                         console.log(`⚠️ WARNING: API response does not have expected structure`);
                         console.log(`   Response keys:`, apiData ? Object.keys(apiData) : 'null');
                         cacheData[dateStr] = { leagues: [] };
+                        actualRefreshHappened = true; // Even if empty, we made an API call
+                        datesRefreshed++;
                     }
                     
                     // Add delay to respect rate limits
@@ -242,10 +286,14 @@ export class FotmobController {
                     });
                     cacheData[dateStr] = { leagues: [] };
                     console.log(`⚠️  Set empty leagues for ${dateStr} due to error`);
+                    actualRefreshHappened = true; // Even if error, we attempted refresh
+                    datesRefreshed++;
                 }
             }
 
             console.log(`\n[FotMob] Loop completed. Total dates processed: ${Object.keys(cacheData).length}`);
+            console.log(`[FotMob] Dates refreshed: ${datesRefreshed}, Dates skipped: ${datesSkipped}`);
+            console.log(`[FotMob] Actual refresh happened: ${actualRefreshHappened}`);
             console.log(`[FotMob] Cache data summary:`);
             Object.keys(cacheData).forEach(dateKey => {
                 const leagues = cacheData[dateKey]?.leagues || [];
@@ -253,24 +301,31 @@ export class FotmobController {
                 console.log(`   - ${dateKey}: ${matchCount} matches across ${leagues.length} leagues`);
             });
 
-            // Save multi-day cache
-            const multiDayFile = path.join(STORAGE_PATH, 'fotmob_multiday_cache.json');
-            fs.writeFileSync(multiDayFile, JSON.stringify(cacheData, null, 2));
-            console.log(`✅ Cache file saved successfully`);
+            // Only save cache file and update metadata if actual refresh happened OR if force refresh
+            if (actualRefreshHappened || forceRefresh) {
+                // Save multi-day cache (reuse multiDayFile declared earlier)
+                fs.writeFileSync(multiDayFile, JSON.stringify(cacheData, null, 2));
+                console.log(`✅ Cache file saved successfully`);
 
-            // Update metadata
-            const metaFile = path.join(STORAGE_PATH, 'fotmob_cache_meta.json');
-            const totalMatches = Object.values(cacheData).reduce((sum, dateData) => {
-                const leagues = dateData?.leagues || [];
-                return sum + leagues.reduce((leagueSum, league) => leagueSum + (league.matches?.length || 0), 0);
-            }, 0);
-            const meta = {
-                lastRefresh: new Date().toISOString(),
-                days: days + 1, // Include the previous day
-                totalMatches: totalMatches
-            };
-            fs.writeFileSync(metaFile, JSON.stringify(meta, null, 2));
-            console.log(`✅ Metadata file saved`);
+                // Update metadata only if actual refresh happened
+                const metaFile = path.join(STORAGE_PATH, 'fotmob_cache_meta.json');
+                const totalMatches = Object.values(cacheData).reduce((sum, dateData) => {
+                    const leagues = dateData?.leagues || [];
+                    return sum + leagues.reduce((leagueSum, league) => leagueSum + (league.matches?.length || 0), 0);
+                }, 0);
+                const meta = {
+                    lastRefresh: new Date().toISOString(),
+                    days: days + 1, // Include the previous day
+                    totalMatches: totalMatches,
+                    datesRefreshed: datesRefreshed,
+                    datesSkipped: datesSkipped
+                };
+                fs.writeFileSync(metaFile, JSON.stringify(meta, null, 2));
+                console.log(`✅ Metadata file saved (actual refresh: ${actualRefreshHappened})`);
+            } else {
+                console.log(`⏭️ No actual refresh needed - all dates already cached. Metadata NOT updated.`);
+                console.log(`   - This prevents unnecessary metadata updates when cache is already valid`);
+            }
 
             const response = {
                 success: true,

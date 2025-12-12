@@ -12,6 +12,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import winnningOddsCalculation from "./winningOddsCalculation.service.js";
+import TeamRestriction from "../models/TeamRestriction.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -279,6 +280,91 @@ class BetService {
     
     // Last resort: return a generic message
     return "Teams information not available";
+  }
+
+  /**
+   * Extract team name from bet selection
+   * Handles: Home/Away, 1/2/X, team names directly, market-based selections
+   * @param {string} selection - Bet selection (e.g., "Home", "1", "Utrecht", "Total Goals by Utrecht")
+   * @param {string} homeName - Home team name
+   * @param {string} awayName - Away team name
+   * @returns {string|null} - Team name or null if not a team-based bet
+   */
+  extractTeamFromBetSelection(selection, homeName, awayName) {
+    if (!selection || !homeName || !awayName) {
+      return null;
+    }
+    
+    const selectionLower = String(selection).toLowerCase().trim();
+    const homeNameLower = String(homeName).toLowerCase().trim();
+    const awayNameLower = String(awayName).toLowerCase().trim();
+    
+    // Check if selection is Home/1 (home team)
+    if (selectionLower === 'home' || selectionLower === '1' || selectionLower === 'h') {
+      return homeName;
+    }
+    
+    // Check if selection is Away/2 (away team)
+    if (selectionLower === 'away' || selectionLower === '2' || selectionLower === 'a') {
+      return awayName;
+    }
+    
+    // Check if selection directly matches home team name
+    if (this.namesMatch(selection, homeName) || selectionLower === homeNameLower) {
+      return homeName;
+    }
+    
+    // Check if selection directly matches away team name
+    if (this.namesMatch(selection, awayName) || selectionLower === awayNameLower) {
+      return awayName;
+    }
+    
+    // Check if selection contains team name (e.g., "Total Goals by Utrecht")
+    if (selectionLower.includes(' by ')) {
+      const parts = selectionLower.split(' by ');
+      if (parts.length > 1) {
+        const teamPart = parts[1].trim();
+        // Remove suffixes like "- 1st Half", "- 2nd Half"
+        const cleanTeamPart = teamPart
+          .replace(/\s*-\s*1st\s+half/gi, '')
+          .replace(/\s*-\s*2nd\s+half/gi, '')
+          .replace(/\s*-\s*first\s+half/gi, '')
+          .replace(/\s*-\s*second\s+half/gi, '')
+          .trim();
+        
+        // Match against home or away team
+        if (this.namesMatch(cleanTeamPart, homeName) || cleanTeamPart === homeNameLower) {
+          return homeName;
+        }
+        if (this.namesMatch(cleanTeamPart, awayName) || cleanTeamPart === awayNameLower) {
+          return awayName;
+        }
+      }
+    }
+    
+    // Check if selection contains team name in other formats
+    if (selectionLower.includes(homeNameLower)) {
+      return homeName;
+    }
+    if (selectionLower.includes(awayNameLower)) {
+      return awayName;
+    }
+    
+    // Not a team-based bet (e.g., "Over 2.5", "X", "Draw")
+    return null;
+  }
+  
+  /**
+   * Simple name matching helper (case-insensitive, handles common variations)
+   * @param {string} name1 - First name
+   * @param {string} name2 - Second name
+   * @returns {boolean} - True if names match
+   */
+  namesMatch(name1, name2) {
+    if (!name1 || !name2) return false;
+    const n1 = String(name1).toLowerCase().trim();
+    const n2 = String(name2).toLowerCase().trim();
+    return n1 === n2 || n1.includes(n2) || n2.includes(n1);
   }
 
   // Helper method to properly parse starting_at field from SportsMonks API
@@ -908,6 +994,43 @@ class BetService {
       console.log(`[placeBet] ✅ No existing pending bet found for market "${marketName}" on match ${matchId}`);
     }
     
+    // Check for team restrictions: If user won a bet on a team in last 7 days, block betting on ANY market for that team's matches
+    const homeName = unibetMetaPayload?.homeName;
+    const awayName = unibetMetaPayload?.awayName;
+    
+    if (homeName && awayName) {
+      // Check BOTH teams in the match - if user has restriction on either team, block the bet
+      // This applies to ALL markets (1, X, 2, Over/Under, etc.) for that match
+      const teamsToCheck = [
+        { name: homeName, normalized: homeName.toLowerCase().trim() },
+        { name: awayName, normalized: awayName.toLowerCase().trim() }
+      ];
+      
+      console.log(`[placeBet] Checking team restrictions for match: ${homeName} vs ${awayName}`);
+      
+      for (const team of teamsToCheck) {
+        // Check if user has an active restriction for this team
+        const activeRestriction = await TeamRestriction.findOne({
+          userId: userId,
+          normalizedTeamName: team.normalized,
+          expiresAt: { $gt: new Date() } // Only active restrictions
+        });
+        
+        if (activeRestriction) {
+          const daysRemaining = Math.ceil((activeRestriction.expiresAt - new Date()) / (1000 * 60 * 60 * 24));
+          console.log(`[placeBet] ❌ User has active team restriction for "${team.name}" (expires in ${daysRemaining} days)`);
+          console.log(`[placeBet] ❌ Blocking bet on match ${homeName} vs ${awayName} - cannot bet on ANY market for this match`);
+          throw new CustomError(
+            `You have already selected "${team.name}" for this week. You cannot place another bet on any market for matches involving "${team.name}" for ${daysRemaining} more day(s).`,
+            400,
+            "TEAM_RESTRICTION_ACTIVE"
+          );
+        }
+      }
+      
+      console.log(`[placeBet] ✅ No active team restrictions found for ${homeName} or ${awayName}`);
+    }
+    
     let matchData;
     let odds;
     const cacheKey = `match_${matchId}`;
@@ -1424,6 +1547,12 @@ class BetService {
       }
     }
     
+    // Final fallback: Use unibetMetaPayload if teams still not available
+    if (teams === "Teams information not available" && unibetMetaPayload?.homeName && unibetMetaPayload?.awayName) {
+      teams = `${unibetMetaPayload.homeName} vs ${unibetMetaPayload.awayName}`;
+      console.log(`[DEBUG] ✅ Extracted teams from unibetMetaPayload: ${teams}`);
+    }
+    
     const selection = betOption;
 
     const matchDate = this.parseMatchStartTime(matchData.starting_at);
@@ -1489,8 +1618,8 @@ class BetService {
     });
     
     // Final validation: Check if required fields are present
-    const homeName = bet.unibetMeta?.homeName || (bet.teams?.includes(' vs ') ? bet.teams.split(' vs ')[0].trim() : null);
-    const awayName = bet.unibetMeta?.awayName || (bet.teams?.includes(' vs ') ? bet.teams.split(' vs ')[1].trim() : null);
+    const finalHomeName = bet.unibetMeta?.homeName || (bet.teams?.includes(' vs ') ? bet.teams.split(' vs ')[0].trim() : null);
+    const finalAwayName = bet.unibetMeta?.awayName || (bet.teams?.includes(' vs ') ? bet.teams.split(' vs ')[1].trim() : null);
     const leagueId = bet.leagueId || bet.unibetMeta?.leagueId;
     const startDate = bet.unibetMeta?.start || bet.matchDate;
     
@@ -1499,16 +1628,16 @@ class BetService {
       matchId: bet.matchId,
       teams: bet.teams,
       leagueId: leagueId,
-      homeName: homeName,
-      awayName: awayName,
+      homeName: finalHomeName,
+      awayName: finalAwayName,
       start: startDate,
       marketId: bet.marketId,
-      hasRequiredFields: !!(homeName && awayName && leagueId && startDate)
+      hasRequiredFields: !!(finalHomeName && finalAwayName && leagueId && startDate)
     });
     
     // Warn if required fields are missing (but don't reject - let calculator handle it)
-    if (!homeName || !awayName) {
-      console.warn(`⚠️ [WARNING] Bet placed with missing team names - Home: "${homeName}", Away: "${awayName}"`);
+    if (!finalHomeName || !finalAwayName) {
+      console.warn(`⚠️ [WARNING] Bet placed with missing team names - Home: "${finalHomeName}", Away: "${finalAwayName}"`);
       console.warn(`⚠️ This bet may be cancelled during outcome calculation`);
     }
     if (!leagueId) {
@@ -2000,6 +2129,30 @@ class BetService {
           return matchData;
         } catch (error) {
           lastError = error;
+          
+          // Check if it's a 404 error (match not found) - this means match is finished
+          if (error.code === "MATCH_NOT_FOUND" || error.status === 404 || error.response?.status === 404) {
+            console.log(
+              `[fetchMatchResult] Match ${matchId} returned 404 (not found) - Match likely finished and removed from Unibet API`
+            );
+            // Return a special object indicating match is finished (404 = match finished)
+            return {
+              id: matchId,
+              state: { id: 5, name: "FINISHED" }, // Mark as finished
+              finished: true,
+              finishedReason: "404_NOT_FOUND", // Special flag to indicate 404
+              message: "Match not found in Unibet API - likely finished",
+              scores: [],
+              participants: [],
+              starting_at: null,
+              odds: [],
+              inplayodds: [],
+              lineups: [],
+              events: [],
+              statistics: []
+            };
+          }
+          
           console.error(
             `[fetchMatchResult] Attempt ${attempt} failed for matchId: ${matchId}:`,
             error.message
@@ -2161,11 +2314,14 @@ class BetService {
       `[processSingleBetOutcome] Looking for odd ID ${bet.oddId} in match data`
     );
 
-    // Check if match is finished (state.id === 5 means finished)
-    if (!matchData.state || matchData.state.id !== 5) {
+    // Check if match is finished (state.id === 5 OR 404_NOT_FOUND means finished)
+    const isMatchFinished = matchData.finishedReason === "404_NOT_FOUND" || (matchData.state && matchData.state.id === 5);
+    
+    if (!isMatchFinished) {
       console.log(
         `[processSingleBetOutcome] Match not finished for betId: ${betId}, state:`,
-        matchData.state
+        matchData.state,
+        `finishedReason: ${matchData.finishedReason || 'none'}`
       );
 
       // Calculate proper rescheduling time based on match start time (2h 5min after start)

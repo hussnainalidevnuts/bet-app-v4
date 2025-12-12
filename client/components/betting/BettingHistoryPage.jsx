@@ -708,8 +708,8 @@ const BettingHistoryPage = ({ userId }) => {
               </div>
             ) : (
               <>
-                {/* Desktop Table View */}
-                <div className="hidden md:block overflow-x-auto">
+                {/* Desktop Table View - COMMENTED OUT */}
+                {/* <div className="hidden md:block overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-gray-50 text-[13px]">
@@ -950,10 +950,10 @@ const BettingHistoryPage = ({ userId }) => {
                       })}
                     </TableBody>
                   </Table>
-                </div>
+                </div> */}
 
-                {/* Mobile Card View */}
-                <div className="md:hidden space-y-4">
+                {/* Mobile Card View - Now shown on all screen sizes */}
+                <div className="space-y-4">
                   {sortedData.map((item) => (
                     <BetCardWrapper
                       key={item._id}

@@ -363,52 +363,17 @@ class BetOutcomeCalculator {
      */
     async getPendingBets(onlyFinished = true) {
         try {
+            // Remove time-based filtering - we will check match status from Unibet API and FotMob instead
+            // This allows us to process bets based on actual match status, not estimated time
             const query = { status: 'pending' };
-
-            if (onlyFinished) {
-                // Use time-based filtering to get bets where matches are likely finished
-                // Matches typically finish within 2 hours (including extra time), so we check for matches
-                // that started at least 2 hours and 15 minutes ago (135 minutes = 90 min match + 15 min extra time + 30 min buffer)
-                const currentTime = new Date();
-                const matchDuration = 135 * 60 * 1000; // 135 minutes in milliseconds (2h 15min)
-                const likelyFinishedTime = new Date(currentTime.getTime() - matchDuration);
-                
-                // Check both 'start' and 'matchDate' fields for backward compatibility
-                query.$or = [
-                    { start: { $lt: likelyFinishedTime.toISOString() } },
-                    { matchDate: { $lt: likelyFinishedTime } },
-                    { createdAt: { $lt: likelyFinishedTime } } // Fallback: use bet creation time if match time not available
-                ];
-                
-                // Also include bets where matchFinished is explicitly true (if set)
-                const finishedBetsQuery = { status: 'pending', matchFinished: true };
-                const finishedBets = await this.db.collection('bets').find(finishedBetsQuery).toArray();
-                
-                console.log(`🔍 Looking for pending bets using time-based filtering (matches started ${matchDuration / 60000} minutes ago or more)`);
-                console.log(`   - Time threshold: ${likelyFinishedTime.toISOString()}`);
-                
-                const timeBasedBets = await this.db.collection('bets').find(query).toArray();
-                
-                // Combine both queries and remove duplicates
-                const allBets = [...timeBasedBets, ...finishedBets];
-                const uniqueBets = allBets.filter((bet, index, self) => 
-                    index === self.findIndex(b => b._id.toString() === bet._id.toString())
-                );
-                
-                console.log(`   - Found ${timeBasedBets.length} time-based bets, ${finishedBets.length} finished-flagged bets, ${uniqueBets.length} unique total`);
-                
-                return uniqueBets;
-            } else {
-                // For legacy mode, use time-based filtering - only matches that are likely finished (105+ minutes after start)
-                const currentTime = new Date();
-                const matchDuration = 105 * 60 * 1000; // 105 minutes in milliseconds
-                const likelyFinishedTime = new Date(currentTime.getTime() - matchDuration);
-                query.start = { $lt: likelyFinishedTime.toISOString() };
-                console.log('🔍 Looking for pending bets using time-based filtering (matches likely finished - 105+ minutes after start)');
-                
-                const bets = await this.db.collection('bets').find(query).toArray();
-                return bets;
-            }
+            
+            console.log(`🔍 Fetching all pending bets (no time-based filtering - will check Unibet/FotMob match status)`);
+            
+            const bets = await this.db.collection('bets').find(query).toArray();
+            
+            console.log(`   - Found ${bets.length} pending bets`);
+            
+            return bets;
         } catch (error) {
             console.error('Error fetching pending bets:', error);
             return [];
@@ -7708,8 +7673,106 @@ class BetOutcomeCalculator {
                 console.log(`✅ Loaded ${this.leagueMapping.size} league mappings`);
             }
 
-            // Step 2: Load Fotmob data (isolated from database operations)
-            console.log(`\n🔍 STEP 2: Loading Fotmob data for ${betDate.toISOString().slice(0, 10)}...`);
+            // Step 2: Check Unibet Bet Offers API first to see if match is finished (404 = finished)
+            console.log(`\n🔍 STEP 2: Checking Unibet Bet Offers API for match status...`);
+            let isUnibetMatchFinished = false;
+            let unibetErrorReason = null;
+            
+            try {
+                // Check Unibet Bet Offers API (Kambi API) - if 404, match is finished
+                const axios = (await import('axios')).default;
+                const eventId = bet.matchId || bet.eventId;
+                const betOffersApiUrl = `https://oc-offering-api.kambicdn.com/offering/v2018/ubau/betoffer/event/${eventId}.json`;
+                
+                console.log(`   - Checking Unibet Bet Offers API: ${betOffersApiUrl}`);
+                
+                try {
+                    const betOffersResponse = await axios.get(betOffersApiUrl, {
+                        timeout: 10000,
+                        validateStatus: (status) => status < 500 // Don't throw on 404
+                    });
+                    
+                    if (betOffersResponse.status === 404 || !betOffersResponse.data) {
+                        console.log(`✅ Unibet Bet Offers API returned 404 - Match is FINISHED (removed from Unibet)`);
+                        isUnibetMatchFinished = true;
+                        unibetErrorReason = "404_BETOFFERS_NOT_FOUND";
+                    } else {
+                        console.log(`⏳ Unibet Bet Offers API returned data - Match is still available (not finished yet)`);
+                    }
+                } catch (betOffersError) {
+                    // Check if it's a 404 error
+                    if (betOffersError.response?.status === 404 || 
+                        betOffersError.code === "MATCH_NOT_FOUND" ||
+                        betOffersError.message?.includes("not found")) {
+                        console.log(`✅ Unibet Bet Offers API returned 404 - Match is FINISHED`);
+                        isUnibetMatchFinished = true;
+                        unibetErrorReason = "404_BETOFFERS_NOT_FOUND";
+                    } else {
+                        console.warn(`⚠️ Unibet Bet Offers API error (not 404): ${betOffersError.message}`);
+                        // Not a 404, so match might still be available - continue processing
+                    }
+                }
+                
+                // Also check match result API as fallback
+                if (!isUnibetMatchFinished) {
+                    try {
+                        const BetService = (await import('../services/bet.service.js')).default;
+                        const betService = new BetService();
+                        
+                        console.log(`   - Also checking Unibet Match Result API for matchId: ${eventId}`);
+                        const unibetMatchData = await betService.fetchMatchResult(eventId, bet.inplay);
+                        
+                        // Check if match returned 404 (finished) or state.id === 5 (finished)
+                        if (unibetMatchData.finishedReason === "404_NOT_FOUND" || 
+                            (unibetMatchData.state && unibetMatchData.state.id === 5)) {
+                            console.log(`✅ Unibet Match Result API indicates match is FINISHED (${unibetMatchData.finishedReason || 'state.id=5'})`);
+                            isUnibetMatchFinished = true;
+                            unibetErrorReason = unibetMatchData.finishedReason || "STATE_ID_5";
+                        } else {
+                            console.log(`⏳ Unibet Match Result API indicates match is NOT finished yet (state.id: ${unibetMatchData.state?.id || 'unknown'})`);
+                        }
+                    } catch (matchResultError) {
+                        console.warn(`⚠️ Could not check Unibet Match Result API: ${matchResultError.message}`);
+                    }
+                }
+                
+                // If match is finished, check if we should wait before fetching FotMob data
+                if (isUnibetMatchFinished) {
+                    console.log(`✅ Unibet API indicates match is FINISHED (${unibetErrorReason})`);
+                    
+                    // Calculate time since match start
+                    const betStartTime = bet.start ? new Date(bet.start) : null;
+                    const currentTime = new Date();
+                    let timeSinceStart = null;
+                    if (betStartTime && !isNaN(betStartTime.getTime())) {
+                        timeSinceStart = (currentTime.getTime() - betStartTime.getTime()) / (1000 * 60); // minutes
+                    }
+                    
+                    // Wait 5 minutes after match finished before fetching FotMob data (for data to update)
+                    const WAIT_AFTER_FINISH = 5; // 5 minutes wait
+                    if (timeSinceStart !== null && timeSinceStart < WAIT_AFTER_FINISH) {
+                        const waitTime = (WAIT_AFTER_FINISH - timeSinceStart) * 60 * 1000; // milliseconds
+                        console.log(`⏰ Match finished but only ${timeSinceStart.toFixed(1)} minutes passed - waiting ${(waitTime/1000/60).toFixed(1)} more minutes for FotMob data to update`);
+                        // Return early - will be processed in next cycle
+                        return {
+                            success: true,
+                            outcome: { status: 'pending', reason: `Match finished, waiting ${(waitTime/1000/60).toFixed(1)} minutes for FotMob data update` },
+                            skipped: true,
+                            reason: 'Match finished but waiting for FotMob data update',
+                            waitTime: waitTime,
+                            unibetErrorReason: unibetErrorReason
+                        };
+                    } else {
+                        console.log(`✅ Enough time has passed (${timeSinceStart?.toFixed(1) || 'unknown'} min) - proceeding with FotMob data fetch`);
+                    }
+                }
+            } catch (unibetError) {
+                console.warn(`⚠️ Could not check Unibet API status: ${unibetError.message}`);
+                console.log(`   - Will proceed with FotMob check as fallback`);
+            }
+            
+            // Step 2B: Load Fotmob data (isolated from database operations)
+            console.log(`\n🔍 STEP 2B: Loading Fotmob data for ${betDate.toISOString().slice(0, 10)}...`);
             let fotmobData;
             try {
                 fotmobData = await this.getCachedDailyMatches(betDate, bet);
@@ -7789,6 +7852,17 @@ class BetOutcomeCalculator {
             // Step 4: Check if match is finished before making API call
             console.log(`\n🔍 STEP 4: Checking match finished status...`);
             
+            // Calculate time since match start (if we have start time)
+            const betStartTime = bet.start ? new Date(bet.start) : null;
+            const currentTime = new Date();
+            let timeSinceStart = null;
+            if (betStartTime && !isNaN(betStartTime.getTime())) {
+                timeSinceStart = (currentTime.getTime() - betStartTime.getTime()) / (1000 * 60); // minutes
+                console.log(`   - Match start time: ${betStartTime.toISOString()}`);
+                console.log(`   - Current time: ${currentTime.toISOString()}`);
+                console.log(`   - Time since start: ${timeSinceStart.toFixed(1)} minutes`);
+            }
+            
             // First check the match status from FotMob match result
             const matchStatusFinished = matchResult.match.status?.finished === true;
             const matchStatusReason = matchResult.match.status?.reason?.short?.toLowerCase() || '';
@@ -7797,9 +7871,18 @@ class BetOutcomeCalculator {
                 matchStatusReason.includes('full') || 
                 matchStatusReason.includes('finished');
             
-            // Check if bet has matchFinished flag set (if explicitly false, skip)
-            if (bet.matchFinished === false && !isMatchFinishedFromStatus) {
-                console.log(`⏳ Match not finished yet (bet flag = false, status check = ${isMatchFinishedFromStatus}) - skipping detailed API call`);
+            // Check if enough time has passed since match start (5-10 minutes threshold)
+            const MIN_WAIT_TIME = 5; // 5 minutes minimum wait after match start
+            const MAX_WAIT_TIME = 10; // 10 minutes maximum wait
+            const hasEnoughTimePassed = timeSinceStart !== null && timeSinceStart >= MIN_WAIT_TIME;
+            const hasTooMuchTimePassed = timeSinceStart !== null && timeSinceStart >= MAX_WAIT_TIME;
+            
+            console.log(`   - Has enough time passed (${MIN_WAIT_TIME} min): ${hasEnoughTimePassed}`);
+            console.log(`   - Has too much time passed (${MAX_WAIT_TIME} min): ${hasTooMuchTimePassed}`);
+            
+            // Check if bet has matchFinished flag set (if explicitly false, skip unless enough time passed)
+            if (bet.matchFinished === false && !isMatchFinishedFromStatus && !hasEnoughTimePassed) {
+                console.log(`⏳ Match not finished yet (bet flag = false, status check = ${isMatchFinishedFromStatus}, time = ${timeSinceStart?.toFixed(1)} min) - skipping detailed API call`);
                 return {
                     success: true,
                     outcome: { status: 'pending', reason: 'Match not finished yet' },
@@ -7811,6 +7894,8 @@ class BetOutcomeCalculator {
             // If match appears finished from status, proceed even if bet flag is not set
             if (isMatchFinishedFromStatus) {
                 console.log(`✅ Match finished confirmed from FotMob status - proceeding with detailed API call`);
+            } else if (hasEnoughTimePassed) {
+                console.log(`⏰ Enough time has passed since match start (${timeSinceStart.toFixed(1)} min) - will check Unibet API and proceed if match finished`);
             } else if (bet.matchFinished === undefined) {
                 console.log(`⚠️ Match finished status unknown - proceeding with API call to verify (time-based filtering selected this bet)`);
             } else {
@@ -7964,6 +8049,15 @@ class BetOutcomeCalculator {
             console.log(`💰 Odds: ${odds} (type: ${typeof odds})`);
             
             switch (outcome.status) {
+                case 'pending':
+                    // Pending bets should NOT have any payout calculation
+                    calculatedPayout = 0;
+                    calculatedProfit = 0;
+                    console.log(`💰 Calculation: PENDING`);
+                    console.log(`💰   - Payout = 0 (bet still being processed)`);
+                    console.log(`💰   - Profit = 0 (no calculation until bet is finalized)`);
+                    break;
+                    
                 case 'won':
                     calculatedPayout = stake * odds;
                     calculatedProfit = calculatedPayout - stake;
@@ -8093,40 +8187,100 @@ class BetOutcomeCalculator {
         }
 
         // Update user balance based on bet outcome
+        // IMPORTANT: Do NOT update balance for pending status - bet is still being processed
         console.log(`\n💰 ========== USER BALANCE UPDATE ==========`);
         console.log(`💰 User ID: ${originalBet.userId || bet.userId}`);
         console.log(`💰 Outcome Status: ${outcome.status}`);
         console.log(`💰 Calculated Payout: ${calculatedPayout}`);
         console.log(`💰 Calculated Profit: ${calculatedProfit}`);
         
-        const userId = originalBet.userId || bet.userId;
-        
-        if (userId) {
-            // Import User model
-            const { default: User } = await import('../models/User.js');
-            
-            // Get user before update
-            const userBefore = await User.findById(userId);
-            const balanceBefore = userBefore?.balance || 0;
-            console.log(`💰 Balance Before: ${balanceBefore}`);
-            
-            // Update balance based on payout
-            if (calculatedPayout > 0) {
-                await User.findByIdAndUpdate(userId, {
-                    $inc: { balance: calculatedPayout }
-                });
-                console.log(`💰 Added to balance: ${calculatedPayout}`);
-            }
-            
-            // Get user after update
-            const userAfter = await User.findById(userId);
-            const balanceAfter = userAfter?.balance || 0;
-            console.log(`💰 Balance After: ${balanceAfter}`);
-            console.log(`💰 Balance Change: ${balanceAfter - balanceBefore}`);
+        // Block balance update for pending status
+        if (outcome.status === 'pending') {
+            console.log(`⏸️ SKIPPING balance update - bet status is still PENDING`);
+            console.log(`   - Balance will be updated when bet is processed (won/lost/void/cancelled)`);
             console.log(`💰 ===========================================\n`);
+            // Skip balance update and return early
         } else {
-            console.log(`💰 No user ID found, skipping balance update`);
-            console.log(`💰 ===========================================\n`);
+            const userId = originalBet.userId || bet.userId;
+            
+            if (userId) {
+                // Import User model
+                const { default: User } = await import('../models/User.js');
+                
+                // Get user before update
+                const userBefore = await User.findById(userId);
+                const balanceBefore = userBefore?.balance || 0;
+                console.log(`💰 Balance Before: ${balanceBefore}`);
+                
+                // Update balance based on payout
+                if (calculatedPayout > 0) {
+                    await User.findByIdAndUpdate(userId, {
+                        $inc: { balance: calculatedPayout }
+                    });
+                    console.log(`💰 Added to balance: ${calculatedPayout}`);
+                }
+                
+                // Get user after update
+                const userAfter = await User.findById(userId);
+                const balanceAfter = userAfter?.balance || 0;
+                console.log(`💰 Balance After: ${balanceAfter}`);
+                console.log(`💰 Balance Change: ${balanceAfter - balanceBefore}`);
+                console.log(`💰 ===========================================\n`);
+            } else {
+                console.log(`💰 No user ID found, skipping balance update`);
+                console.log(`💰 ===========================================\n`);
+            }
+        }
+        
+        // Create team restriction if bet was won
+        if (outcome.status === 'won' && originalBet) {
+            try {
+                const TeamRestriction = (await import('../models/TeamRestriction.js')).default;
+                const BetService = (await import('../services/bet.service.js')).default;
+                const betService = new BetService();
+                
+                // Extract team name from bet
+                const homeName = bet.homeName || originalBet.unibetMeta?.homeName;
+                const awayName = bet.awayName || originalBet.unibetMeta?.awayName;
+                const selection = bet.outcomeLabel || originalBet.betOption || originalBet.selection;
+                
+                if (homeName && awayName && selection) {
+                    const selectedTeam = betService.extractTeamFromBetSelection(selection, homeName, awayName);
+                    
+                    if (selectedTeam) {
+                        console.log(`\n🚫 ========== CREATING TEAM RESTRICTION ==========`);
+                        console.log(`🚫 User ID: ${originalBet.userId || bet.userId}`);
+                        console.log(`🚫 Team: ${selectedTeam}`);
+                        console.log(`🚫 Winning Bet ID: ${betId}`);
+                        
+                        // Create restriction for 7 days
+                        const expiresAt = new Date();
+                        expiresAt.setDate(expiresAt.getDate() + 7);
+                        
+                        const restriction = new TeamRestriction({
+                            userId: originalBet.userId || bet.userId,
+                            teamName: selectedTeam,
+                            normalizedTeamName: selectedTeam.toLowerCase().trim(),
+                            winningBetId: betId,
+                            expiresAt: expiresAt
+                        });
+                        
+                        await restriction.save();
+                        
+                        console.log(`🚫 Team restriction created successfully`);
+                        console.log(`🚫 Restriction expires at: ${expiresAt.toISOString()}`);
+                        console.log(`🚫 ===========================================\n`);
+                    } else {
+                        console.log(`🚫 No team restriction needed - bet is not team-specific (selection: ${selection})`);
+                    }
+                } else {
+                    console.log(`🚫 Cannot create team restriction - missing team names or selection`);
+                }
+            } catch (restrictionError) {
+                // Don't fail bet processing if restriction creation fails
+                console.error(`⚠️ Error creating team restriction:`, restrictionError.message);
+                console.error(`⚠️ Bet processing will continue despite restriction error`);
+            }
         }
             } else {
                 console.log(`\n🔍 STEP 6 SKIPPED: Database update disabled for combination bet leg`);

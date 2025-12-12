@@ -604,10 +604,42 @@ function extractFootballMatches(data) {
   console.log(`   - Live matches: ${liveMatches.length} → ${filteredLiveMatches.length}`);
   console.log(`   - Upcoming matches: ${upcomingMatches.length} → ${filteredUpcomingMatches.length}`);
 
+  // Filter upcoming matches to only show matches within next 24 hours
+  const now = new Date();
+  const twentyFourHoursLater = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  
+  const upcomingMatchesWithin24Hours = filteredUpcomingMatches.filter(match => {
+    // Use start field (from event.start) or starting_at if available
+    const matchStartTimeStr = match.start || match.starting_at;
+    
+    if (!matchStartTimeStr) {
+      return false; // Exclude matches without start time
+    }
+    
+    const matchStartTime = new Date(matchStartTimeStr);
+    
+    // Check if date is valid
+    if (isNaN(matchStartTime.getTime())) {
+      console.warn(`⚠️ Invalid start time for match ${match.id}: ${matchStartTimeStr}`);
+      return false;
+    }
+    
+    // Only include matches that start within the next 24 hours (from now)
+    const isWithin24Hours = matchStartTime >= now && matchStartTime <= twentyFourHoursLater;
+    
+    return isWithin24Hours;
+  });
+  
+  console.log(`⏰ Time filtering for upcoming matches:`);
+  console.log(`   - Before 24h filter: ${filteredUpcomingMatches.length}`);
+  console.log(`   - After 24h filter: ${upcomingMatchesWithin24Hours.length}`);
+  console.log(`   - Current time: ${now.toISOString()}`);
+  console.log(`   - 24 hours later: ${twentyFourHoursLater.toISOString()}`);
+
   return { 
     allMatches: filteredAllMatches, 
     liveMatches: filteredLiveMatches, 
-    upcomingMatches: filteredUpcomingMatches 
+    upcomingMatches: upcomingMatchesWithin24Hours 
   };
 }
 

@@ -21,40 +21,17 @@ export class UnibetCalcController {
             let bets = [];
             
             if (onlyPending) {
-                // Use time-based filtering to get bets where matches are likely finished (2h 15min ago)
-                // This ensures we only process bets for matches that have likely finished
-                const currentTime = new Date();
-                const matchDuration = 135 * 60 * 1000; // 135 minutes = 2h 15min in milliseconds
-                const likelyFinishedTime = new Date(currentTime.getTime() - matchDuration);
+                // Remove time-based filtering - we will check match status from Unibet API and FotMob instead
+                // This allows us to process bets based on actual match status, not estimated time
+                const query = { status: 'pending' };
                 
-                // Check multiple date fields for backward compatibility
-                const query = {
-                    status: 'pending',
-                    $or: [
-                        { start: { $lt: likelyFinishedTime.toISOString() } },
-                        { matchDate: { $lt: likelyFinishedTime } },
-                        { createdAt: { $lt: likelyFinishedTime } } // Fallback: use bet creation time
-                    ]
-                };
+                console.log(`🔍 [processAll] Fetching all pending bets (no time-based filtering - will check Unibet/FotMob match status)`);
                 
-                // Also include bets where matchFinished is explicitly true (if set)
-                const finishedBetsQuery = { status: 'pending', matchFinished: true };
-                const finishedBets = await Bet.find(finishedBetsQuery).limit(parseInt(limit));
-                
-                console.log(`🔍 [processAll] Looking for pending bets using time-based filtering (matches started ${matchDuration / 60000} minutes ago or more)`);
-                console.log(`   - Time threshold: ${likelyFinishedTime.toISOString()}`);
-                
-                const timeBasedBets = await Bet.find(query)
+                bets = await Bet.find(query)
                     .sort({ createdAt: 1 })
                     .limit(parseInt(limit));
                 
-                // Combine both queries and remove duplicates
-                const allBets = [...timeBasedBets, ...finishedBets];
-                bets = allBets.filter((bet, index, self) => 
-                    index === self.findIndex(b => b._id.toString() === bet._id.toString())
-                );
-                
-                console.log(`   - Found ${timeBasedBets.length} time-based bets, ${finishedBets.length} finished-flagged bets, ${bets.length} unique total`);
+                console.log(`   - Found ${bets.length} pending bets`);
             } else {
                 // For non-pending mode, get all bets
                 const query = {};

@@ -7713,32 +7713,26 @@ class BetOutcomeCalculator {
                     }
                 }
                 
-                // Also check match result API as fallback
+                // REMOVED: SportsMonks API fallback check - only using Unibet Bet Offers API
+                // If Unibet Bet Offers API returns 404, match is finished - proceed with FotMob
+                // No SportsMonks API calls - completely removed to prevent IP abuse
+                
+                // If match is NOT finished according to Unibet Bet Offers API, skip FotMob call and return early
                 if (!isUnibetMatchFinished) {
-                    try {
-                        const BetService = (await import('../services/bet.service.js')).default;
-                        const betService = new BetService();
-                        
-                        console.log(`   - Also checking Unibet Match Result API for matchId: ${eventId}`);
-                        const unibetMatchData = await betService.fetchMatchResult(eventId, bet.inplay);
-                        
-                        // Check if match returned 404 (finished) or state.id === 5 (finished)
-                        if (unibetMatchData.finishedReason === "404_NOT_FOUND" || 
-                            (unibetMatchData.state && unibetMatchData.state.id === 5)) {
-                            console.log(`✅ Unibet Match Result API indicates match is FINISHED (${unibetMatchData.finishedReason || 'state.id=5'})`);
-                            isUnibetMatchFinished = true;
-                            unibetErrorReason = unibetMatchData.finishedReason || "STATE_ID_5";
-                        } else {
-                            console.log(`⏳ Unibet Match Result API indicates match is NOT finished yet (state.id: ${unibetMatchData.state?.id || 'unknown'})`);
-                        }
-                    } catch (matchResultError) {
-                        console.warn(`⚠️ Could not check Unibet Match Result API: ${matchResultError.message}`);
-                    }
+                    console.log(`⏳ Unibet API indicates match is NOT finished yet - skipping FotMob API call`);
+                    console.log(`   - Match is still ongoing or not found in Unibet`);
+                    console.log(`   - Will check again in next processing cycle`);
+                    return {
+                        success: true,
+                        outcome: { status: 'pending', reason: 'Match not finished yet (Unibet API check)' },
+                        skipped: true,
+                        reason: 'Match not finished - skipping FotMob API call to avoid unnecessary requests'
+                    };
                 }
                 
                 // If match is finished, check if we should wait before fetching FotMob data
                 if (isUnibetMatchFinished) {
-                    console.log(`✅ Unibet API indicates match is FINISHED (${unibetErrorReason})`);
+                    console.log(`✅ Unibet API indicates match is FINISHED (${unibetErrorReason}) - proceeding with FotMob call`);
                     
                     // Calculate time since match start
                     const betStartTime = bet.start ? new Date(bet.start) : null;
@@ -7768,7 +7762,13 @@ class BetOutcomeCalculator {
                 }
             } catch (unibetError) {
                 console.warn(`⚠️ Could not check Unibet API status: ${unibetError.message}`);
-                console.log(`   - Will proceed with FotMob check as fallback`);
+                console.log(`   - Will skip FotMob call and retry in next cycle`);
+                return {
+                    success: true,
+                    outcome: { status: 'pending', reason: 'Unibet API check failed - will retry' },
+                    skipped: true,
+                    reason: 'Unibet API check error - skipping FotMob call'
+                };
             }
             
             // Step 2B: Load Fotmob data (isolated from database operations)
@@ -7891,23 +7891,26 @@ class BetOutcomeCalculator {
                 };
             }
             
+            // IMPORTANT: Only call FotMob fetchMatchDetails if Unibet confirmed match is finished
+            // Note: isUnibetMatchFinished is checked earlier (line 7740) and returns early if false
+            // This is a safety check in case we reach here somehow
+            // If Unibet check failed or wasn't done, we still proceed (fallback behavior)
+            
             // If match appears finished from status, proceed even if bet flag is not set
             if (isMatchFinishedFromStatus) {
                 console.log(`✅ Match finished confirmed from FotMob status - proceeding with detailed API call`);
             } else if (hasEnoughTimePassed) {
-                console.log(`⏰ Enough time has passed since match start (${timeSinceStart.toFixed(1)} min) - will check Unibet API and proceed if match finished`);
+                console.log(`⏰ Enough time has passed since match start (${timeSinceStart.toFixed(1)} min) - proceeding with FotMob call (Unibet already confirmed match finished)`);
             } else if (bet.matchFinished === undefined) {
-                console.log(`⚠️ Match finished status unknown - proceeding with API call to verify (time-based filtering selected this bet)`);
+                console.log(`⚠️ Match finished status unknown - proceeding with API call to verify`);
             } else {
                 console.log(`✅ Match finished status confirmed - proceeding with detailed API call`);
             }
             
             // Fetch detailed match information using new API
-            console.log(`\n🔍 STEP 4B: Fetching detailed match information...`);
-            
-            // 🐛 BREAKPOINT: About to fetch FotMob match details for live match
-            console.log(`🐛 [BREAKPOINT] ===== ABOUT TO FETCH FOTMOB MATCH DETAILS =====`);
-            console.log(`\n🔍 STEP 4B: Fetching detailed match information...`);
+            // NOTE: This is only called if Unibet confirmed match is finished (404 or state.id === 5)
+            console.log(`\n🔍 STEP 4B: Fetching detailed match information from FotMob...`);
+            console.log(`   ⚠️ This call only happens if Unibet confirmed match is finished`);
             console.log(`   Match ID: ${matchResult.match.id}`);
             console.log(`   Match: ${matchResult.match.home?.name} vs ${matchResult.match.away?.name}`);
             
@@ -8236,8 +8239,8 @@ class BetOutcomeCalculator {
         if (outcome.status === 'won' && originalBet) {
             try {
                 const TeamRestriction = (await import('../models/TeamRestriction.js')).default;
-                const BetService = (await import('../services/bet.service.js')).default;
-                const betService = new BetService();
+                // BetService is exported as an instance, not a class
+                const betService = (await import('../services/bet.service.js')).default;
                 
                 // Extract team name from bet
                 const homeName = bet.homeName || originalBet.unibetMeta?.homeName;

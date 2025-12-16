@@ -1,14 +1,14 @@
 {
-  "eventId": "1025526313",
-  "timestamp": "2025-12-12T11:21:17.558Z",
+  "eventId": "1024209967",
+  "timestamp": "2025-12-14T14:22:53.562Z",
   "data": {
     "betOffers": [
       {
-        "id": 2586365985,
+        "id": 2585868085,
         "criterion": {
-          "id": 1000316018,
-          "label": "Half Time",
-          "englishLabel": "Half Time",
+          "id": 1001159826,
+          "label": "2nd Half",
+          "englishLabel": "2nd Half",
           "order": [],
           "occurrenceType": "GOALS"
         },
@@ -17,463 +17,46 @@
           "name": "Head to Head",
           "englishName": "Match"
         },
-        "eventId": 1025526313,
+        "eventId": 1024209967,
         "outcomes": [
           {
-            "id": 3985492169,
+            "id": 3983792305,
             "label": "1",
             "englishLabel": "1",
-            "odds": 3750,
-            "participant": "Fard Alborz",
+            "participant": "SV Wehen Wiesbaden",
             "type": "OT_ONE",
-            "betOfferId": 2586365985,
-            "changedDate": "2025-12-12T11:20:56Z",
-            "participantId": 1030214248,
-            "oddsFractional": "11/4",
-            "oddsAmerican": "275",
-            "status": "OPEN",
+            "betOfferId": 2585868085,
+            "changedDate": "2025-12-14T14:22:24Z",
+            "participantId": 1000090809,
+            "status": "SUSPENDED",
             "cashOutStatus": "ENABLED"
           },
           {
-            "id": 3985492170,
+            "id": 3983792306,
             "label": "X",
             "englishLabel": "X",
-            "odds": 1500,
             "type": "OT_CROSS",
-            "betOfferId": 2586365985,
-            "changedDate": "2025-12-12T11:20:56Z",
-            "oddsFractional": "1/2",
-            "oddsAmerican": "-200",
-            "status": "OPEN",
+            "betOfferId": 2585868085,
+            "changedDate": "2025-12-14T14:22:24Z",
+            "status": "SUSPENDED",
             "cashOutStatus": "ENABLED"
           },
           {
-            "id": 3985492171,
+            "id": 3983792307,
             "label": "2",
             "englishLabel": "2",
-            "odds": 5100,
-            "participant": "Besat Kermanshah",
+            "participant": "Energie Cottbus",
             "type": "OT_TWO",
-            "betOfferId": 2586365985,
-            "changedDate": "2025-12-12T11:20:56Z",
-            "participantId": 1030198043,
-            "oddsFractional": "4/1",
-            "oddsAmerican": "410",
-            "status": "OPEN",
-            "cashOutStatus": "ENABLED"
+            "betOfferId": 2585868085,
+            "changedDate": "2025-12-14T14:22:11Z",
+            "participantId": 1000000274,
+            "status": "SUSPENDED",
+            "cashOutStatus": "DISABLED"
           }
         ],
         "tags": [
           "OFFERED_PREMATCH",
           "OFFERED_LIVE",
-          "BET_BUILDER"
-        ],
-        "cashOutStatus": "ENABLED"
-      },
-      {
-        "id": 2586365986,
-        "criterion": {
-          "id": 1001159926,
-          "label": "Total Goals",
-          "englishLabel": "Total Goals",
-          "order": [],
-          "occurrenceType": "GOALS",
-          "lifetime": "FULL_TIME"
-        },
-        "betOfferType": {
-          "id": 6,
-          "name": "Totals",
-          "englishName": "Over/Under"
-        },
-        "eventId": 1025526313,
-        "outcomes": [
-          {
-            "id": 3985492172,
-            "label": "Over",
-            "englishLabel": "Over",
-            "odds": 1970,
-            "line": 1500,
-            "type": "OT_OVER",
-            "betOfferId": 2586365986,
-            "changedDate": "2025-12-12T11:20:56Z",
-            "oddsFractional": "19/20",
-            "oddsAmerican": "-104",
-            "status": "OPEN",
-            "cashOutStatus": "ENABLED"
-          },
-          {
-            "id": 3985492173,
-            "label": "Under",
-            "englishLabel": "Under",
-            "odds": 1620,
-            "line": 1500,
-            "type": "OT_UNDER",
-            "betOfferId": 2586365986,
-            "changedDate": "2025-12-12T11:20:56Z",
-            "oddsFractional": "8/13",
-            "oddsAmerican": "-162",
-            "status": "OPEN",
-            "cashOutStatus": "ENABLED"
-          }
-        ],
-        "tags": [
-          "OFFERED_PREMATCH",
-          "OFFERED_LIVE",
-          "MAIN_LINE",
-          "BET_BUILDER"
-        ],
-        "cashOutStatus": "ENABLED"
-      },
-      {
-        "id": 2586365987,
-        "criterion": {
-          "id": 1001159858,
-          "label": "Match (regular time)",
-          "englishLabel": "Full Time",
-          "order": [],
-          "occurrenceType": "GOALS",
-          "lifetime": "FULL_TIME"
-        },
-        "betOfferType": {
-          "id": 2,
-          "name": "Head to Head",
-          "englishName": "Match"
-        },
-        "eventId": 1025526313,
-        "outcomes": [
-          {
-            "id": 3985492174,
-            "label": "1",
-            "englishLabel": "1",
-            "odds": 2480,
-            "participant": "Fard Alborz",
-            "type": "OT_ONE",
-            "betOfferId": 2586365987,
-            "changedDate": "2025-12-12T11:20:56Z",
-            "participantId": 1030214248,
-            "oddsFractional": "29/20",
-            "oddsAmerican": "148",
-            "status": "OPEN",
-            "cashOutStatus": "ENABLED"
-          },
-          {
-            "id": 3985492175,
-            "label": "X",
-            "englishLabel": "X",
-            "odds": 2320,
-            "type": "OT_CROSS",
-            "betOfferId": 2586365987,
-            "changedDate": "2025-12-12T11:20:56Z",
-            "oddsFractional": "13/10",
-            "oddsAmerican": "132",
-            "status": "OPEN",
-            "cashOutStatus": "ENABLED"
-          },
-          {
-            "id": 3985492176,
-            "label": "2",
-            "englishLabel": "2",
-            "odds": 3500,
-            "participant": "Besat Kermanshah",
-            "type": "OT_TWO",
-            "betOfferId": 2586365987,
-            "changedDate": "2025-12-12T11:20:56Z",
-            "participantId": 1030198043,
-            "oddsFractional": "5/2",
-            "oddsAmerican": "250",
-            "status": "OPEN",
-            "cashOutStatus": "ENABLED"
-          }
-        ],
-        "tags": [
-          "OFFERED_PREMATCH",
-          "OFFERED_LIVE",
-          "BET_BUILDER",
-          "MAIN"
-        ],
-        "oddsStats": {
-          "unexpectedOddsTrend": false,
-          "outcomeId": 3985492174,
-          "startingOdds": 2140,
-          "startingOddsFractional": "57/50",
-          "startingOddsAmerican": "114"
-        },
-        "cashOutStatus": "ENABLED"
-      },
-      {
-        "id": 2586372110,
-        "criterion": {
-          "id": 1001159926,
-          "label": "Total Goals",
-          "englishLabel": "Total Goals",
-          "order": [],
-          "occurrenceType": "GOALS",
-          "lifetime": "FULL_TIME"
-        },
-        "betOfferType": {
-          "id": 6,
-          "name": "Totals",
-          "englishName": "Over/Under"
-        },
-        "eventId": 1025526313,
-        "outcomes": [
-          {
-            "id": 3985494822,
-            "label": "Over",
-            "englishLabel": "Over",
-            "odds": 4000,
-            "line": 2500,
-            "type": "OT_OVER",
-            "betOfferId": 2586372110,
-            "changedDate": "2025-12-12T11:20:56Z",
-            "oddsFractional": "3/1",
-            "oddsAmerican": "300",
-            "status": "OPEN",
-            "cashOutStatus": "ENABLED"
-          },
-          {
-            "id": 3985494823,
-            "label": "Under",
-            "englishLabel": "Under",
-            "odds": 1150,
-            "line": 2500,
-            "type": "OT_UNDER",
-            "betOfferId": 2586372110,
-            "changedDate": "2025-12-12T11:20:56Z",
-            "oddsFractional": "1/7",
-            "oddsAmerican": "-670",
-            "status": "OPEN",
-            "cashOutStatus": "ENABLED"
-          }
-        ],
-        "tags": [
-          "OFFERED_PREMATCH",
-          "OFFERED_LIVE",
-          "BET_BUILDER"
-        ],
-        "cashOutStatus": "ENABLED"
-      },
-      {
-        "id": 2586372111,
-        "criterion": {
-          "id": 1001159922,
-          "label": "Double Chance",
-          "englishLabel": "Double Chance",
-          "order": [],
-          "occurrenceType": "GOALS",
-          "lifetime": "FULL_TIME"
-        },
-        "betOfferType": {
-          "id": 12,
-          "name": "Double Chance",
-          "englishName": "Double Chance"
-        },
-        "eventId": 1025526313,
-        "outcomes": [
-          {
-            "id": 3985494824,
-            "label": "1X",
-            "englishLabel": "1X",
-            "odds": 1200,
-            "type": "OT_ONE_OR_CROSS",
-            "betOfferId": 2586372111,
-            "changedDate": "2025-12-12T11:20:56Z",
-            "oddsFractional": "1/5",
-            "oddsAmerican": "-500",
-            "status": "OPEN",
-            "cashOutStatus": "ENABLED"
-          },
-          {
-            "id": 3985494825,
-            "label": "12",
-            "englishLabel": "12",
-            "odds": 1440,
-            "type": "OT_ONE_OR_TWO",
-            "betOfferId": 2586372111,
-            "changedDate": "2025-12-12T11:20:56Z",
-            "oddsFractional": "11/25",
-            "oddsAmerican": "-230",
-            "status": "OPEN",
-            "cashOutStatus": "ENABLED"
-          },
-          {
-            "id": 3985494826,
-            "label": "X2",
-            "englishLabel": "X2",
-            "odds": 1380,
-            "type": "OT_CROSS_OR_TWO",
-            "betOfferId": 2586372111,
-            "changedDate": "2025-12-12T11:20:56Z",
-            "oddsFractional": "4/11",
-            "oddsAmerican": "-265",
-            "status": "OPEN",
-            "cashOutStatus": "ENABLED"
-          }
-        ],
-        "tags": [
-          "OFFERED_PREMATCH",
-          "OFFERED_LIVE",
-          "BET_BUILDER"
-        ],
-        "cashOutStatus": "ENABLED"
-      },
-      {
-        "id": 2586406030,
-        "criterion": {
-          "id": 1001159926,
-          "label": "Total Goals",
-          "englishLabel": "Total Goals",
-          "order": [],
-          "occurrenceType": "GOALS",
-          "lifetime": "FULL_TIME"
-        },
-        "betOfferType": {
-          "id": 6,
-          "name": "Totals",
-          "englishName": "Over/Under"
-        },
-        "eventId": 1025526313,
-        "outcomes": [
-          {
-            "id": 3985538272,
-            "label": "Over",
-            "englishLabel": "Over",
-            "odds": 1210,
-            "line": 500,
-            "type": "OT_OVER",
-            "betOfferId": 2586406030,
-            "changedDate": "2025-12-12T11:20:56Z",
-            "oddsFractional": "1/5",
-            "oddsAmerican": "-480",
-            "status": "OPEN",
-            "cashOutStatus": "ENABLED"
-          },
-          {
-            "id": 3985538273,
-            "label": "Under",
-            "englishLabel": "Under",
-            "odds": 3350,
-            "line": 500,
-            "type": "OT_UNDER",
-            "betOfferId": 2586406030,
-            "changedDate": "2025-12-12T11:20:56Z",
-            "oddsFractional": "47/20",
-            "oddsAmerican": "235",
-            "status": "OPEN",
-            "cashOutStatus": "ENABLED"
-          }
-        ],
-        "tags": [
-          "OFFERED_PREMATCH",
-          "OFFERED_LIVE",
-          "BET_BUILDER"
-        ],
-        "cashOutStatus": "ENABLED"
-      },
-      {
-        "id": 2586832859,
-        "criterion": {
-          "id": 2100092368,
-          "label": "Total Goals - 15:00-29:59",
-          "englishLabel": "Total Goals - 15:00-29:59",
-          "order": [
-            15,
-            29
-          ]
-        },
-        "betOfferType": {
-          "id": 6,
-          "name": "Totals",
-          "englishName": "Over/Under"
-        },
-        "eventId": 1025526313,
-        "outcomes": [
-          {
-            "id": 3987081470,
-            "label": "Over",
-            "englishLabel": "Over",
-            "odds": 3500,
-            "line": 500,
-            "type": "OT_OVER",
-            "betOfferId": 2586832859,
-            "changedDate": "2025-12-12T11:21:06Z",
-            "oddsFractional": "5/2",
-            "oddsAmerican": "250",
-            "status": "OPEN",
-            "cashOutStatus": "ENABLED"
-          },
-          {
-            "id": 3987081471,
-            "label": "Under",
-            "englishLabel": "Under",
-            "odds": 1210,
-            "line": 500,
-            "type": "OT_UNDER",
-            "betOfferId": 2586832859,
-            "changedDate": "2025-12-12T11:21:06Z",
-            "oddsFractional": "1/5",
-            "oddsAmerican": "-480",
-            "status": "OPEN",
-            "cashOutStatus": "ENABLED"
-          }
-        ],
-        "tags": [
-          "OFFERED_LIVE",
-          "MAIN_LINE",
-          "BET_BUILDER"
-        ],
-        "cashOutStatus": "ENABLED"
-      },
-      {
-        "id": 2586832860,
-        "criterion": {
-          "id": 2100092368,
-          "label": "Total Goals - 20:00-24:59",
-          "englishLabel": "Total Goals - 20:00-24:59",
-          "order": [
-            20,
-            24
-          ]
-        },
-        "betOfferType": {
-          "id": 6,
-          "name": "Totals",
-          "englishName": "Over/Under"
-        },
-        "eventId": 1025526313,
-        "outcomes": [
-          {
-            "id": 3987081472,
-            "label": "Over",
-            "englishLabel": "Over",
-            "odds": 7500,
-            "line": 500,
-            "type": "OT_OVER",
-            "betOfferId": 2586832860,
-            "changedDate": "2025-12-12T11:21:06Z",
-            "oddsFractional": "13/2",
-            "oddsAmerican": "650",
-            "status": "OPEN",
-            "cashOutStatus": "ENABLED"
-          },
-          {
-            "id": 3987081473,
-            "label": "Under",
-            "englishLabel": "Under",
-            "odds": 1050,
-            "line": 500,
-            "type": "OT_UNDER",
-            "betOfferId": 2586832860,
-            "changedDate": "2025-12-12T11:21:06Z",
-            "oddsFractional": "1/20",
-            "oddsAmerican": "-2000",
-            "status": "OPEN",
-            "cashOutStatus": "ENABLED"
-          }
-        ],
-        "tags": [
-          "OFFERED_LIVE",
-          "MAIN_LINE",
           "BET_BUILDER"
         ],
         "cashOutStatus": "ENABLED"
@@ -481,15 +64,15 @@
     ],
     "events": [
       {
-        "id": 1025526313,
-        "name": "Fard Alborz - Besat Kermanshah",
+        "id": 1024209967,
+        "name": "SV Wehen Wiesbaden - Energie Cottbus",
         "nameDelimiter": "-",
-        "englishName": "Fard Alborz - Besat Kermanshah",
-        "homeName": "Fard Alborz",
-        "awayName": "Besat Kermanshah",
-        "start": "2025-12-12T11:05:00Z",
-        "group": "Azadegan League",
-        "groupId": 2000052302,
+        "englishName": "SV Wehen Wiesbaden - Energie Cottbus",
+        "homeName": "SV Wehen Wiesbaden",
+        "awayName": "Energie Cottbus",
+        "start": "2025-12-14T12:30:00Z",
+        "group": "3. Liga",
+        "groupId": 1000355562,
         "path": [
           {
             "id": 1000093190,
@@ -498,29 +81,31 @@
             "termKey": "football"
           },
           {
-            "id": 2000051705,
-            "name": "Iran",
-            "englishName": "Iran",
-            "termKey": "iran"
+            "id": 1000461728,
+            "name": "Germany",
+            "englishName": "Germany",
+            "termKey": "germany"
           },
           {
-            "id": 2000052302,
-            "name": "Azadegan League",
-            "englishName": "Azadegan League",
-            "termKey": "azadegan_league"
+            "id": 1000355562,
+            "name": "3. Liga",
+            "englishName": "3. Liga",
+            "termKey": "3__liga"
           }
         ],
-        "nonLiveBoCount": 7,
-        "liveBoCount": 8,
+        "nonLiveBoCount": 1,
+        "liveBoCount": 1,
         "sport": "FOOTBALL",
         "tags": [
           "OPEN_FOR_LIVE",
+          "STREAMED_WEB",
           "BET_BUILDER",
+          "STREAMED_MOBILE",
           "MATCH"
         ],
         "state": "STARTED",
-        "groupSortOrder": 2999999000000000000,
-        "prematchEnd": "2025-12-12T11:05:00Z"
+        "groupSortOrder": 2009999000000000000,
+        "prematchEnd": "2025-12-14T12:30:00Z"
       }
     ],
     "prePacks": []

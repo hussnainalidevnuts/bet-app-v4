@@ -301,6 +301,12 @@ export class FotmobController {
                 console.log(`   - ${dateKey}: ${matchCount} matches across ${leagues.length} leagues`);
             });
 
+            // Calculate total matches (needed for response regardless of refresh)
+            const totalMatches = Object.values(cacheData).reduce((sum, dateData) => {
+                const leagues = dateData?.leagues || [];
+                return sum + leagues.reduce((leagueSum, league) => leagueSum + (league.matches?.length || 0), 0);
+            }, 0);
+
             // Only save cache file and update metadata if actual refresh happened OR if force refresh
             if (actualRefreshHappened || forceRefresh) {
                 // Save multi-day cache (reuse multiDayFile declared earlier)
@@ -309,10 +315,6 @@ export class FotmobController {
 
                 // Update metadata only if actual refresh happened
                 const metaFile = path.join(STORAGE_PATH, 'fotmob_cache_meta.json');
-                const totalMatches = Object.values(cacheData).reduce((sum, dateData) => {
-                    const leagues = dateData?.leagues || [];
-                    return sum + leagues.reduce((leagueSum, league) => leagueSum + (league.matches?.length || 0), 0);
-                }, 0);
                 const meta = {
                     lastRefresh: new Date().toISOString(),
                     days: days + 1, // Include the previous day
@@ -330,7 +332,7 @@ export class FotmobController {
             const response = {
                 success: true,
                 message: `Multi-day cache built for ${days + 1} days (including 1 previous day)`,
-                totalMatches: meta.totalMatches,
+                totalMatches: totalMatches,
                 cacheFile: multiDayFile
             };
             

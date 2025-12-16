@@ -2076,8 +2076,9 @@ class BetService {
           );
 
           // Use minimal includes to reduce response size and avoid timeouts
+          // Removed inplayOdds as it's not available in the API plan
           const includes =
-            "state;inplayOdds;scores;participants;lineups.details;events;statistics;odds"; // Minimal on first attempt
+            "state;scores;participants;lineups.details;events;statistics;odds"; // Minimal on first attempt
 
           const response = await SportsMonksService.client.get(
             `/football/fixtures/${matchId}`,
@@ -2186,6 +2187,35 @@ class BetService {
         `[fetchMatchResult] All attempts failed for matchId: ${matchId}. Final error:`,
         error.message
       );
+
+      // Check if it's a "Match not found" error (404) - this means match is finished
+      if (
+        error.code === "MATCH_NOT_FOUND" || 
+        error.status === 404 || 
+        error.response?.status === 404 ||
+        error.message?.toLowerCase().includes("match not found") ||
+        error.message?.toLowerCase().includes("not found")
+      ) {
+        console.log(
+          `[fetchMatchResult] Match ${matchId} returned "not found" after all retries - Match likely finished and removed from SportsMonks API`
+        );
+        // Return a special object indicating match is finished (404 = match finished)
+        return {
+          id: matchId,
+          state: { id: 5, name: "FINISHED" }, // Mark as finished
+          finished: true,
+          finishedReason: "404_NOT_FOUND", // Special flag to indicate 404
+          message: "Match not found in SportsMonks API - likely finished",
+          scores: [],
+          participants: [],
+          starting_at: null,
+          odds: [],
+          inplayodds: [],
+          lineups: [],
+          events: [],
+          statistics: []
+        };
+      }
 
       // If it's a network error, try to provide a more user-friendly error
       if (

@@ -82,10 +82,22 @@ const cancelInplayMatchesJob = async () => {
 // Function to schedule bet processing job
 const scheduleBetProcessingJob = async () => {
   if (!betProcessingJobScheduled) {
-    console.log('[Agenda] Scheduling automated bet processing job...');
-    await agenda.every("5 seconds", "processPendingBets");
-    betProcessingJobScheduled = true;
-    console.log('[Agenda] Automated bet processing job scheduled successfully');
+    try {
+      console.log('[Agenda] ⚙️ Scheduling automated bet processing job...');
+      console.log('[Agenda] ⚙️ Job will run every 5 seconds');
+      const job = await agenda.every("5 seconds", "processPendingBets");
+      betProcessingJobScheduled = true;
+      console.log('[Agenda] ✅ Automated bet processing job scheduled successfully');
+      console.log(`[Agenda] ✅ Job ID: ${job.attrs._id}`);
+      console.log(`[Agenda] ✅ Next run: ${job.attrs.nextRunAt}`);
+      console.log(`[Agenda] ✅ Repeat interval: ${job.attrs.repeatInterval}`);
+    } catch (error) {
+      console.error('[Agenda] ❌ Failed to schedule bet processing job:', error);
+      console.error('[Agenda] ❌ Error stack:', error.stack);
+      throw error; // Re-throw to see the error
+    }
+  } else {
+    console.log('[Agenda] ⚠️ Bet processing job already scheduled, skipping...');
   }
 };
 
@@ -145,47 +157,34 @@ export const checkFixtureCacheAndManageJobs = async () => {
   const liveFixturesService = getLiveFixturesService();
   const fixtureOptimizationService = getFixtureOptimizationService();
   
+  // Cancel all SportsMonks API jobs to prevent continuous API calls
+  // DISABLED: Continuously running SportsMonks API calls to prevent IP abuse
+  // These jobs were making excessive API calls:
+  // - updateLiveOdds: every 1 second (3,600 calls/hour)
+  // - updateInplayMatches: every 1 minute (60 calls/hour)
+  // - refreshHomepageCache: every 30 minutes (2 calls/hour)
+  // All these jobs call SportsMonks API continuously and have been disabled
+  console.log('[Agenda] DISABLED: Cancelling all SportsMonks API jobs to prevent IP abuse');
+  await cancelLiveOddsJob();
+  await cancelInplayMatchesJob();
+  await cancelHomepageCacheJob();
+  
   if (!liveFixturesService) {
-    console.log('[Agenda] LiveFixtures service not available - cancelling all jobs');
-    await cancelLiveOddsJob();
-    await cancelInplayMatchesJob();
-    await cancelHomepageCacheJob();
-    return;
+    console.log('[Agenda] LiveFixtures service not available - SportsMonks jobs already cancelled');
+    // Don't return early - still need to schedule bet processing job
+  } else {
+    const hasFixtureData = liveFixturesService.hasFixtureCacheData();
+    console.log(`[Agenda] LiveFixtures service available, has fixture data: ${hasFixtureData}`);
   }
   
   if (!fixtureOptimizationService) {
-    console.log('[Agenda] FixtureOptimization service not available - cancelling homepage cache job');
-    await cancelHomepageCacheJob();
+    console.log('[Agenda] FixtureOptimization service not available - homepage cache job already cancelled');
   }
   
-  const hasFixtureData = liveFixturesService.hasFixtureCacheData();
+  console.log('[Agenda] SportsMonks API jobs disabled - no continuous API calls will be made');
   
-  if (hasFixtureData) {
-    console.log('[Agenda] Fixture cache has data - scheduling inplay matches job');
-    await scheduleInplayMatchesJob();
-    
-    // Check if there are actual live matches for live odds job
-    const hasLiveMatches = checkForLiveMatches(liveFixturesService);
-    if (hasLiveMatches) {
-      console.log('[Agenda] Live matches found - scheduling live odds job');
-      await scheduleLiveOddsJob();
-    } else {
-      console.log('[Agenda] No live matches found - cancelling live odds job');
-      await cancelLiveOddsJob();
-    }
-    
-    // Only schedule homepage cache job if service is available
-    if (fixtureOptimizationService) {
-      await scheduleHomepageCacheJob();
-    }
-  } else {
-    console.log('[Agenda] Fixture cache is empty - cancelling all jobs');
-    await cancelLiveOddsJob();
-    await cancelInplayMatchesJob();
-    await cancelHomepageCacheJob();
-  }
-  
-  // Always schedule automated bet processing and FotMob cache refresh
+  // ALWAYS schedule automated bet processing and FotMob cache refresh
+  // These jobs don't depend on liveFixturesService, so they should always be scheduled
   console.log('[Agenda] Scheduling automated bet processing job...');
   await scheduleBetProcessingJob();
   
@@ -239,92 +238,41 @@ agenda.define("checkBetOutcome", async (job) => {
   }
 });
 
+// DISABLED: This job was making SportsMonks API calls every 1 second (3,600 calls/hour)
+// This caused IP abuse issues. Job has been disabled.
 // Define the Agenda job for updating live odds
 agenda.define("updateLiveOdds", async (job) => {
-  try { 
-    console.log(`[Agenda] updateLiveOdds job starting at ${new Date().toISOString()}`);
-    const liveFixturesService = getLiveFixturesService();
-    
-    if (!liveFixturesService) {
-      console.warn('[Agenda] LiveFixtures service not available - skipping live odds update');
-      return;
-    }
-    
-    // Double-check that there are still live matches before updating odds
-    const hasLiveMatches = checkForLiveMatches(liveFixturesService);
-    if (!hasLiveMatches) {
-      console.log('[Agenda] No live matches found during odds update - skipping');
-      return;
-    }
-    
-    await liveFixturesService.updateAllLiveOdds();
-    console.log(`[Agenda] Live odds updated successfully at ${new Date().toISOString()}`);
-  } catch (error) {
-    console.error("[Agenda] Error updating live odds:", error);
-  }
+  // JOB DISABLED: This job was causing excessive SportsMonks API calls
+  console.log(`[Agenda] updateLiveOdds job DISABLED - was causing IP abuse (3,600 API calls/hour)`);
+  return; // Exit immediately without making any API calls
 });
 
+// DISABLED: This job was making SportsMonks API calls every 1 minute (60 calls/hour)
+// This caused IP abuse issues. Job has been disabled.
 // Define inplay matches update job
 agenda.define("updateInplayMatches", async (job) => {
-  try {
-    console.log('[Agenda] Starting updateInplayMatches job');
-    const liveFixturesService = getLiveFixturesService();
-    
-    if (!liveFixturesService) {
-      console.warn('[Agenda] LiveFixtures service not available - skipping inplay matches update');
-      return;
-    }
-    
-    await liveFixturesService.updateInplayMatches();
-    console.log(`[Agenda] Inplay matches updated at ${new Date().toISOString()}`);
-    
-    // Check if matches were cached
-    const cachedMatches = liveFixturesService.inplayMatchesCache.get('inplay_matches') || [];
-    console.log(`[Agenda] Cached matches count: ${cachedMatches.length}`);
-    
-    // Check live matches and manage live odds job accordingly
-    await checkLiveMatchesAndManageLiveOddsJob();
-    
-    // Immediately update odds for the live matches
-    if (cachedMatches.length > 0) {
-      console.log('[Agenda] Immediately updating odds for live matches');
-      await liveFixturesService.updateInplayMatchesOdds();
-    }
-  } catch (error) {
-    console.error("[Agenda] Error updating inplay matches:", error);
-  }
+  // JOB DISABLED: This job was causing excessive SportsMonks API calls
+  console.log(`[Agenda] updateInplayMatches job DISABLED - was causing IP abuse (60 API calls/hour)`);
+  return; // Exit immediately without making any API calls
 });
 
+// DISABLED: This job was making SportsMonks API calls every 30 minutes (2 calls/hour)
+// This caused IP abuse issues. Job has been disabled.
 // Define homepage cache refresh job
 agenda.define("refreshHomepageCache", async (job) => {
-  try {
-    console.log(`[Agenda] Starting refreshHomepageCache job at ${new Date().toISOString()}`);
-    
-    // Get the fixture optimization service
-    const fixtureOptimizationService = getFixtureOptimizationService();
-    
-    if (!fixtureOptimizationService) {
-      console.warn('[Agenda] FixtureOptimizationService not available - skipping homepage cache refresh');
-      return;
-    }
-    
-    // Clear existing cache first
-    const cacheKey = "homepage_data";
-    fixtureOptimizationService.fixtureCache.del(cacheKey);
-    console.log('[Agenda] Cleared existing homepage cache');
-    
-    // Fetch fresh homepage data (this will cache it automatically)
-    await fixtureOptimizationService.getHomepageData();
-    console.log(`[Agenda] Homepage cache refreshed successfully at ${new Date().toISOString()}`);
-  } catch (error) {
-    console.error("[Agenda] Error refreshing homepage cache:", error);
-  }
+  // JOB DISABLED: This job was causing excessive SportsMonks API calls
+  console.log(`[Agenda] refreshHomepageCache job DISABLED - was causing IP abuse (2 API calls/hour)`);
+  return; // Exit immediately without making any API calls
 });
 
 // Define automated bet processing job
 agenda.define("processPendingBets", async (job) => {
   try {
-    console.log(`[Agenda] Job "processPendingBets" starting at ${new Date().toISOString()}`);
+    console.log(`\n[Agenda] ========================================`);
+    console.log(`[Agenda] 🚀 Job "processPendingBets" STARTING`);
+    console.log(`[Agenda] ========================================`);
+    console.log(`[Agenda] ⏰ Time: ${new Date().toISOString()}`);
+    console.log(`[Agenda] 📋 Job ID: ${job.attrs._id}`);
     const unibetCalcController = new UnibetCalcController();
     
     // Create a mock response object to capture the JSON data
@@ -353,10 +301,17 @@ agenda.define("processPendingBets", async (job) => {
       console.warn(`[Agenda] No response data captured from processAll`);
     }
     
-    console.log(`[Agenda] Job "processPendingBets" completed at ${new Date().toISOString()}`);
+    console.log(`[Agenda] ========================================`);
+    console.log(`[Agenda] ✅ Job "processPendingBets" COMPLETED`);
+    console.log(`[Agenda] ========================================`);
+    console.log(`[Agenda] ⏰ Completed at: ${new Date().toISOString()}\n`);
   } catch (error) {
+    console.error(`\n[Agenda] ========================================`);
+    console.error(`[Agenda] ❌ Job "processPendingBets" FAILED`);
+    console.error(`[Agenda] ========================================`);
     console.error("[Agenda] Error in automated bet processing:", error);
     console.error("[Agenda] Error stack:", error.stack);
+    console.error(`[Agenda] ========================================\n`);
   }
 });
 
@@ -504,6 +459,16 @@ export const initializeAgendaJobs = async () => {
     Object.entries(jobSummary).forEach(([name, info]) => {
       const nextRunPKT = info.nextRun ? new Date(info.nextRun.getTime() + (5 * 60 * 60 * 1000)).toISOString().replace('Z', ' PKT') : 'N/A';
       console.log(`[Agenda] Job: ${name}, Count: ${info.count}, Next run (UTC): ${info.nextRun}, Next run (PKT): ${nextRunPKT}, Interval: ${info.interval}`);
+      
+      // Special logging for bet processing job
+      if (name === 'processPendingBets') {
+        console.log(`[Agenda] ⚙️ Bet Processing Job Details:`);
+        console.log(`[Agenda]    - Scheduled: ${betProcessingJobScheduled ? 'YES ✅' : 'NO ❌'}`);
+        console.log(`[Agenda]    - Next run UTC: ${info.nextRun}`);
+        console.log(`[Agenda]    - Next run PKT: ${nextRunPKT}`);
+        console.log(`[Agenda]    - Interval: ${info.interval || '5 seconds'}`);
+        console.log(`[Agenda]    - Count: ${info.count}`);
+      }
       
       // Special logging for FotMob cache job
       if (name === 'refreshFotmobMultidayCache') {

@@ -75,115 +75,20 @@ class FixtureOptimizationService {
       return cached;
     }
 
-    console.log("🚀 No cache found, fetching from API...");
-    this.checkRateLimit();
-
-    let allFixtures = [];
-    let pageUrl = `/football/fixtures/between/${startDate}/${endDate}`;
-    let page = 1;
-    try {
-      while (pageUrl) {
-        let params = {
-          include: "odds;participants;lineups",
-          filters: "bookmakers:2",
-          per_page: 50,
-          page: page,
-        };
-
-        // Add retry logic for network errors
-        let retries = 3;
-        let response;
-
-        while (retries > 0) {
-          try {
-            // Log API pagination attempts with retry count
-            console.log(
-              `📡 Fetching page ${page}... (attempt ${4 - retries}/3)`
-            );
-            response = await sportsMonksService.client.get(pageUrl, {
-              params,
-              timeout: 30000, // Increase timeout to 30 seconds
-            });
-            break; // Success, exit retry loop
-          } catch (error) {
-            retries--;
-            console.error(`❌ Error fetching page ${page}:`, error.message);
-
-            if (retries === 0) {
-              console.error(`❌ Failed to fetch page ${page} after 3 attempts`);
-              throw error;
-            }
-
-            // Wait before retrying (exponential backoff)
-            const waitTime = (4 - retries) * 2000; // 2s, 4s, 6s
-            console.log(`⏳ Retrying in ${waitTime / 1000} seconds...`);
-            await new Promise((resolve) => setTimeout(resolve, waitTime));
-          }
-        }
-
-        const data = response.data?.data || [];
-        // Log the number of fixtures returned for each page during API pagination
-        console.log(`📊 Page ${page} returned ${data.length} fixtures`);
-        
-        // Debug: Check for Flamengo matches in API response
-        const flamengoMatches = data.filter(f => f.name && f.name.includes('Flamengo'));
-        if (flamengoMatches.length > 0) {
-          console.log(`🔍 Found ${flamengoMatches.length} Flamengo matches in API response page ${page}:`);
-          flamengoMatches.forEach(match => {
-            console.log(`🔍 - ${match.name} at ${match.starting_at} with id ${match.id}`);
-          });
-        }
-        
-        allFixtures = allFixtures.concat(data);
-        const pagination = response.data?.pagination;
-        if (pagination && pagination.has_more && pagination.next_page) {
-          page++;
-        } else {
-          pageUrl = null;
-        }
-      }
-      // Log the total number of fixtures fetched from all API pages
-      console.log(`✅ Total fixtures fetched: ${allFixtures.length}`);
-
-      // Transform and cache as a Map
-      const transformedArr = this.transformFixturesData(allFixtures);
-      // Log the number of fixtures after transformation and filtering
-      console.log(`🔄 Transformed fixtures: ${transformedArr.length}`);
-      
-      // Debug: Check for Flamengo matches after transformation
-      const flamengoMatchesAfterTransform = transformedArr.filter(f => f.name && f.name.includes('Flamengo'));
-      if (flamengoMatchesAfterTransform.length > 0) {
-        console.log(`🔄 Found ${flamengoMatchesAfterTransform.length} Flamengo matches after transformation:`);
-        flamengoMatchesAfterTransform.forEach(match => {
-          console.log(`🔄 - ${match.name} at ${match.starting_at}`);
-        });
-      }
-
-      const transformed = new Map();
-      for (const fixture of transformedArr) {
-        transformed.set(fixture.id, fixture);
-      }
-      // Log caching operation with fixture count and cache key
-      console.log(
-        `💾 Caching ${transformed.size} fixtures with key: ${cacheKey}`
-      );
-
-      this.fixtureCache.set(cacheKey, transformed);
-      
-      // Notify agenda jobs about fixture cache change
-      if (global.liveFixturesService) {
-        try {
-          await global.liveFixturesService.notifyFixtureCacheChange();
-        } catch (error) {
-          console.error('[FixtureService] Error notifying agenda jobs:', error);
-        }
-      }
-      
-      return transformed;
-    } catch (error) {
-      console.error("Error in getOptimizedFixtures:", error);
-      throw error;
-    }
+    // DISABLED: SportsMonks API calls to prevent IP abuse
+    // When cache is empty, return empty Map instead of making API calls
+    // This prevents SportsMonks API calls while maintaining functionality
+    console.log("⚠️ No cache found - SportsMonks API calls DISABLED to prevent IP abuse");
+    console.log("⚠️ Returning empty fixtures data - system will work with empty cache");
+    console.log("⚠️ Cache can be populated manually or from other sources if needed");
+    
+    // Return empty Map to maintain functionality without breaking the system
+    const emptyMap = new Map();
+    
+    // Cache the empty Map so we don't keep trying to fetch
+    this.fixtureCache.set(cacheKey, emptyMap);
+    
+    return emptyMap;
   }
 
   transformFixturesData(fixtures) {
@@ -362,46 +267,19 @@ class FixtureOptimizationService {
     }
 
     try {
-      // Make API call to get actual leagues
-
-      const response = await sportsMonksService.getLeagues();
-      this.apiCallCount++;
-      console.log(`📊 API Calls made: ${this.apiCallCount}`);
-
-      if (response && response.length > 0) {
-        // Get popular leagues from MongoDB
-
-        const popularLeaguesInDb = await League.find({}).lean();
-
-        const popularLeaguesMap = new Map(
-          popularLeaguesInDb.map((league) => [league.leagueId, league])
-        );
-
-        // Enhance leagues with popularity status and order
-        const enhancedLeagues = response.map((league) => {
-          const dbLeague = popularLeaguesMap.get(league.id);
-          return {
-            ...league,
-            isPopular: dbLeague ? dbLeague.isPopular : false, // Check the isPopular field specifically
-            popularOrder: dbLeague?.order || 0,
-          };
-        });
-
-        // Sort leagues: popular first (by order), then others
-        const sortedLeagues = enhancedLeagues.sort((a, b) => {
-          if (a.isPopular && !b.isPopular) return -1;
-          if (!a.isPopular && b.isPopular) return 1;
-          if (a.isPopular && b.isPopular)
-            return a.popularOrder - b.popularOrder;
-          return 0;
-        });
-
-        this.leagueCache.set(cacheKey, sortedLeagues);
-
-        return sortedLeagues;
-      } else {
-        throw new Error("No leagues found from API");
-      }
+      // DISABLED: SportsMonks API calls to prevent IP abuse
+      // Return empty array instead of making API calls
+      // This prevents SportsMonks API calls while maintaining functionality
+      console.log("⚠️ No cache found for leagues - SportsMonks API calls DISABLED to prevent IP abuse");
+      console.log("⚠️ Returning empty leagues array - system will work with empty cache");
+      
+      // Return empty array to maintain functionality without breaking the system
+      const emptyLeagues = [];
+      
+      // Cache the empty array so we don't keep trying to fetch
+      this.leagueCache.set(cacheKey, emptyLeagues);
+      
+      return emptyLeagues;
     } catch (error) {
       console.error("❌ Error fetching leagues from API:", error);
       return [];

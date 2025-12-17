@@ -1,7 +1,7 @@
 import NodeCache from "node-cache";
 import { CustomError } from "../utils/customErrors.js";
 import FixtureOptimizationService from "./fixture.service.js";
-import axios from "axios";
+import axios from "../config/axios-proxy.js";
 import {
   classifyOdds,
   transformToBettingData,

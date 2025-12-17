@@ -28,8 +28,8 @@ export class UnibetCalcController {
                 console.log(`🔍 [processAll] Fetching all pending bets (no time-based filtering - will check Unibet/FotMob match status)`);
                 
                 bets = await Bet.find(query)
-                    .sort({ createdAt: 1 })
-                    .limit(parseInt(limit));
+                .sort({ createdAt: 1 })
+                .limit(parseInt(limit));
                 
                 console.log(`   - Found ${bets.length} pending bets`);
             } else {

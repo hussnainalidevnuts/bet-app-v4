@@ -4,7 +4,7 @@
 import Fotmob from '@max-xoo/fotmob';
 import fs from 'fs';
 import path from 'path';
-import axios from 'axios';
+import axios from '../config/axios-proxy.js';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import Bet from '../models/Bet.js';
@@ -366,13 +366,13 @@ class BetOutcomeCalculator {
             // Remove time-based filtering - we will check match status from Unibet API and FotMob instead
             // This allows us to process bets based on actual match status, not estimated time
             const query = { status: 'pending' };
-            
+
             console.log(`🔍 Fetching all pending bets (no time-based filtering - will check Unibet/FotMob match status)`);
-            
+
             const bets = await this.db.collection('bets').find(query).toArray();
             
             console.log(`   - Found ${bets.length} pending bets`);
-            
+
             return bets;
         } catch (error) {
             console.error('Error fetching pending bets:', error);
@@ -8204,34 +8204,34 @@ class BetOutcomeCalculator {
             console.log(`💰 ===========================================\n`);
             // Skip balance update and return early
         } else {
-            const userId = originalBet.userId || bet.userId;
+        const userId = originalBet.userId || bet.userId;
+        
+        if (userId) {
+            // Import User model
+            const { default: User } = await import('../models/User.js');
             
-            if (userId) {
-                // Import User model
-                const { default: User } = await import('../models/User.js');
-                
-                // Get user before update
-                const userBefore = await User.findById(userId);
-                const balanceBefore = userBefore?.balance || 0;
-                console.log(`💰 Balance Before: ${balanceBefore}`);
-                
-                // Update balance based on payout
-                if (calculatedPayout > 0) {
-                    await User.findByIdAndUpdate(userId, {
-                        $inc: { balance: calculatedPayout }
-                    });
-                    console.log(`💰 Added to balance: ${calculatedPayout}`);
-                }
-                
-                // Get user after update
-                const userAfter = await User.findById(userId);
-                const balanceAfter = userAfter?.balance || 0;
-                console.log(`💰 Balance After: ${balanceAfter}`);
-                console.log(`💰 Balance Change: ${balanceAfter - balanceBefore}`);
-                console.log(`💰 ===========================================\n`);
-            } else {
-                console.log(`💰 No user ID found, skipping balance update`);
-                console.log(`💰 ===========================================\n`);
+            // Get user before update
+            const userBefore = await User.findById(userId);
+            const balanceBefore = userBefore?.balance || 0;
+            console.log(`💰 Balance Before: ${balanceBefore}`);
+            
+            // Update balance based on payout
+            if (calculatedPayout > 0) {
+                await User.findByIdAndUpdate(userId, {
+                    $inc: { balance: calculatedPayout }
+                });
+                console.log(`💰 Added to balance: ${calculatedPayout}`);
+            }
+            
+            // Get user after update
+            const userAfter = await User.findById(userId);
+            const balanceAfter = userAfter?.balance || 0;
+            console.log(`💰 Balance After: ${balanceAfter}`);
+            console.log(`💰 Balance Change: ${balanceAfter - balanceBefore}`);
+            console.log(`💰 ===========================================\n`);
+        } else {
+            console.log(`💰 No user ID found, skipping balance update`);
+            console.log(`💰 ===========================================\n`);
             }
         }
         
@@ -8536,10 +8536,10 @@ class BetOutcomeCalculator {
                         results.skipped++;
                         console.log(`⏭️ Bet ${bet._id} skipped - match not finished yet`);
                     } else {
-                        results.processed++;
-                        if (result.outcome.status === 'won') results.won++;
-                        else if (result.outcome.status === 'lost') results.lost++;
-                        else if (result.outcome.status === 'void') results.void++;
+                    results.processed++;
+                    if (result.outcome.status === 'won') results.won++;
+                    else if (result.outcome.status === 'lost') results.lost++;
+                    else if (result.outcome.status === 'void') results.void++;
                     }
                 } else {
                     results.errors++;

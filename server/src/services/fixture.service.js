@@ -81,7 +81,7 @@ class FixtureOptimizationService {
     console.log("⚠️ No cache found - SportsMonks API calls DISABLED to prevent IP abuse");
     console.log("⚠️ Returning empty fixtures data - system will work with empty cache");
     console.log("⚠️ Cache can be populated manually or from other sources if needed");
-    
+      
     // Return empty Map to maintain functionality without breaking the system
     const emptyMap = new Map();
     
@@ -272,13 +272,13 @@ class FixtureOptimizationService {
       // This prevents SportsMonks API calls while maintaining functionality
       console.log("⚠️ No cache found for leagues - SportsMonks API calls DISABLED to prevent IP abuse");
       console.log("⚠️ Returning empty leagues array - system will work with empty cache");
-      
+
       // Return empty array to maintain functionality without breaking the system
       const emptyLeagues = [];
       
       // Cache the empty array so we don't keep trying to fetch
       this.leagueCache.set(cacheKey, emptyLeagues);
-      
+
       return emptyLeagues;
     } catch (error) {
       console.error("❌ Error fetching leagues from API:", error);

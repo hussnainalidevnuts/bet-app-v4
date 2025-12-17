@@ -86,7 +86,7 @@ const scheduleBetProcessingJob = async () => {
       console.log('[Agenda] ⚙️ Scheduling automated bet processing job...');
       console.log('[Agenda] ⚙️ Job will run every 5 seconds');
       const job = await agenda.every("5 seconds", "processPendingBets");
-      betProcessingJobScheduled = true;
+    betProcessingJobScheduled = true;
       console.log('[Agenda] ✅ Automated bet processing job scheduled successfully');
       console.log(`[Agenda] ✅ Job ID: ${job.attrs._id}`);
       console.log(`[Agenda] ✅ Next run: ${job.attrs.nextRunAt}`);
@@ -131,7 +131,7 @@ const scheduleFotmobCacheJob = async () => {
         console.log(`[Agenda] Next run (UTC): ${scheduledJob.attrs.nextRunAt}`);
         console.log(`[Agenda] Next run (PKT): ${nextRunPKT}`);
         console.log(`[Agenda] Repeat interval: ${scheduledJob.attrs.repeatInterval}`);
-        fotmobCacheJobScheduled = true;
+    fotmobCacheJobScheduled = true;
       } else {
         console.error('[Agenda] ❌ Failed to schedule FotMob cache refresh job - no job returned');
       }
@@ -165,9 +165,9 @@ export const checkFixtureCacheAndManageJobs = async () => {
   // - refreshHomepageCache: every 30 minutes (2 calls/hour)
   // All these jobs call SportsMonks API continuously and have been disabled
   console.log('[Agenda] DISABLED: Cancelling all SportsMonks API jobs to prevent IP abuse');
-  await cancelLiveOddsJob();
-  await cancelInplayMatchesJob();
-  await cancelHomepageCacheJob();
+    await cancelLiveOddsJob();
+    await cancelInplayMatchesJob();
+    await cancelHomepageCacheJob();
   
   if (!liveFixturesService) {
     console.log('[Agenda] LiveFixtures service not available - SportsMonks jobs already cancelled');
@@ -255,7 +255,7 @@ agenda.define("updateInplayMatches", async (job) => {
   console.log(`[Agenda] updateInplayMatches job DISABLED - was causing IP abuse (60 API calls/hour)`);
   return; // Exit immediately without making any API calls
 });
-
+    
 // DISABLED: This job was making SportsMonks API calls every 30 minutes (2 calls/hour)
 // This caused IP abuse issues. Job has been disabled.
 // Define homepage cache refresh job
@@ -371,8 +371,9 @@ agenda.define("refreshFotmobMultidayCache", async (job) => {
 // Initialize agenda jobs
 export const initializeAgendaJobs = async () => {
   try {
+    console.log('[Agenda] 🔄 Starting Agenda...');
     await agenda.start();
-    console.log('[Agenda] Agenda started successfully');
+    console.log('[Agenda] ✅ Agenda started successfully');
     
     // Aggressive cleanup - remove ALL existing jobs
     console.log('[Agenda] Cleaning up all existing jobs...');
@@ -444,7 +445,14 @@ export const initializeAgendaJobs = async () => {
     
     // Log current scheduled jobs (summary only)
     const jobs = await agenda.jobs({});
+    console.log(`\n[Agenda] ========================================`);
+    console.log(`[Agenda] 📊 JOB SUMMARY`);
+    console.log(`[Agenda] ========================================`);
     console.log(`[Agenda] Total scheduled jobs: ${jobs.length}`);
+    
+    if (jobs.length === 0) {
+      console.error(`[Agenda] ⚠️ WARNING: No jobs scheduled!`);
+    }
     
     // Group jobs by name and show summary
     const jobSummary = {};
@@ -458,25 +466,29 @@ export const initializeAgendaJobs = async () => {
     
     Object.entries(jobSummary).forEach(([name, info]) => {
       const nextRunPKT = info.nextRun ? new Date(info.nextRun.getTime() + (5 * 60 * 60 * 1000)).toISOString().replace('Z', ' PKT') : 'N/A';
-      console.log(`[Agenda] Job: ${name}, Count: ${info.count}, Next run (UTC): ${info.nextRun}, Next run (PKT): ${nextRunPKT}, Interval: ${info.interval}`);
+      console.log(`\n[Agenda] ─────────────────────────────────────`);
+      console.log(`[Agenda] Job Name: ${name}`);
+      console.log(`[Agenda] Count: ${info.count}`);
+      console.log(`[Agenda] Next run (UTC): ${info.nextRun}`);
+      console.log(`[Agenda] Next run (PKT): ${nextRunPKT}`);
+      console.log(`[Agenda] Interval: ${info.interval}`);
       
       // Special logging for bet processing job
       if (name === 'processPendingBets') {
-        console.log(`[Agenda] ⚙️ Bet Processing Job Details:`);
+        console.log(`[Agenda] ⚙️ Bet Processing Job Status:`);
         console.log(`[Agenda]    - Scheduled: ${betProcessingJobScheduled ? 'YES ✅' : 'NO ❌'}`);
-        console.log(`[Agenda]    - Next run UTC: ${info.nextRun}`);
-        console.log(`[Agenda]    - Next run PKT: ${nextRunPKT}`);
-        console.log(`[Agenda]    - Interval: ${info.interval || '5 seconds'}`);
-        console.log(`[Agenda]    - Count: ${info.count}`);
+        if (info.nextRun) {
+          const now = new Date();
+          const timeUntilNext = info.nextRun.getTime() - now.getTime();
+          const secondsUntil = Math.floor(timeUntilNext / 1000);
+          console.log(`[Agenda]    - Time until next run: ${secondsUntil} seconds`);
+        }
       }
       
       // Special logging for FotMob cache job
       if (name === 'refreshFotmobMultidayCache') {
-        console.log(`[Agenda] ⏰ FotMob Cache Job Details:`);
-        console.log(`[Agenda]    - Scheduled: ${fotmobCacheJobScheduled ? 'YES' : 'NO'}`);
-        console.log(`[Agenda]    - Next run UTC: ${info.nextRun}`);
-        console.log(`[Agenda]    - Next run PKT: ${nextRunPKT}`);
-        console.log(`[Agenda]    - Cron interval: ${info.interval}`);
+        console.log(`[Agenda] ⏰ FotMob Cache Job Status:`);
+        console.log(`[Agenda]    - Scheduled: ${fotmobCacheJobScheduled ? 'YES ✅' : 'NO ❌'}`);
         if (info.nextRun) {
           const now = new Date();
           const timeUntilNext = info.nextRun.getTime() - now.getTime();
@@ -487,6 +499,8 @@ export const initializeAgendaJobs = async () => {
       }
     });
     
+    console.log(`[Agenda] ========================================\n`);
+    
   } catch (error) {
     console.error('[Agenda] Error initializing agenda:', error);
   }
@@ -494,26 +508,68 @@ export const initializeAgendaJobs = async () => {
 
 // Set up agenda event listeners
 export const setupAgendaListeners = () => {
+  console.log('[Agenda] 🔧 Setting up Agenda listeners...');
+  
   agenda.on("ready", () => {
-    console.log("[Agenda] Ready and connected to MongoDB");
+    console.log("[Agenda] ✅ Ready and connected to MongoDB");
+    console.log("[Agenda] 🚀 Initializing agenda jobs...");
     // Initialize agenda after agenda is ready
-    initializeAgendaJobs();
+    initializeAgendaJobs().catch(error => {
+      console.error('[Agenda] ❌ Error initializing agenda jobs:', error);
+    });
   });
 
   agenda.on("error", (err) => {
-    console.error("[Agenda] Error:", err);
+    console.error("[Agenda] ❌ Error:", err);
+    console.error("[Agenda] Error stack:", err.stack);
   });
 
   // Log when agenda jobs start executing
+  agenda.on("start:processPendingBets", (job) => {
+    console.log(`\n[Agenda] ========================================`);
+    console.log(`[Agenda] 🟢 Job "processPendingBets" STARTING`);
+    console.log(`[Agenda] ⏰ Time: ${new Date().toISOString()}`);
+    console.log(`[Agenda] 📋 Job ID: ${job.attrs._id}`);
+    console.log(`[Agenda] ========================================\n`);
+  });
+
+  agenda.on("start:refreshFotmobMultidayCache", (job) => {
+    console.log(`\n[Agenda] ========================================`);
+    console.log(`[Agenda] 🟢 Job "refreshFotmobMultidayCache" STARTING`);
+    console.log(`[Agenda] ⏰ Time: ${new Date().toISOString()}`);
+    console.log(`[Agenda] 📋 Job ID: ${job.attrs._id}`);
+    console.log(`[Agenda] ========================================\n`);
+  });
+
+  // Generic job start handler for any other jobs
   agenda.on("start", (job) => {
-    console.log(`[Agenda] Job "${job.attrs.name}" starting at ${new Date().toISOString()}`);
+    const jobName = job.attrs.name;
+    if (jobName !== 'processPendingBets' && jobName !== 'refreshFotmobMultidayCache') {
+      console.log(`[Agenda] 🟢 Job "${jobName}" starting at ${new Date().toISOString()}`);
+    }
   });
 
   agenda.on("complete", (job) => {
-    console.log(`[Agenda] Job "${job.attrs.name}" completed at ${new Date().toISOString()}`);
+    const jobName = job.attrs.name;
+    if (jobName === 'processPendingBets' || jobName === 'refreshFotmobMultidayCache') {
+      console.log(`\n[Agenda] ========================================`);
+      console.log(`[Agenda] ✅ Job "${jobName}" COMPLETED`);
+      console.log(`[Agenda] ⏰ Time: ${new Date().toISOString()}`);
+      console.log(`[Agenda] ========================================\n`);
+    } else {
+      console.log(`[Agenda] ✅ Job "${jobName}" completed at ${new Date().toISOString()}`);
+    }
   });
 
   agenda.on("fail", (err, job) => {
-    console.error(`[Agenda] Job "${job.attrs.name}" failed at ${new Date().toISOString()}:`, err);
+    const jobName = job.attrs.name;
+    console.error(`\n[Agenda] ========================================`);
+    console.error(`[Agenda] ❌ Job "${jobName}" FAILED`);
+    console.error(`[Agenda] ⏰ Time: ${new Date().toISOString()}`);
+    console.error(`[Agenda] Error:`, err);
+    console.error(`[Agenda] Error stack:`, err.stack);
+    console.error(`[Agenda] ========================================\n`);
   });
+
+  console.log('[Agenda] ✅ Agenda listeners set up successfully');
 }; 

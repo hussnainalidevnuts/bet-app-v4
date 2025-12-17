@@ -1,5 +1,5 @@
 import express from 'express';
-import axios from 'axios';
+import axios from '../../config/axios-proxy.js';
 import { filterMatchesByAllowedLeagues, getLeagueFilterStats } from '../../utils/leagueFilter.js';
 const router = express.Router();
 

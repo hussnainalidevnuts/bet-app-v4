@@ -1,5 +1,5 @@
 import express from 'express';
-import axios from 'axios';
+import axios from '../../config/axios-proxy.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';

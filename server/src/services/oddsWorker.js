@@ -1,5 +1,5 @@
 import { parentPort, workerData } from 'worker_threads';
-import axios from 'axios';
+import axios from '../config/axios-proxy.js';
 import { classifyOdds, transformToBettingData } from '../utils/oddsClassification.js';
 
 async function processMatchOdds(match, apiToken, allowedMarketIds) {

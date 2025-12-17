@@ -6,7 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import Fotmob from '@max-xoo/fotmob';
-import axios from 'axios';
+import axios from '../config/axios-proxy.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -198,7 +198,7 @@ export class FotmobController {
             let actualRefreshHappened = false;
             let datesRefreshed = 0;
             let datesSkipped = 0;
-            
+
             // Start from yesterday (i = -1) to include previous day
             for (let i = -1; i < days; i++) {
                 const date = new Date(startDate);
@@ -310,19 +310,19 @@ export class FotmobController {
             // Only save cache file and update metadata if actual refresh happened OR if force refresh
             if (actualRefreshHappened || forceRefresh) {
                 // Save multi-day cache (reuse multiDayFile declared earlier)
-                fs.writeFileSync(multiDayFile, JSON.stringify(cacheData, null, 2));
+            fs.writeFileSync(multiDayFile, JSON.stringify(cacheData, null, 2));
                 console.log(`✅ Cache file saved successfully`);
 
                 // Update metadata only if actual refresh happened
-                const metaFile = path.join(STORAGE_PATH, 'fotmob_cache_meta.json');
-                const meta = {
-                    lastRefresh: new Date().toISOString(),
-                    days: days + 1, // Include the previous day
+            const metaFile = path.join(STORAGE_PATH, 'fotmob_cache_meta.json');
+            const meta = {
+                lastRefresh: new Date().toISOString(),
+                days: days + 1, // Include the previous day
                     totalMatches: totalMatches,
                     datesRefreshed: datesRefreshed,
                     datesSkipped: datesSkipped
-                };
-                fs.writeFileSync(metaFile, JSON.stringify(meta, null, 2));
+            };
+            fs.writeFileSync(metaFile, JSON.stringify(meta, null, 2));
                 console.log(`✅ Metadata file saved (actual refresh: ${actualRefreshHappened})`);
             } else {
                 console.log(`⏭️ No actual refresh needed - all dates already cached. Metadata NOT updated.`);
@@ -345,11 +345,11 @@ export class FotmobController {
         } catch (error) {
             console.error('❌ ERROR refreshing multi-day cache:', error);
             if (res && typeof res.status === 'function') {
-                res.status(500).json({
-                    success: false,
-                    message: 'Failed to refresh multi-day cache',
-                    error: error.message
-                });
+            res.status(500).json({
+                success: false,
+                message: 'Failed to refresh multi-day cache',
+                error: error.message
+            });
             }
             throw error;
         }

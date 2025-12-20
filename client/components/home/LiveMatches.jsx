@@ -144,10 +144,10 @@ const LiveMatches = () => {
         // Initial fetch with loading state
         dispatch(fetchLiveMatches());
         
-        // Set up interval to refresh every 2 seconds with silent updates
+        // Set up interval to refresh every 5 seconds with silent updates (reduced frequency to prevent timeout)
         const refreshInterval = setInterval(() => {
             dispatch(silentUpdateLiveMatches());
-        }, 2000); // 2 seconds
+        }, 5000); // 5 seconds (reduced from 2 seconds to prevent API timeout)
 
         // Cleanup interval on unmount
         return () => {

@@ -84,7 +84,9 @@ export class BetSchemaAdapter {
                 betOption: bet.betOption,
                 marketId: bet.marketId,
                 betDetails: betDetails,
-                unibetMeta: unibetMeta
+                unibetMeta: unibetMeta,
+                matchDate: bet.matchDate, // ✅ FIX: Include matchDate for time-based processing
+                result: bet.result // ✅ FIX: Include result object (contains matchDate in some cases)
             }
         };
 

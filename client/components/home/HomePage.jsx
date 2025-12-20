@@ -36,12 +36,12 @@ const HomePage = () => {
 
     // Set up polling for live matches data (1 second - same as MatchDetailPage)
     useEffect(() => {
-        // Start polling every 1 second for live matches (same as match detail page)
+        // Start polling every 5 seconds for live matches (reduced frequency to prevent timeout)
         const startPolling = () => {
             pollingIntervalRef.current = setInterval(() => {
                 if (typeof document !== 'undefined' && document.hidden) return; // pause when tab hidden
                 dispatch(silentUpdateLiveMatches());
-            }, 1000); // Poll every 1 second (same as MatchDetailPage)
+            }, 5000); // Poll every 5 seconds (reduced from 1 second to prevent API timeout)
         };
 
         // Start polling after initial load
@@ -73,7 +73,7 @@ const HomePage = () => {
                 if (!pollingIntervalRef.current) {
                     pollingIntervalRef.current = setInterval(() => {
                         dispatch(silentUpdateLiveMatches());
-                    }, 5000);
+                    }, 5000); // 5 seconds polling interval
                 }
             }
         };

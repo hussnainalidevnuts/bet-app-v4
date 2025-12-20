@@ -214,6 +214,20 @@ const initializeApp = async () => {
     // 2. Set up Agenda listeners (after database is connected)
     setupAgendaListeners();
     
+    // 2.5. Explicitly initialize agenda jobs after a short delay to ensure MongoDB is ready
+    // This ensures jobs are scheduled even if "ready" event doesn't fire
+    setTimeout(async () => {
+      try {
+        const { initializeAgendaJobs } = await import('./config/agendaJobs.js');
+        console.log('[App] 🔄 Explicitly initializing agenda jobs...');
+        await initializeAgendaJobs();
+        console.log('[App] ✅ Agenda jobs initialized successfully');
+      } catch (error) {
+        console.error('[App] ❌ Error initializing agenda jobs:', error);
+        // Don't block server startup
+      }
+    }, 2000); // Wait 2 seconds for MongoDB connection to stabilize
+    
     // 3. Start the server
     server.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);

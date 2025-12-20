@@ -875,7 +875,7 @@ class BetOutcomeCalculator {
                     awayName: bet.awayName,
                     leagueId: bet.leagueId,
                     leagueName: bet.leagueName,
-                    start: bet.start
+                    start: bet.matchDate || bet.start || bet.unibetMeta?.start || bet._originalBet?.matchDate || bet._originalBet?.result?.matchDate // ✅ FIX: Check all possible locations
                 },
                 searchSteps: []
             }
@@ -1026,7 +1026,8 @@ class BetOutcomeCalculator {
 
         // Step 5: Search for matching matches
         // For test cases, adjust bet date to match test data (August 11, 2025)
-        let betDate = new Date(bet.start);
+        // ✅ FIX: Check all possible field locations for match date
+        let betDate = new Date(bet.matchDate || bet.start || bet.unibetMeta?.start || bet._originalBet?.matchDate || bet._originalBet?.result?.matchDate);
         if (bet && bet?.eventId === '1022853538') {
             betDate = new Date('2025-08-11T23:00:00.000Z'); // Match the test data date
             console.log(`🧪 TEST MODE: Adjusted bet date to match test data: ${betDate.toISOString()}`);
@@ -7613,7 +7614,9 @@ class BetOutcomeCalculator {
             console.log(`   - Selection: ${bet.outcomeLabel} @ ${bet.odds}`);
             console.log(`   - Stake: €${bet.stake}`);
             console.log(`   - League: ${bet.leagueName} (ID: ${bet.leagueId})`);
-            console.log(`   - Date: ${bet.start}`);
+            // ✅ FIX: Check all possible field locations for match date
+            const matchDateValue = bet.matchDate || bet.start || bet.unibetMeta?.start || bet._originalBet?.matchDate || bet._originalBet?.result?.matchDate;
+            console.log(`   - Date: ${matchDateValue}`);
             console.log(`   - Market: ${bet.marketName}`);
 
             // Import mongoose for ObjectId conversion
@@ -7641,11 +7644,17 @@ class BetOutcomeCalculator {
             // Step 1: Validate bet data
             console.log(`\n🔍 STEP 1: Validating bet data...`);
 
-            if (!bet.start) {
-                console.log(`❌ VALIDATION FAILED: Bet has no start date`);
-                return { success: false, error: 'Bet has no start date' };
+            // ✅ FIX: Check all possible field locations for match date
+            if (!bet.matchDate && !bet.start && !bet.unibetMeta?.start && !bet._originalBet?.matchDate && !bet._originalBet?.result?.matchDate) {
+                console.log(`❌ VALIDATION FAILED: Bet has no match date in any expected location`);
+                console.log(`   - bet.matchDate: ${bet.matchDate}`);
+                console.log(`   - bet.start: ${bet.start}`);
+                console.log(`   - bet.unibetMeta?.start: ${bet.unibetMeta?.start}`);
+                console.log(`   - bet._originalBet?.matchDate: ${bet._originalBet?.matchDate}`);
+                console.log(`   - bet._originalBet?.result?.matchDate: ${bet._originalBet?.result?.matchDate}`);
+                return { success: false, error: 'Bet has no match date' };
             }
-            console.log(`✅ Start date valid: ${bet.start}`);
+            console.log(`✅ Match date valid: ${matchDateValue}`);
 
             if (!bet.homeName || !bet.awayName) {
                 console.log(`❌ VALIDATION FAILED: Missing team names - Home: "${bet.homeName}", Away: "${bet.awayName}"`);
@@ -7659,10 +7668,11 @@ class BetOutcomeCalculator {
             }
             console.log(`✅ League ID valid: ${bet.leagueId}`);
 
-            const betDate = new Date(bet.start);
+            // ✅ FIX: Use matchDate field (set when bet is placed)
+            const betDate = new Date(matchDateValue);
             if (isNaN(betDate.getTime())) {
-                console.log(`❌ VALIDATION FAILED: Invalid bet start date: ${bet.start}`);
-                return { success: false, error: 'Invalid bet start date' };
+                console.log(`❌ VALIDATION FAILED: Invalid bet match date: ${matchDateValue}`);
+                return { success: false, error: 'Invalid bet match date' };
             }
             console.log(`✅ Bet date parsed: ${betDate.toISOString()}`);
 
@@ -7673,103 +7683,70 @@ class BetOutcomeCalculator {
                 console.log(`✅ Loaded ${this.leagueMapping.size} league mappings`);
             }
 
-            // Step 2: Check Unibet Bet Offers API first to see if match is finished (404 = finished)
-            console.log(`\n🔍 STEP 2: Checking Unibet Bet Offers API for match status...`);
-            let isUnibetMatchFinished = false;
-            let unibetErrorReason = null;
+            // Step 2: TIME-BASED CHECK - Check if enough time has passed since match start (2hrs 15min = 135 minutes)
+            // REMOVED: Unibet API call - using time-based logic instead
+            // ✅ FIX: Check all possible field locations (matchDate, start, unibetMeta.start, result.matchDate)
+            console.log(`\n🔍 STEP 2: Checking if enough time has passed since match start (TIME-BASED LOGIC)...`);
             
-            try {
-                // Check Unibet Bet Offers API (Kambi API) - if 404, match is finished
-                const axios = (await import('axios')).default;
-                const eventId = bet.matchId || bet.eventId;
-                const betOffersApiUrl = `https://oc-offering-api.kambicdn.com/offering/v2018/ubau/betoffer/event/${eventId}.json`;
-                
-                console.log(`   - Checking Unibet Bet Offers API: ${betOffersApiUrl}`);
-                
-                try {
-                    const betOffersResponse = await axios.get(betOffersApiUrl, {
-                        timeout: 10000,
-                        validateStatus: (status) => status < 500 // Don't throw on 404
-                    });
-                    
-                    if (betOffersResponse.status === 404 || !betOffersResponse.data) {
-                        console.log(`✅ Unibet Bet Offers API returned 404 - Match is FINISHED (removed from Unibet)`);
-                        isUnibetMatchFinished = true;
-                        unibetErrorReason = "404_BETOFFERS_NOT_FOUND";
-                    } else {
-                        console.log(`⏳ Unibet Bet Offers API returned data - Match is still available (not finished yet)`);
-                    }
-                } catch (betOffersError) {
-                    // Check if it's a 404 error
-                    if (betOffersError.response?.status === 404 || 
-                        betOffersError.code === "MATCH_NOT_FOUND" ||
-                        betOffersError.message?.includes("not found")) {
-                        console.log(`✅ Unibet Bet Offers API returned 404 - Match is FINISHED`);
-                        isUnibetMatchFinished = true;
-                        unibetErrorReason = "404_BETOFFERS_NOT_FOUND";
-                    } else {
-                        console.warn(`⚠️ Unibet Bet Offers API error (not 404): ${betOffersError.message}`);
-                        // Not a 404, so match might still be available - continue processing
-                    }
-                }
-                
-                // REMOVED: SportsMonks API fallback check - only using Unibet Bet Offers API
-                // If Unibet Bet Offers API returns 404, match is finished - proceed with FotMob
-                // No SportsMonks API calls - completely removed to prevent IP abuse
-                
-                // If match is NOT finished according to Unibet Bet Offers API, skip FotMob call and return early
-                if (!isUnibetMatchFinished) {
-                    console.log(`⏳ Unibet API indicates match is NOT finished yet - skipping FotMob API call`);
-                    console.log(`   - Match is still ongoing or not found in Unibet`);
-                    console.log(`   - Will check again in next processing cycle`);
-                    return {
-                        success: true,
-                        outcome: { status: 'pending', reason: 'Match not finished yet (Unibet API check)' },
-                        skipped: true,
-                        reason: 'Match not finished - skipping FotMob API call to avoid unnecessary requests'
-                    };
-                }
-                
-                // If match is finished, check if we should wait before fetching FotMob data
-                if (isUnibetMatchFinished) {
-                    console.log(`✅ Unibet API indicates match is FINISHED (${unibetErrorReason}) - proceeding with FotMob call`);
-                    
-                    // Calculate time since match start
-                    const betStartTime = bet.start ? new Date(bet.start) : null;
-                    const currentTime = new Date();
-                    let timeSinceStart = null;
-                    if (betStartTime && !isNaN(betStartTime.getTime())) {
-                        timeSinceStart = (currentTime.getTime() - betStartTime.getTime()) / (1000 * 60); // minutes
-                    }
-                    
-                    // Wait 5 minutes after match finished before fetching FotMob data (for data to update)
-                    const WAIT_AFTER_FINISH = 5; // 5 minutes wait
-                    if (timeSinceStart !== null && timeSinceStart < WAIT_AFTER_FINISH) {
-                        const waitTime = (WAIT_AFTER_FINISH - timeSinceStart) * 60 * 1000; // milliseconds
-                        console.log(`⏰ Match finished but only ${timeSinceStart.toFixed(1)} minutes passed - waiting ${(waitTime/1000/60).toFixed(1)} more minutes for FotMob data to update`);
-                        // Return early - will be processed in next cycle
-                        return {
-                            success: true,
-                            outcome: { status: 'pending', reason: `Match finished, waiting ${(waitTime/1000/60).toFixed(1)} minutes for FotMob data update` },
-                            skipped: true,
-                            reason: 'Match finished but waiting for FotMob data update',
-                            waitTime: waitTime,
-                            unibetErrorReason: unibetErrorReason
-                        };
-                    } else {
-                        console.log(`✅ Enough time has passed (${timeSinceStart?.toFixed(1) || 'unknown'} min) - proceeding with FotMob data fetch`);
-                    }
-                }
-            } catch (unibetError) {
-                console.warn(`⚠️ Could not check Unibet API status: ${unibetError.message}`);
-                console.log(`   - Will skip FotMob call and retry in next cycle`);
+            // Check all possible locations for match date:
+            // 1. bet.matchDate (root level from database)
+            // 2. bet.start (from BetSchemaAdapter.adaptBetForCalculator)
+            // 3. bet.unibetMeta?.start (from unibetMeta object)
+            // 4. bet._originalBet?.matchDate (original bet document)
+            // 5. bet._originalBet?.result?.matchDate (from result object in database)
+            const betStartTime = bet.matchDate 
+                ? new Date(bet.matchDate) 
+                : (bet.start 
+                    ? new Date(bet.start) 
+                    : (bet.unibetMeta?.start 
+                        ? new Date(bet.unibetMeta.start) 
+                        : (bet._originalBet?.matchDate 
+                            ? new Date(bet._originalBet.matchDate)
+                            : (bet._originalBet?.result?.matchDate 
+                                ? new Date(bet._originalBet.result.matchDate)
+                                : null))));
+            const currentTime = new Date();
+            let timeSinceStart = null;
+            
+            if (!betStartTime || isNaN(betStartTime.getTime())) {
+                console.warn(`⚠️ No valid match start time found for bet - skipping time check`);
+                console.log(`   - bet.matchDate: ${bet.matchDate}`);
+                console.log(`   - bet.start: ${bet.start}`);
+                console.log(`   - bet.unibetMeta?.start: ${bet.unibetMeta?.start}`);
+                console.log(`   - bet._originalBet?.matchDate: ${bet._originalBet?.matchDate}`);
+                console.log(`   - bet._originalBet?.result?.matchDate: ${bet._originalBet?.result?.matchDate}`);
                 return {
                     success: true,
-                    outcome: { status: 'pending', reason: 'Unibet API check failed - will retry' },
+                    outcome: { status: 'pending', reason: 'No match start time available' },
                     skipped: true,
-                    reason: 'Unibet API check error - skipping FotMob call'
+                    reason: 'Missing match start time - cannot use time-based logic'
                 };
             }
+            
+            timeSinceStart = (currentTime.getTime() - betStartTime.getTime()) / (1000 * 60); // minutes
+            console.log(`   - Match start time: ${betStartTime.toISOString()}`);
+            console.log(`   - Current time: ${currentTime.toISOString()}`);
+            console.log(`   - Time since start: ${timeSinceStart.toFixed(1)} minutes`);
+            
+            // Estimated match end time: Match start + 2 hours 15 minutes (135 minutes)
+            const ESTIMATED_MATCH_DURATION = 135; // 2h 15min in minutes
+            const hasEnoughTimePassed = timeSinceStart >= ESTIMATED_MATCH_DURATION;
+            
+            if (!hasEnoughTimePassed) {
+                const remainingTime = ESTIMATED_MATCH_DURATION - timeSinceStart;
+                console.log(`⏳ Not enough time passed (${timeSinceStart.toFixed(1)} min < ${ESTIMATED_MATCH_DURATION} min)`);
+                console.log(`   - Remaining time: ${remainingTime.toFixed(1)} minutes`);
+                console.log(`   - Will check again in next cycle (every 5 seconds)`);
+                return {
+                    success: true,
+                    outcome: { status: 'pending', reason: `Match estimated end time not reached yet (${remainingTime.toFixed(1)} min remaining)` },
+                    skipped: true,
+                    reason: 'Match estimated end time not reached - skipping FotMob API call'
+                };
+            }
+            
+            console.log(`✅ Enough time has passed (${timeSinceStart.toFixed(1)} min >= ${ESTIMATED_MATCH_DURATION} min) - proceeding with FotMob call`);
+            console.log(`   - Match estimated end time reached - calling FotMob API`);
             
             // Step 2B: Load Fotmob data (isolated from database operations)
             console.log(`\n🔍 STEP 2B: Loading Fotmob data for ${betDate.toISOString().slice(0, 10)}...`);
@@ -7852,16 +7829,8 @@ class BetOutcomeCalculator {
             // Step 4: Check if match is finished before making API call
             console.log(`\n🔍 STEP 4: Checking match finished status...`);
             
-            // Calculate time since match start (if we have start time)
-            const betStartTime = bet.start ? new Date(bet.start) : null;
-            const currentTime = new Date();
-            let timeSinceStart = null;
-            if (betStartTime && !isNaN(betStartTime.getTime())) {
-                timeSinceStart = (currentTime.getTime() - betStartTime.getTime()) / (1000 * 60); // minutes
-                console.log(`   - Match start time: ${betStartTime.toISOString()}`);
-                console.log(`   - Current time: ${currentTime.toISOString()}`);
-                console.log(`   - Time since start: ${timeSinceStart.toFixed(1)} minutes`);
-            }
+            // Reuse time values from Step 2 (already calculated above)
+            // betStartTime, currentTime, timeSinceStart are already available from Step 2
             
             // First check the match status from FotMob match result
             const matchStatusFinished = matchResult.match.status?.finished === true;
@@ -7874,14 +7843,50 @@ class BetOutcomeCalculator {
             // Check if enough time has passed since match start (5-10 minutes threshold)
             const MIN_WAIT_TIME = 5; // 5 minutes minimum wait after match start
             const MAX_WAIT_TIME = 10; // 10 minutes maximum wait
-            const hasEnoughTimePassed = timeSinceStart !== null && timeSinceStart >= MIN_WAIT_TIME;
+            const hasEnoughTimePassedStep4 = timeSinceStart !== null && timeSinceStart >= MIN_WAIT_TIME;
             const hasTooMuchTimePassed = timeSinceStart !== null && timeSinceStart >= MAX_WAIT_TIME;
             
-            console.log(`   - Has enough time passed (${MIN_WAIT_TIME} min): ${hasEnoughTimePassed}`);
+            console.log(`   - Has enough time passed (${MIN_WAIT_TIME} min): ${hasEnoughTimePassedStep4}`);
             console.log(`   - Has too much time passed (${MAX_WAIT_TIME} min): ${hasTooMuchTimePassed}`);
             
+            // Check if match is not finished from FotMob - implement 5-minute retry logic
+            // ESTIMATED_MATCH_DURATION is already defined in Step 2 (135 minutes)
+            if (!isMatchFinishedFromStatus && timeSinceStart !== null && timeSinceStart >= ESTIMATED_MATCH_DURATION) {
+                // Match should be finished (135 min passed) but FotMob says not finished
+                // Check last FotMob check time to implement 5-minute retry
+                const lastFotmobCheckTime = bet.lastFotmobCheckTime ? new Date(bet.lastFotmobCheckTime) : betStartTime;
+                const timeSinceLastCheck = (currentTime.getTime() - lastFotmobCheckTime.getTime()) / (1000 * 60); // minutes
+                const RETRY_INTERVAL = 5; // 5 minutes between retries
+                
+                if (timeSinceLastCheck < RETRY_INTERVAL) {
+                    const remainingWait = RETRY_INTERVAL - timeSinceLastCheck;
+                    console.log(`⏳ Match not finished yet from FotMob (${timeSinceStart.toFixed(1)} min since start)`);
+                    console.log(`   - Last FotMob check: ${timeSinceLastCheck.toFixed(1)} minutes ago`);
+                    console.log(`   - Waiting ${remainingWait.toFixed(1)} more minutes before next FotMob retry`);
+                    
+                    // Update last check time in database
+                    try {
+                        await this.db.collection('bets').updateOne(
+                            { _id: bet._id },
+                            { $set: { lastFotmobCheckTime: currentTime } }
+                        );
+                    } catch (updateError) {
+                        console.warn(`⚠️ Failed to update lastFotmobCheckTime: ${updateError.message}`);
+                    }
+                    
+                    return {
+                        success: true,
+                        outcome: { status: 'pending', reason: `Match not finished yet - will retry in ${remainingWait.toFixed(1)} minutes` },
+                        skipped: true,
+                        reason: 'Match not finished - waiting 5 minutes before next FotMob retry'
+                    };
+                } else {
+                    console.log(`✅ Enough time passed since last FotMob check (${timeSinceLastCheck.toFixed(1)} min) - proceeding with detailed API call`);
+                }
+            }
+            
             // Check if bet has matchFinished flag set (if explicitly false, skip unless enough time passed)
-            if (bet.matchFinished === false && !isMatchFinishedFromStatus && !hasEnoughTimePassed) {
+            if (bet.matchFinished === false && !isMatchFinishedFromStatus && !hasEnoughTimePassedStep4) {
                 console.log(`⏳ Match not finished yet (bet flag = false, status check = ${isMatchFinishedFromStatus}, time = ${timeSinceStart?.toFixed(1)} min) - skipping detailed API call`);
                 return {
                     success: true,
@@ -7891,16 +7896,15 @@ class BetOutcomeCalculator {
                 };
             }
             
-            // IMPORTANT: Only call FotMob fetchMatchDetails if Unibet confirmed match is finished
-            // Note: isUnibetMatchFinished is checked earlier (line 7740) and returns early if false
+            // IMPORTANT: Only call FotMob fetchMatchDetails if enough time has passed (2hrs 15min = 135 minutes)
+            // Note: Time-based check is done earlier (Step 2) and returns early if not enough time
             // This is a safety check in case we reach here somehow
-            // If Unibet check failed or wasn't done, we still proceed (fallback behavior)
             
             // If match appears finished from status, proceed even if bet flag is not set
             if (isMatchFinishedFromStatus) {
                 console.log(`✅ Match finished confirmed from FotMob status - proceeding with detailed API call`);
-            } else if (hasEnoughTimePassed) {
-                console.log(`⏰ Enough time has passed since match start (${timeSinceStart.toFixed(1)} min) - proceeding with FotMob call (Unibet already confirmed match finished)`);
+            } else if (hasEnoughTimePassedStep4) {
+                console.log(`⏰ Enough time has passed since match start (${timeSinceStart.toFixed(1)} min) - proceeding with FotMob call (minimum 135 min / 2hrs 15min required)`);
             } else if (bet.matchFinished === undefined) {
                 console.log(`⚠️ Match finished status unknown - proceeding with API call to verify`);
             } else {
@@ -7908,9 +7912,9 @@ class BetOutcomeCalculator {
             }
             
             // Fetch detailed match information using new API
-            // NOTE: This is only called if Unibet confirmed match is finished (404 or state.id === 5)
+            // NOTE: This is only called if enough time has passed (2hrs 15min = 135 minutes from match start)
             console.log(`\n🔍 STEP 4B: Fetching detailed match information from FotMob...`);
-            console.log(`   ⚠️ This call only happens if Unibet confirmed match is finished`);
+            console.log(`   ✅ This call happens after ${timeSinceStart.toFixed(1)} minutes from match start (minimum ${ESTIMATED_MATCH_DURATION} min required)`);
             console.log(`   Match ID: ${matchResult.match.id}`);
             console.log(`   Match: ${matchResult.match.home?.name} vs ${matchResult.match.away?.name}`);
             

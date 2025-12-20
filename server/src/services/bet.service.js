@@ -3193,7 +3193,8 @@ class BetService {
       query.status = filters.status;
     }
     
-    const bets = await Bet.find(query).sort({ createdAt: -1 });
+    // ✅ FIX: Use .lean() for faster JSON serialization (converts Mongoose docs to plain JS objects)
+    const bets = await Bet.find(query).sort({ createdAt: -1 }).lean();
     console.log(`[BetService.getUserBets] Found ${bets.length} bets for user ${userId} with filters:`, filters);
     return bets;
   }

@@ -1,14 +1,15 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import apiClient from "@/config/axios";
+import matchesService from "@/services/matches.service"; // Use matches service for direct Unibet calls
 
-// Async thunk for fetching live matches from Unibet API
+// Async thunk for fetching live matches from Unibet API (DIRECT - no backend)
 export const fetchLiveMatches = createAsyncThunk(
   "liveMatches/fetchLiveMatches",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await apiClient.get("/v2/live-matches");
+      // ✅ DIRECT CALL: Frontend → Unibet API (no backend)
+      const response = await matchesService.getLiveMatchesV2();
       // Transform the response to match the expected format
-      const { matches, upcomingMatches, totalMatches, lastUpdated, warning, cacheAge } = response.data;
+      const { matches, upcomingMatches, totalMatches, lastUpdated, warning, cacheAge } = response;
       
       console.log('🔍 Redux slice received matches:', matches.length, 'first match kambiLiveData:', matches[0]?.kambiLiveData);
       
@@ -69,13 +70,14 @@ export const fetchLiveMatches = createAsyncThunk(
   }
 );
 
-// Async thunk for silently updating live matches (no loading state)
+// Async thunk for silently updating live matches (no loading state) - DIRECT Unibet call
 export const silentUpdateLiveMatches = createAsyncThunk(
   "liveMatches/silentUpdateLiveMatches",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await apiClient.get("/v2/live-matches?force=true");
-      const { matches, upcomingMatches, totalMatches, lastUpdated } = response.data;
+      // ✅ DIRECT CALL: Frontend → Unibet API (no backend)
+      const response = await matchesService.getLiveMatchesV2();
+      const { matches, upcomingMatches, totalMatches, lastUpdated } = response;
       
       // Group live matches by league for the frontend
       const groupedMatches = {};

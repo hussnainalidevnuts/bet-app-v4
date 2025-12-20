@@ -643,7 +643,7 @@ function extractFootballMatches(data) {
   };
 }
 
-// Initialize cache on startup
+// Initialize cache on startup (one-time only)
 console.log('🚀 Initializing live matches cache...');
 refreshAllFootballCache().then(() => {
   console.log('✅ Live matches cache initialized');
@@ -651,10 +651,15 @@ refreshAllFootballCache().then(() => {
   console.error('❌ Failed to initialize cache:', error.message);
 });
 
-// Set up automatic cache refresh every 2 minutes
+// ✅ DISABLED: Automatic cache refresh - was making Unibet API calls from server every 30 seconds
+// Frontend now calls Next.js API routes directly, so server-side auto-refresh is not needed
+// This prevents unnecessary Unibet API calls from the backend
+/*
 setInterval(() => {
   console.log('⏰ Scheduled cache refresh...');
   refreshAllFootballCache();
 }, CACHE_DURATION);
+*/
+console.log('⚠️ [DISABLED] Automatic cache refresh - frontend handles this via Next.js API routes');
 
 export default router;

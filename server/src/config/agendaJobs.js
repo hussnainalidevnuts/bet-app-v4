@@ -368,9 +368,19 @@ agenda.define("refreshFotmobMultidayCache", async (job) => {
   }
 });
 
+// Track if jobs have been initialized to prevent duplicate initialization
+let agendaJobsInitialized = false;
+
 // Initialize agenda jobs
 export const initializeAgendaJobs = async () => {
+  // Prevent duplicate initialization
+  if (agendaJobsInitialized) {
+    console.log('[Agenda] ⚠️ Agenda jobs already initialized, skipping...');
+    return;
+  }
+  
   try {
+    agendaJobsInitialized = true; // Set flag immediately to prevent race conditions
     console.log('[Agenda] 🔄 Starting Agenda...');
     await agenda.start();
     console.log('[Agenda] ✅ Agenda started successfully');
@@ -502,7 +512,9 @@ export const initializeAgendaJobs = async () => {
     console.log(`[Agenda] ========================================\n`);
     
   } catch (error) {
+    agendaJobsInitialized = false; // Reset flag on error so it can be retried
     console.error('[Agenda] Error initializing agenda:', error);
+    throw error; // Re-throw so caller knows initialization failed
   }
 };
 
@@ -510,14 +522,23 @@ export const initializeAgendaJobs = async () => {
 export const setupAgendaListeners = () => {
   console.log('[Agenda] 🔧 Setting up Agenda listeners...');
   
-  agenda.on("ready", () => {
-    console.log("[Agenda] ✅ Ready and connected to MongoDB");
-    console.log("[Agenda] 🚀 Initializing agenda jobs...");
-    // Initialize agenda after agenda is ready
+  // Check if agenda is already ready (might happen if MongoDB connects quickly)
+  if (agenda._ready) {
+    console.log("[Agenda] ✅ Agenda already ready, initializing jobs immediately...");
     initializeAgendaJobs().catch(error => {
       console.error('[Agenda] ❌ Error initializing agenda jobs:', error);
     });
-  });
+  } else {
+    // Wait for ready event
+    agenda.on("ready", () => {
+      console.log("[Agenda] ✅ Ready and connected to MongoDB");
+      console.log("[Agenda] 🚀 Initializing agenda jobs...");
+      // Initialize agenda after agenda is ready
+      initializeAgendaJobs().catch(error => {
+        console.error('[Agenda] ❌ Error initializing agenda jobs:', error);
+      });
+    });
+  }
 
   agenda.on("error", (err) => {
     console.error("[Agenda] ❌ Error:", err);

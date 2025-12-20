@@ -1,4 +1,5 @@
 import apiClient from "@/config/axios";
+import unibetDirectService from "./unibetDirect.service"; // Direct Unibet API calls
 
 class MatchesService {
   /**
@@ -87,91 +88,118 @@ class MatchesService {
   // ===== NEW CLEAN API METHODS (from unibet-api) =====
 
   /**
-   * Get betting offers for a specific match using new clean API
+   * Get betting offers for a specific match using DIRECT Unibet API (no backend)
    * @param {string|number} eventId - The event/match ID
    * @returns {Promise} - Betting offers data from Unibet API
    */
   async getBetOffersV2(eventId, opts = {}) {
     try {
-      console.log(`🔍 Fetching bet offers for event: ${eventId}`);
-      const params = {};
-      if (opts.noCache) {
-        params._ts = Date.now(); // cache buster
-      }
-      const response = await apiClient.get(`/v2/betoffers/${eventId}` , { params });
+      console.log(`🔍 [DIRECT] Fetching bet offers for event: ${eventId} (direct from Unibet)`);
       
-      if (response.data.success) {
-        console.log(`✅ Successfully fetched bet offers for event: ${eventId} (source: ${response.data.source || 'unknown'})`);
-        return response.data;
+      // ✅ DIRECT CALL: Frontend → Unibet API (no backend)
+      const data = await unibetDirectService.getBetOffers(eventId);
+      
+      if (data.success) {
+        console.log(`✅ [DIRECT] Successfully fetched bet offers for event: ${eventId} (source: ${data.source})`);
+        return data;
       } else {
-        throw new Error(response.data.message || 'Failed to fetch bet offers');
+        // Handle 404 case (match finished)
+        if (opts.silent) {
+          console.warn(`⚠️ [DIRECT] Match not found (404) for event ${eventId}`);
+          return null;
+        }
+        throw new Error(data.message || 'Match not found or finished');
       }
     } catch (error) {
       // For silent updates (polling), don't throw errors - just return null
       if (opts.silent) {
-        console.warn(`⚠️ Silent update failed for event ${eventId}:`, error.message);
+        console.warn(`⚠️ [DIRECT] Silent update failed for event ${eventId}:`, error.message);
         return null;
       }
       
-      console.error('❌ Error fetching bet offers:', error);
+      console.error('❌ [DIRECT] Error fetching bet offers:', error);
       throw new Error(
         error.response?.data?.message ||
         error.message ||
-        'Failed to fetch bet offers'
+        'Failed to fetch bet offers from Unibet'
       );
     }
   }
 
   /**
-   * Get live matches using new clean API
+   * Get live matches using DIRECT Unibet API (no backend)
    * @returns {Promise} - Live matches data from Unibet API
    */
   async getLiveMatchesV2() {
     try {
-      console.log('🔍 Fetching live matches from new API...');
-      const response = await apiClient.get('/v2/live-matches');
+      console.log('🔍 [DIRECT] Fetching live matches (direct from Unibet)...');
       
-      if (response.data.success) {
-        console.log(`✅ Successfully fetched ${response.data.totalMatches} live matches`);
-        return response.data;
+      // ✅ DIRECT CALL: Frontend → Unibet API (no backend)
+      const data = await unibetDirectService.getLiveMatches();
+      
+      if (data.success) {
+        console.log(`✅ [NEXT PROXY] Successfully fetched live matches (source: ${data.source})`);
+        
+        // Data is already extracted and filtered by Next.js API route (same as backend)
+        // Just return the response as-is
+        return {
+          success: true,
+          matches: data.matches || [],
+          allMatches: data.allMatches || [],
+          upcomingMatches: data.upcomingMatches || [],
+          totalMatches: data.totalMatches || 0,
+          totalAllMatches: data.totalAllMatches || 0,
+          lastUpdated: data.lastUpdated || data.timestamp,
+          source: data.source
+        };
       } else {
-        throw new Error(response.data.message || 'Failed to fetch live matches');
+        throw new Error(data.message || 'Failed to fetch live matches');
       }
     } catch (error) {
-      console.error('❌ Error fetching live matches:', error);
+      console.error('❌ [DIRECT] Error fetching live matches:', error);
       throw new Error(
         error.response?.data?.message ||
         error.message ||
-        'Failed to fetch live matches'
+        'Failed to fetch live matches from Unibet'
       );
     }
   }
 
+  // Note: extractMatchesFromUnibetResponse removed - extraction and filtering now done in Next.js API route
+
   /**
-   * Get all football matches (live + upcoming) using new clean API
+   * Get all football matches (live + upcoming) using DIRECT Unibet API (no backend)
    * @returns {Promise} - All football matches data from Unibet API
    */
   async getAllFootballMatchesV2() {
     try {
-      console.log('🔍 Fetching all football matches from new API...');
-      const response = await apiClient.get('/v2/live-matches');
+      console.log('🔍 [DIRECT] Fetching all football matches (direct from Unibet)...');
       
-      if (response.data.success) {
-        console.log(`✅ Successfully fetched ${response.data.totalAllMatches} total matches`);
+      // ✅ DIRECT CALL: Frontend → Unibet API (no backend)
+      const data = await unibetDirectService.getLiveMatches();
+      
+      if (data.success) {
+        console.log(`✅ [NEXT PROXY] Successfully fetched all football matches (source: ${data.source})`);
+        // Data is already extracted and filtered by Next.js API route
         return {
-          ...response.data,
-          allMatches: response.data.allMatches || [],
-          upcomingMatches: response.data.upcomingMatches || []
+          success: true,
+          matches: data.matches || [],
+          allMatches: data.allMatches || [],
+          upcomingMatches: data.upcomingMatches || [],
+          totalMatches: data.totalMatches || 0,
+          totalAllMatches: data.totalAllMatches || 0,
+          lastUpdated: data.lastUpdated || data.timestamp,
+          source: data.source
         };
       } else {
-        throw new Error(response.data.message || 'Failed to fetch all football matches');
+        throw new Error(data.message || 'Failed to fetch all football matches');
       }
     } catch (error) {
-      console.error('❌ Error fetching all football matches:', error);
+      console.error('❌ [DIRECT] Error fetching all football matches:', error);
       throw new Error(
         error.response?.data?.message ||
         error.message ||
-        'Failed to fetch all football matches'
+        'Failed to fetch all football matches from Unibet'
       );
     }
   }

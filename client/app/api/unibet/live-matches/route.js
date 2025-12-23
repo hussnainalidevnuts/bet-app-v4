@@ -5,6 +5,19 @@ import { filterMatchesByAllowedLeagues, getLeagueFilterStats } from '@/lib/utils
 
 const UNIBET_LIVE_MATCHES_API = 'https://www.unibet.com.au/sportsbook-feeds/views/filter/football/all/matches';
 
+// Kambi API Configuration (for live data: score, matchClock, statistics)
+const KAMBI_LIVE_API_URL = 'https://oc-offering-api.kambicdn.com/offering/v2018/ubau/event/live/open.json';
+const KAMBI_LIVE_HEADERS = {
+  'accept': 'application/json, text/javascript, */*; q=0.01',
+  'accept-language': 'en-US,en;q=0.9',
+  'cache-control': 'no-cache',
+  'origin': 'https://www.unibet.com.au',
+  'pragma': 'no-cache',
+  'priority': 'u=1, i',
+  'referer': 'https://www.unibet.com.au/',
+  'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'
+};
+
 // In-memory cache to prevent multiple simultaneous requests
 let cache = {
   data: null,
@@ -242,6 +255,103 @@ function extractFootballMatches(data) {
   };
 }
 
+// Function to fetch live data from Kambi API (score, matchClock, statistics)
+async function fetchKambiLiveData() {
+  try {
+    const url = `${KAMBI_LIVE_API_URL}?lang=en_AU&market=AU&client_id=2&channel_id=1&ncid=${Date.now()}`;
+    console.log('🎲 [NEXT API] Fetching live data from Kambi API...');
+    
+    const response = await fetch(url, {
+      headers: KAMBI_LIVE_HEADERS,
+      signal: AbortSignal.timeout(10000) // 10 second timeout
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Kambi API returned ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data && data.liveEvents) {
+      console.log(`✅ [NEXT API] Successfully fetched Kambi live data:`, {
+        hasLiveEvents: !!data.liveEvents,
+        totalEvents: data.liveEvents?.length || 0,
+        footballEvents: data.liveEvents?.filter(e => e.event?.sport === 'FOOTBALL').length || 0
+      });
+      return data;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('❌ [NEXT API] Failed to fetch Kambi live data:', error.message);
+    return null;
+  }
+}
+
+// Function to extract live data (score, matchClock, statistics) from Kambi API response
+function extractKambiLiveData(kambiData) {
+  const liveDataMap = {};
+  
+  if (kambiData && kambiData.liveEvents && Array.isArray(kambiData.liveEvents)) {
+    kambiData.liveEvents.forEach(liveEvent => {
+      // Only process football matches
+      if (liveEvent.event && liveEvent.event.sport === 'FOOTBALL') {
+        const eventId = liveEvent.event.id;
+        
+        // Extract live data (score, time, statistics) only
+        if (liveEvent.liveData) {
+          liveDataMap[eventId] = {
+            eventId: liveEvent.liveData.eventId,
+            matchClock: liveEvent.liveData.matchClock,
+            score: liveEvent.liveData.score,
+            statistics: liveEvent.liveData.statistics
+          };
+        }
+      }
+    });
+  }
+  
+  console.log(`📊 [NEXT API] Extracted live data for ${Object.keys(liveDataMap).length} football matches`);
+  return liveDataMap;
+}
+
+// Function to merge Kambi live data with Unibet matches
+function mergeKambiLiveDataWithMatches(matches, liveDataMap) {
+  if (!liveDataMap || Object.keys(liveDataMap).length === 0) {
+    console.log('⚠️ [NEXT API] No Kambi live data to merge');
+    return matches;
+  }
+  
+  console.log('🔗 [NEXT API] Merging Kambi live data with matches:', {
+    totalMatches: matches.length,
+    totalLiveData: Object.keys(liveDataMap).length,
+    matchIds: matches.map(m => m.id).slice(0, 5),
+    liveDataIds: Object.keys(liveDataMap).slice(0, 5)
+  });
+  
+  const enrichedMatches = matches.map(match => {
+    const matchLiveData = liveDataMap[match.id];
+    
+    const enrichedMatch = { ...match };
+    
+    if (matchLiveData) {
+      console.log(`✅ [NEXT API] Found live data for match ${match.id}:`, {
+        hasMatchClock: !!matchLiveData.matchClock,
+        hasScore: !!matchLiveData.score,
+        hasStatistics: !!matchLiveData.statistics
+      });
+      enrichedMatch.kambiLiveData = matchLiveData;
+    }
+    
+    return enrichedMatch;
+  });
+  
+  const matchesWithLiveData = enrichedMatches.filter(m => m.kambiLiveData).length;
+  console.log(`✨ [NEXT API] Enriched ${matchesWithLiveData} out of ${matches.length} matches with Kambi live data`);
+  
+  return enrichedMatches;
+}
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -297,20 +407,29 @@ export async function GET(request) {
     fetch('http://127.0.0.1:7242/ingest/36e9cd0b-a351-407e-8f20-cf67918d6e8e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'route.js:227',message:'GET - extraction complete',data:{allMatchesCount:allMatches.length,liveMatchesCount:liveMatches.length,upcomingMatchesCount:upcomingMatches.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
     // #endregion
     
+    // Fetch Kambi live data (score, matchClock, statistics) for live matches
+    console.log('🎲 [NEXT API] Fetching Kambi live data to enrich matches...');
+    const kambiData = await fetchKambiLiveData();
+    const liveDataMap = extractKambiLiveData(kambiData);
+    
+    // Merge Kambi live data with live matches
+    const enrichedLiveMatches = mergeKambiLiveDataWithMatches(liveMatches, liveDataMap);
+    
     // Prepare response data
     const responseData = {
       success: true,
-      matches: liveMatches,
+      matches: enrichedLiveMatches,
       allMatches: allMatches,
       upcomingMatches: upcomingMatches,
-      totalMatches: liveMatches.length,
+      totalMatches: enrichedLiveMatches.length,
       totalAllMatches: allMatches.length,
       lastUpdated: new Date().toISOString(),
       source: 'unibet-proxy-nextjs',
       debug: {
         totalEventsFound: allMatches.length,
-        liveEventsWithOdds: liveMatches.length,
-        upcomingEventsWithOdds: upcomingMatches.length
+        liveEventsWithOdds: enrichedLiveMatches.length,
+        upcomingEventsWithOdds: upcomingMatches.length,
+        kambiLiveDataCount: Object.keys(liveDataMap).length
       }
     };
     

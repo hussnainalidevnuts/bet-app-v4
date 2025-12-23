@@ -95,19 +95,36 @@ const transformLiveMatchData = (apiMatch) => {
         });
     }
 
-    // Format match time
+    // Format match time - use Kambi live data if available, otherwise use Unibet liveData
     const matchDate = new Date(apiMatch.start);
     const now = new Date();
     const isToday = matchDate.toDateString() === now.toDateString();
     
+    // For live matches, show actual time from matchClock (not "Today")
     let displayTime = 'Live';
-    if (apiMatch.liveData?.matchClock) {
+    let displayDate = isToday ? 'Today' : matchDate.toLocaleDateString();
+    
+    // Prioritize kambiLiveData for accurate live time and score
+    if (apiMatch.kambiLiveData?.matchClock) {
+        const clock = apiMatch.kambiLiveData.matchClock;
+        if (clock.running) {
+            displayTime = `${clock.minute}'`;
+            if (clock.second && clock.second > 0) {
+                displayTime = `${clock.minute}'${clock.second.toString().padStart(2, '0')}`;
+            }
+        } else {
+            displayTime = clock.period === 'HT' ? 'HT' : clock.period || 'Live';
+        }
+        // For live matches, don't show "Today" - show actual time
+        displayDate = displayTime;
+    } else if (apiMatch.liveData?.matchClock) {
         const clock = apiMatch.liveData.matchClock;
         if (clock.running) {
             displayTime = `${clock.period} - ${clock.minute}'`;
         } else {
             displayTime = 'HT';
         }
+        displayDate = displayTime;
     }
 
 
@@ -121,7 +138,7 @@ const transformLiveMatchData = (apiMatch) => {
         },
         team1: homeTeam,
         team2: awayTeam,
-        date: isToday ? 'Today' : matchDate.toLocaleDateString(),
+        date: displayDate, // Shows actual time for live matches, "Today" or date for upcoming
         time: displayTime,
         odds: odds,
         clock: true,

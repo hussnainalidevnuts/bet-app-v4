@@ -2955,26 +2955,25 @@
               "longName": "Benin"
             },
             "eliminatedTeamId": null,
-            "statusId": 2,
+            "statusId": 6,
             "tournamentStage": "1",
             "status": {
               "utcTime": "2025-12-23T12:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "23.12.2025 13:30:04"
+                "firstHalfStarted": "23.12.2025 13:30:04",
+                "secondHalfStarted": "23.12.2025 14:32:39"
               },
               "periodLength": 45,
-              "finished": false,
+              "finished": true,
               "started": true,
               "cancelled": false,
-              "ongoing": true,
+              "awarded": false,
               "scoreStr": "1 - 0",
-              "liveTime": {
-                "short": "44‎’‎",
-                "shortKey": "",
-                "long": "43:32",
-                "longKey": "",
-                "maxTime": 45,
-                "addedTime": 0
+              "reason": {
+                "short": "FT",
+                "shortKey": "fulltime_short",
+                "long": "Full-Time",
+                "longKey": "finished"
               }
             },
             "timeTS": 1766493000000
@@ -2985,7 +2984,7 @@
             "time": "23.12.2025 16:00",
             "home": {
               "id": 6395,
-              "score": 0,
+              "score": 1,
               "name": "Senegal",
               "longName": "Senegal"
             },
@@ -2996,17 +2995,28 @@
               "longName": "Botswana"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 3,
             "tournamentStage": "1",
             "status": {
               "utcTime": "2025-12-23T15:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "23.12.2025 16:00:00"
+                "firstHalfStarted": "23.12.2025 16:01:00",
+                "secondHalfStarted": "23.12.2025 17:06:07"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "1 - 0",
+              "liveTime": {
+                "short": "46‎’‎",
+                "shortKey": "",
+                "long": "45:48",
+                "longKey": "",
+                "maxTime": 90,
+                "addedTime": 0
+              }
             },
             "timeTS": 1766502000000
           }
@@ -3093,17 +3103,27 @@
               "longName": "Shabab Al-Ahli Dubai FC"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 2,
             "tournamentStage": "6",
             "status": {
               "utcTime": "2025-12-23T16:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "23.12.2025 17:00:00"
+                "firstHalfStarted": "23.12.2025 17:01:40"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "0 - 0",
+              "liveTime": {
+                "short": "6‎’‎",
+                "shortKey": "",
+                "long": "5:15",
+                "longKey": "",
+                "maxTime": 45,
+                "addedTime": 0
+              }
             },
             "timeTS": 1766505600000
           },
@@ -3159,28 +3179,37 @@
             "time": "23.12.2025 14:45",
             "home": {
               "id": 101688,
-              "score": 0,
+              "score": 3,
               "name": "Al-Hussein SC",
               "longName": "Al-Hussein SC"
             },
             "away": {
               "id": 617067,
-              "score": 0,
+              "score": 1,
               "name": "Ahal",
               "longName": "Ahal"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 6,
             "tournamentStage": "6",
             "status": {
               "utcTime": "2025-12-23T13:45:00.000Z",
               "halfs": {
-                "firstHalfStarted": "23.12.2025 14:45:00"
+                "firstHalfStarted": "23.12.2025 14:45:17",
+                "secondHalfStarted": "23.12.2025 15:48:49"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": true,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "awarded": false,
+              "scoreStr": "3 - 1",
+              "reason": {
+                "short": "FT",
+                "shortKey": "fulltime_short",
+                "long": "Full-Time",
+                "longKey": "finished"
+              }
             },
             "timeTS": 1766497500000
           },
@@ -3519,7 +3548,7 @@
             "time": "23.12.2025 13:30",
             "home": {
               "id": 608449,
-              "score": 0,
+              "score": 2,
               "name": "Ceramica Cleopatra",
               "longName": "Ceramica Cleopatra"
             },
@@ -3527,29 +3556,32 @@
               "id": 316504,
               "score": 0,
               "name": "Abo Qir Semad",
+              "redCards": 1,
               "longName": "Abo Qir Semad"
             },
             "eliminatedTeamId": null,
-            "statusId": 2,
+            "statusId": 11,
             "tournamentStage": "1/16",
             "status": {
               "utcTime": "2025-12-23T12:30:00.000Z",
+              "numberOfAwayRedCards": 1,
               "halfs": {
-                "firstHalfStarted": "23.12.2025 13:31:05"
+                "firstHalfStarted": "23.12.2025 13:31:05",
+                "secondHalfStarted": "23.12.2025 14:39:23",
+                "firstExtraHalfStarted": "23.12.2025 15:36:44",
+                "secondExtraHalfStarted": "23.12.2025 15:54:56"
               },
               "periodLength": 45,
-              "finished": false,
+              "finished": true,
               "started": true,
               "cancelled": false,
-              "ongoing": true,
-              "scoreStr": "0 - 0",
-              "liveTime": {
-                "short": "43‎’‎",
-                "shortKey": "",
-                "long": "42:31",
-                "longKey": "",
-                "maxTime": 45,
-                "addedTime": 0
+              "awarded": false,
+              "scoreStr": "2 - 0",
+              "reason": {
+                "short": "AET",
+                "shortKey": "afterextratime_short",
+                "long": "After extra time",
+                "longKey": "afterextra"
               }
             },
             "timeTS": 1766493000000
@@ -3571,7 +3603,7 @@
             "time": "23.12.2025 15:30",
             "home": {
               "id": 8622,
-              "score": 0,
+              "score": 1,
               "name": "Konyaspor",
               "longName": "Konyaspor"
             },
@@ -3582,17 +3614,28 @@
               "longName": "Antalyaspor"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 3,
             "tournamentStage": "1",
             "status": {
               "utcTime": "2025-12-23T14:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "23.12.2025 15:30:00"
+                "firstHalfStarted": "23.12.2025 15:31:33",
+                "secondHalfStarted": "23.12.2025 16:33:14"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "1 - 0",
+              "liveTime": {
+                "short": "79‎’‎",
+                "shortKey": "",
+                "long": "78:41",
+                "longKey": "",
+                "maxTime": 90,
+                "addedTime": 0
+              }
             },
             "timeTS": 1766500200000
           }
@@ -3620,12 +3663,12 @@
             },
             "away": {
               "id": 281467,
-              "score": 0,
+              "score": 1,
               "name": "Erzurumspor FK",
               "longName": "Erzurumspor FK"
             },
             "eliminatedTeamId": null,
-            "statusId": 3,
+            "statusId": 6,
             "tournamentStage": "1",
             "status": {
               "utcTime": "2025-12-23T12:00:00.000Z",
@@ -3634,18 +3677,16 @@
                 "secondHalfStarted": "23.12.2025 14:05:21"
               },
               "periodLength": 45,
-              "finished": false,
+              "finished": true,
               "started": true,
               "cancelled": false,
-              "ongoing": true,
-              "scoreStr": "3 - 0",
-              "liveTime": {
-                "short": "54‎’‎",
-                "shortKey": "",
-                "long": "53:15",
-                "longKey": "",
-                "maxTime": 90,
-                "addedTime": 0
+              "awarded": false,
+              "scoreStr": "3 - 1",
+              "reason": {
+                "short": "FT",
+                "shortKey": "fulltime_short",
+                "long": "Full-Time",
+                "longKey": "finished"
               }
             },
             "timeTS": 1766491200000
@@ -3865,28 +3906,38 @@
             "time": "23.12.2025 16:00",
             "home": {
               "id": 101752,
-              "score": 0,
+              "score": 1,
               "name": "Ghazl Al Mahalla",
               "longName": "Ghazl Al Mahalla"
             },
             "away": {
               "id": 101745,
-              "score": 0,
+              "score": 1,
               "name": "Al Ahly SC",
               "longName": "Al Ahly SC"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 10,
             "tournamentStage": "3",
             "status": {
               "utcTime": "2025-12-23T15:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "23.12.2025 16:00:00"
+                "firstHalfStarted": "23.12.2025 16:02:11"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "1 - 1",
+              "liveTime": {
+                "short": "HT",
+                "shortKey": "halftime_short",
+                "long": "Half-Time",
+                "longKey": "pause_match",
+                "maxTime": 45,
+                "addedTime": 0
+              }
             },
             "timeTS": 1766502000000
           }
@@ -3917,22 +3968,32 @@
             },
             "away": {
               "id": 205190,
-              "score": 0,
+              "score": 1,
               "name": "Wadi Degla FC",
               "longName": "Wadi Degla FC"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 10,
             "tournamentStage": "3",
             "status": {
               "utcTime": "2025-12-23T15:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "23.12.2025 16:00:00"
+                "firstHalfStarted": "23.12.2025 16:01:21"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "0 - 1",
+              "liveTime": {
+                "short": "HT",
+                "shortKey": "halftime_short",
+                "long": "Half-Time",
+                "longKey": "pause_match",
+                "maxTime": 45,
+                "addedTime": 0
+              }
             },
             "timeTS": 1766502000000
           }
@@ -4070,26 +4131,25 @@
               "longName": "Penang"
             },
             "eliminatedTeamId": null,
-            "statusId": 10,
+            "statusId": 6,
             "tournamentStage": "13",
             "status": {
               "utcTime": "2025-12-23T12:15:00.000Z",
               "halfs": {
-                "firstHalfStarted": "23.12.2025 13:15:16"
+                "firstHalfStarted": "23.12.2025 13:15:16",
+                "secondHalfStarted": "23.12.2025 14:20:55"
               },
               "periodLength": 45,
-              "finished": false,
+              "finished": true,
               "started": true,
               "cancelled": false,
-              "ongoing": true,
+              "awarded": false,
               "scoreStr": "2 - 0",
-              "liveTime": {
-                "short": "HT",
-                "shortKey": "halftime_short",
-                "long": "Half-Time",
-                "longKey": "pause_match",
-                "maxTime": 45,
-                "addedTime": 0
+              "reason": {
+                "short": "FT",
+                "shortKey": "fulltime_short",
+                "long": "Full-Time",
+                "longKey": "finished"
               }
             },
             "timeTS": 1766492100000
@@ -4100,37 +4160,36 @@
             "time": "23.12.2025 14:00",
             "home": {
               "id": 165235,
-              "score": 0,
+              "score": 1,
               "name": "PDRM",
               "longName": "PDRM"
             },
             "away": {
               "id": 165223,
-              "score": 0,
+              "score": 3,
               "name": "Selangor",
               "longName": "Selangor"
             },
             "eliminatedTeamId": null,
-            "statusId": 2,
+            "statusId": 6,
             "tournamentStage": "13",
             "status": {
               "utcTime": "2025-12-23T13:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "23.12.2025 14:00:37"
+                "firstHalfStarted": "23.12.2025 14:00:37",
+                "secondHalfStarted": "23.12.2025 15:05:25"
               },
               "periodLength": 45,
-              "finished": false,
+              "finished": true,
               "started": true,
               "cancelled": false,
-              "ongoing": true,
-              "scoreStr": "0 - 0",
-              "liveTime": {
-                "short": "13‎’‎",
-                "shortKey": "",
-                "long": "12:59",
-                "longKey": "",
-                "maxTime": 45,
-                "addedTime": 0
+              "awarded": false,
+              "scoreStr": "1 - 3",
+              "reason": {
+                "short": "FT",
+                "shortKey": "fulltime_short",
+                "long": "Full-Time",
+                "longKey": "finished"
               }
             },
             "timeTS": 1766494800000
@@ -4141,37 +4200,36 @@
             "time": "23.12.2025 14:00",
             "home": {
               "id": 165229,
-              "score": 0,
+              "score": 1,
               "name": "Terengganu",
               "longName": "Terengganu"
             },
             "away": {
               "id": 242698,
-              "score": 0,
+              "score": 3,
               "name": "Sabah",
               "longName": "Sabah"
             },
             "eliminatedTeamId": null,
-            "statusId": 2,
+            "statusId": 6,
             "tournamentStage": "13",
             "status": {
               "utcTime": "2025-12-23T13:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "23.12.2025 14:01:08"
+                "firstHalfStarted": "23.12.2025 14:01:08",
+                "secondHalfStarted": "23.12.2025 15:06:40"
               },
               "periodLength": 45,
-              "finished": false,
+              "finished": true,
               "started": true,
               "cancelled": false,
-              "ongoing": true,
-              "scoreStr": "0 - 0",
-              "liveTime": {
-                "short": "13‎’‎",
-                "shortKey": "",
-                "long": "12:28",
-                "longKey": "",
-                "maxTime": 45,
-                "addedTime": 0
+              "awarded": false,
+              "scoreStr": "1 - 3",
+              "reason": {
+                "short": "FT",
+                "shortKey": "fulltime_short",
+                "long": "Full-Time",
+                "longKey": "finished"
               }
             },
             "timeTS": 1766494800000
@@ -4246,17 +4304,27 @@
               "longName": "Barau"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 10,
             "tournamentStage": "18",
             "status": {
               "utcTime": "2025-12-23T15:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "23.12.2025 16:00:00"
+                "firstHalfStarted": "23.12.2025 16:02:34"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "0 - 0",
+              "liveTime": {
+                "short": "HT",
+                "shortKey": "halftime_short",
+                "long": "Half-Time",
+                "longKey": "pause_match",
+                "maxTime": 45,
+                "addedTime": 0
+              }
             },
             "timeTS": 1766502000000
           }
@@ -4344,7 +4412,7 @@
               "longName": "Al-Qasim"
             },
             "eliminatedTeamId": null,
-            "statusId": 2,
+            "statusId": 12,
             "tournamentStage": "8",
             "status": {
               "utcTime": "2025-12-23T13:00:00.000Z",
@@ -4358,10 +4426,10 @@
               "ongoing": true,
               "scoreStr": "2 - 0",
               "liveTime": {
-                "short": "12‎’‎",
-                "shortKey": "",
-                "long": "11:58",
-                "longKey": "",
+                "short": "IR",
+                "shortKey": "interrupted_short",
+                "long": "Interrupted",
+                "longKey": "interrupted",
                 "maxTime": 45,
                 "addedTime": 0
               }
@@ -4385,17 +4453,27 @@
               "longName": "Al Quwa Al Jawiya"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 2,
             "tournamentStage": "8",
             "status": {
               "utcTime": "2025-12-23T15:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "23.12.2025 16:30:00"
+                "firstHalfStarted": "23.12.2025 16:29:51"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "0 - 0",
+              "liveTime": {
+                "short": "38‎’‎",
+                "shortKey": "",
+                "long": "37:04",
+                "longKey": "",
+                "maxTime": 45,
+                "addedTime": 0
+              }
             },
             "timeTS": 1766503800000
           },
@@ -4405,7 +4483,7 @@
             "time": "23.12.2025 16:30",
             "home": {
               "id": 101650,
-              "score": 0,
+              "score": 1,
               "name": "Duhok",
               "longName": "Duhok"
             },
@@ -4416,17 +4494,27 @@
               "longName": "Al Najaf"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 2,
             "tournamentStage": "8",
             "status": {
               "utcTime": "2025-12-23T15:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "23.12.2025 16:30:00"
+                "firstHalfStarted": "23.12.2025 16:32:42"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "1 - 0",
+              "liveTime": {
+                "short": "35‎’‎",
+                "shortKey": "",
+                "long": "34:13",
+                "longKey": "",
+                "maxTime": 45,
+                "addedTime": 0
+              }
             },
             "timeTS": 1766503800000
           }
@@ -4494,12 +4582,12 @@
             },
             "away": {
               "id": 585850,
-              "score": 0,
+              "score": 1,
               "name": "PSIM Yogyakarta",
               "longName": "PSIM Yogyakarta"
             },
             "eliminatedTeamId": null,
-            "statusId": 3,
+            "statusId": 6,
             "tournamentStage": "15",
             "status": {
               "utcTime": "2025-12-23T12:00:00.000Z",
@@ -4508,18 +4596,16 @@
                 "secondHalfStarted": "23.12.2025 14:05:21"
               },
               "periodLength": 45,
-              "finished": false,
+              "finished": true,
               "started": true,
               "cancelled": false,
-              "ongoing": true,
-              "scoreStr": "1 - 0",
-              "liveTime": {
-                "short": "54‎’‎",
-                "shortKey": "",
-                "long": "53:15",
-                "longKey": "",
-                "maxTime": 90,
-                "addedTime": 0
+              "awarded": false,
+              "scoreStr": "1 - 1",
+              "reason": {
+                "short": "FT",
+                "shortKey": "fulltime_short",
+                "long": "Full-Time",
+                "longKey": "finished"
               }
             },
             "timeTS": 1766491200000
@@ -5506,41 +5592,53 @@
               "finished": false
             },
             "timeTS": 1766588400000
-          },
+          }
+        ],
+        "parentLeagueId": 10270,
+        "parentLeagueName": "League Cup",
+        "internalRank": 0,
+        "liveRank": 0,
+        "simpleLeague": false
+      },
+      {
+        "ccode": "HON",
+        "id": 915192,
+        "primaryId": 337,
+        "name": "Liga Nacional - Apertura Playoff Grp. A",
+        "matches": [
           {
-            "id": 5055342,
-            "leagueId": 912218,
-            "time": "24.12.2025 19:00",
+            "id": 5091751,
+            "leagueId": 915192,
+            "time": "24.12.2025 02:00",
             "home": {
-              "id": 80591,
+              "id": 49783,
               "score": 0,
-              "name": "Zamalek SC",
-              "longName": "Zamalek SC"
+              "name": "Real Espana",
+              "longName": "Real Espana"
             },
             "away": {
-              "id": 205189,
+              "id": 49785,
               "score": 0,
-              "name": "Smouha SC",
-              "longName": "Smouha SC"
+              "name": "FC Motagua",
+              "longName": "FC Motagua"
             },
             "eliminatedTeamId": null,
             "statusId": 1,
-            "tournamentStage": "3",
+            "tournamentStage": "5",
             "status": {
-              "utcTime": "2025-12-24T18:00:00.000Z",
+              "utcTime": "2025-12-24T01:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "24.12.2025 19:00:00"
+                "firstHalfStarted": "24.12.2025 02:00:00"
               },
               "periodLength": 45,
               "started": false,
               "cancelled": false,
               "finished": false
             },
-            "timeTS": 1766599200000
+            "timeTS": 1766538000000
           }
         ],
-        "parentLeagueId": 10270,
-        "parentLeagueName": "League Cup",
+        "parentLeagueId": 337,
         "internalRank": 0,
         "liveRank": 0,
         "simpleLeague": false
@@ -5834,7 +5932,7 @@
               "longName": "San Juan FC"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 106,
             "tournamentStage": "final",
             "status": {
               "utcTime": "2025-12-23T23:00:00.000Z",
@@ -5842,9 +5940,15 @@
                 "firstHalfStarted": "24.12.2025 00:00:00"
               },
               "periodLength": 45,
+              "cancelled": true,
               "started": false,
-              "cancelled": false,
               "finished": false,
+              "reason": {
+                "short": "Can",
+                "shortKey": "cancelled_short",
+                "long": "Cancelled",
+                "longKey": "cancelled"
+              },
               "aggregatedStr": "0 - 0"
             },
             "timeTS": 1766530800000
@@ -6364,53 +6468,41 @@
               "finished": false
             },
             "timeTS": 1766674800000
-          }
-        ],
-        "parentLeagueId": 10270,
-        "parentLeagueName": "League Cup",
-        "internalRank": 0,
-        "liveRank": 0,
-        "simpleLeague": false
-      },
-      {
-        "ccode": "HON",
-        "id": 915192,
-        "primaryId": 337,
-        "name": "Liga Nacional - Apertura Playoff Grp. A",
-        "matches": [
+          },
           {
-            "id": 5091751,
-            "leagueId": 915192,
-            "time": "25.12.2025 02:00",
+            "id": 5055342,
+            "leagueId": 912218,
+            "time": "25.12.2025 19:00",
             "home": {
-              "id": 49783,
+              "id": 80591,
               "score": 0,
-              "name": "Real Espana",
-              "longName": "Real Espana"
+              "name": "Zamalek SC",
+              "longName": "Zamalek SC"
             },
             "away": {
-              "id": 49785,
+              "id": 205189,
               "score": 0,
-              "name": "FC Motagua",
-              "longName": "FC Motagua"
+              "name": "Smouha SC",
+              "longName": "Smouha SC"
             },
             "eliminatedTeamId": null,
             "statusId": 1,
-            "tournamentStage": "5",
+            "tournamentStage": "3",
             "status": {
-              "utcTime": "2025-12-25T01:00:00.000Z",
+              "utcTime": "2025-12-25T18:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "25.12.2025 02:00:00"
+                "firstHalfStarted": "25.12.2025 19:00:00"
               },
               "periodLength": 45,
               "started": false,
               "cancelled": false,
               "finished": false
             },
-            "timeTS": 1766624400000
+            "timeTS": 1766685600000
           }
         ],
-        "parentLeagueId": 337,
+        "parentLeagueId": 10270,
+        "parentLeagueName": "League Cup",
         "internalRank": 0,
         "liveRank": 0,
         "simpleLeague": false

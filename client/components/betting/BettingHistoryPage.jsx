@@ -952,8 +952,8 @@ const BettingHistoryPage = ({ userId }) => {
                   </Table>
                 </div> */}
 
-                {/* Mobile Card View - Now shown on all screen sizes */}
-                <div className="space-y-4">
+                {/* Card View - 1 column on mobile, 2 columns on desktop */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {sortedData.map((item) => (
                     <BetCardWrapper
                       key={item._id}

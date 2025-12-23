@@ -439,7 +439,7 @@ const MatchDetailPage = ({ matchId }) => {
     }
 
     return (
-        <div className="bg-slate-100 min-h-screen relative">
+        <div className="bg-slate-100 min-h-screen">
             {/* Main content - adjusts width when sidebar expands */}
             <div className="lg:mr-80 xl:mr-96">
                 <div className="lg:p-2 xl:p-4">
@@ -457,7 +457,7 @@ const MatchDetailPage = ({ matchId }) => {
             </div>
 
             {/* Right sidebar - fixed position, doesn't move */}
-            <div className="w-full lg:w-80 xl:w-96 lg:fixed lg:right-4 lg:top-40 lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto">
+            <div className="w-full lg:w-80 xl:w-96 lg:fixed lg:right-4 lg:top-40 lg:max-h-[calc(100vh-120px)] lg:overflow-y-auto lg:z-40">
                 <div className="p-2 sm:p-3 md:p-4 lg:p-2">
                     <MatchVisualization matchData={displayMatchData} />
                 </div>

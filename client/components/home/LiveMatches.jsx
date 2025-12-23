@@ -156,15 +156,15 @@ const LiveMatches = () => {
     const cacheAge = useSelector(selectLiveMatchesCacheAge);
 
 
-    // Auto-refresh live odds every 2 seconds
+    // Auto-refresh live odds every 1 second for real-time updates
     useEffect(() => {
         // Initial fetch with loading state
         dispatch(fetchLiveMatches());
         
-        // Set up interval to refresh every 5 seconds with silent updates (reduced frequency to prevent timeout)
+        // Set up interval to refresh every 1 second with silent updates (real-time data requirement)
         const refreshInterval = setInterval(() => {
             dispatch(silentUpdateLiveMatches());
-        }, 5000); // 5 seconds (reduced from 2 seconds to prevent API timeout)
+        }, 1000); // 1 second for real-time odds updates
 
         // Cleanup interval on unmount
         return () => {

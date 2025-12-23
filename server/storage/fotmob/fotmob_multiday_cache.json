@@ -4563,17 +4563,27 @@
               "longName": "Songkhla United FC"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 2,
             "tournamentStage": "14",
             "status": {
               "utcTime": "2025-12-23T11:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "23.12.2025 12:00:00"
+                "firstHalfStarted": "23.12.2025 12:00:56"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "0 - 0",
+              "liveTime": {
+                "short": "2‎’‎",
+                "shortKey": "",
+                "long": "1:00",
+                "longKey": "",
+                "maxTime": 45,
+                "addedTime": 0
+              }
             },
             "timeTS": 1766487600000
           }

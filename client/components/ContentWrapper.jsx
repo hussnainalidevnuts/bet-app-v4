@@ -14,7 +14,7 @@ const ContentWrapper = ({ children }) => {
             !isMobile && !isCollapsed ? 'ml-6' : ''
         }`}>
             {!isAdminPage && <SecondaryNavigation />}
-            <main className="flex-1 overflow-y-auto overflow-x-hidden">
+            <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-0">
                 {children}
             </main>
         </div>

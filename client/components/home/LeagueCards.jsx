@@ -1073,7 +1073,7 @@ const LeagueCards = ({
     };
 
     return (
-        <div className="mb-8">
+        <div className="mb-8 pb-4 md:pb-0">
             {title && (
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">{title}</h2>
             )}

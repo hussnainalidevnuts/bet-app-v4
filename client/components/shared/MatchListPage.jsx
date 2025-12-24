@@ -176,7 +176,7 @@ const MatchListPage = ({ config }) => {
         <div className="bg-slate-100 min-h-screen relative">
             {/* Main content */}
             <div className="lg:mr-80 xl:mr-96">
-                <div className="p-2 sm:p-3 md:p-4">
+                <div className="p-2 sm:p-3 md:p-4 pb-20 md:pb-2 sm:pb-3 md:pb-4">
                     {/* Header */}
                     <div className="mb-4 bg-white p-3 w-full md:w-screen"> {/* Adjusted width for responsiveness */}
                         {/* Breadcrumb */}

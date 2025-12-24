@@ -133,8 +133,8 @@ const LiveMatchCard = ({ match }) => {
                         <div className="w-1/10 text-right">
                             {match.kambiLiveData?.score ? (
                                 <div className="text-lg font-bold text-gray-800">
-                                    <div>{match.kambiLiveData.score.home}</div>
-                                    <div>{match.kambiLiveData.score.away}</div>
+                                    <div>{match.kambiLiveData.score.home ?? 0}</div>
+                                    <div>{match.kambiLiveData.score.away ?? 0}</div>
                                 </div>
                             ) : match.liveData?.score ? (
                                 <div className="text-lg font-bold text-gray-800">

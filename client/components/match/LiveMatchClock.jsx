@@ -133,7 +133,7 @@ const LiveMatchClock = ({ matchId, isLive = false, initialLiveData = null, onSco
         
         // ✅ FIX: Only update timer if:
         // 1. Not initialized yet (currentTime is null)
-        // 2. New time is significantly newer (5+ seconds ahead) - major correction
+        // 2. New time is significantly newer (10+ seconds ahead) - major correction (more defensive for production)
         // 3. Timer is not running (stopped state)
         const apiTotalSeconds = (matchClock.minute || 0) * 60 + (matchClock.second || 0);
         const currentTotalSeconds = currentTime ? 
@@ -141,7 +141,7 @@ const LiveMatchClock = ({ matchId, isLive = false, initialLiveData = null, onSco
         
         const shouldUpdate = !currentTime || // First initialization
                             !matchClock.running || // Timer stopped - safe to update
-                            apiTotalSeconds > currentTotalSeconds + 5; // Major correction (5+ seconds ahead)
+                            apiTotalSeconds > currentTotalSeconds + 10; // Major correction (10+ seconds ahead - more defensive for production)
         
         if (shouldUpdate) {
             // Initialize or update with API data

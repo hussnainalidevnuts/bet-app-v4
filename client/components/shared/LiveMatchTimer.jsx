@@ -116,10 +116,19 @@ const LiveMatchTimer = ({ matchId, initialTime = null, initialPeriod = null, isR
         };
     }, [isLive]);
 
-    // API sync every 45 seconds (keep this as backup)
+    // API sync every 45 seconds (keep this as backup) - MORE DEFENSIVE for production
     useEffect(() => {
+        if (!matchId) return;
+        
         const syncWithAPI = async () => {
             try {
+                // Don't sync if timer is running locally - let it run independently
+                // Only sync if timer is stopped or if we need a major correction
+                if (isLive && intervalRef.current && isInitializedRef.current) {
+                    // Timer is running - skip API sync to prevent glitches
+                    return;
+                }
+                
                 console.log(`🔄 LiveMatchTimer: Syncing with API for match ${matchId}`);
                 const response = await apiClient.get(`/matches/${matchId}/live`);
                 
@@ -130,9 +139,10 @@ const LiveMatchTimer = ({ matchId, initialTime = null, initialPeriod = null, isR
                         const apiTotalSeconds = (matchClock.minute || 0) * 60 + (matchClock.second || 0);
                         const currentTotalSeconds = (currentTimeRef.current.minute || 0) * 60 + (currentTimeRef.current.second || 0);
                         
-                        // Only update if API time is significantly newer (at least 2 seconds ahead)
-                        // This prevents backward jumps from stale API data
-                        if (apiTotalSeconds > currentTotalSeconds + 1) {
+                        // ✅ MORE DEFENSIVE: Only update if API time is significantly newer (10+ seconds ahead)
+                        // This prevents backward jumps from stale API data in production
+                        // Production networks can have delays causing stale data
+                        if (apiTotalSeconds > currentTotalSeconds + 10) {
                             const newTime = {
                                 minute: matchClock.minute || 0,
                                 second: matchClock.second || 0
@@ -143,7 +153,21 @@ const LiveMatchTimer = ({ matchId, initialTime = null, initialPeriod = null, isR
                             setIsLive(matchClock.running || false);
                             setLastSyncTime(Date.now());
                             
-                            console.log(`✅ LiveMatchTimer: Synced - ${matchClock.minute}'${matchClock.second} ${matchClock.period} (running: ${matchClock.running})`);
+                            console.log(`✅ LiveMatchTimer: Major sync - ${matchClock.minute}'${matchClock.second} ${matchClock.period} (running: ${matchClock.running})`);
+                        } else if (!isInitializedRef.current) {
+                            // First initialization - sync regardless
+                            const newTime = {
+                                minute: matchClock.minute || 0,
+                                second: matchClock.second || 0
+                            };
+                            setCurrentTime(newTime);
+                            currentTimeRef.current = newTime;
+                            setCurrentPeriod(matchClock.period || '1st half');
+                            setIsLive(matchClock.running || false);
+                            isInitializedRef.current = true;
+                            setLastSyncTime(Date.now());
+                            
+                            console.log(`✅ LiveMatchTimer: Initial sync - ${matchClock.minute}'${matchClock.second} ${matchClock.period} (running: ${matchClock.running})`);
                         } else {
                             console.log(`⏭️ LiveMatchTimer: Skipped sync - API time (${matchClock.minute}'${matchClock.second}) is not significantly newer than current (${currentTimeRef.current.minute}'${currentTimeRef.current.second})`);
                         }
@@ -154,18 +178,20 @@ const LiveMatchTimer = ({ matchId, initialTime = null, initialPeriod = null, isR
             }
         };
 
-        // Initial sync
-        syncWithAPI();
+        // Initial sync only if not initialized
+        if (!isInitializedRef.current) {
+            syncWithAPI();
+        }
 
-        // Set up periodic sync every 45 seconds
-        syncIntervalRef.current = setInterval(syncWithAPI, 45000);
+        // Set up periodic sync every 60 seconds (increased from 45s for production)
+        syncIntervalRef.current = setInterval(syncWithAPI, 60000);
 
         return () => {
             if (syncIntervalRef.current) {
                 clearInterval(syncIntervalRef.current);
             }
         };
-    }, [matchId]);
+    }, [matchId, isLive]);
 
     // Format time display
     const formatTime = () => {

@@ -28,8 +28,9 @@ import {
     calculateTotals,
     placeBetThunk,
     clearOddsUpdatedFlag,
-    hideOddsChangeNotification
+    hideOddsChangeNotification,
 } from '@/lib/features/betSlip/betSlipSlice';
+import { fetchUserBets } from '@/lib/features/bets/betsSlice';
 import { selectIsAuthenticated, selectUser } from '@/lib/features/auth/authSlice';
 import LoginDialog from '@/components/auth/LoginDialog';
 import { toast } from 'sonner';
@@ -182,6 +183,8 @@ const BetSlip = () => {
             const resultAction = await dispatch(placeBetThunk());
             if (placeBetThunk.fulfilled.match(resultAction)) {
                 toast.success('Bet placed successfully!');
+                // Refresh betting history after successful bet placement
+                dispatch(fetchUserBets({}));
             } else {
                 // Improved error handling: show backend error if available
                 let errorMsg =

@@ -34,11 +34,11 @@ const transformLiveMatchData = (apiMatch) => {
                 const convertedValue = (value / 1000).toFixed(2);
                 
                 if (label === '1') {
-                    odds['1'] = { value: convertedValue, oddId: outcome.id, status: outcome.status };
+                    odds['1'] = { value: convertedValue, oddId: outcome.id || `${apiMatch.id}_home_1`, status: outcome.status };
                 } else if (label === 'x') {
-                    odds['X'] = { value: convertedValue, oddId: outcome.id, status: outcome.status };
+                    odds['X'] = { value: convertedValue, oddId: outcome.id || `${apiMatch.id}_draw_X`, status: outcome.status };
                 } else if (label === '2') {
-                    odds['2'] = { value: convertedValue, oddId: outcome.id, status: outcome.status };
+                    odds['2'] = { value: convertedValue, oddId: outcome.id || `${apiMatch.id}_away_2`, status: outcome.status };
                 }
             }
         });
@@ -62,13 +62,13 @@ const transformLiveMatchData = (apiMatch) => {
                     // Convert Unibet API odds format (divide by 1000)
                     const convertedValue = (value / 1000).toFixed(2);
                     
-                    if (label === '1' || label === 'home') {
-                        odds['1'] = { value: convertedValue, oddId: outcome.outcomeId };
-                    } else if (label === 'x' || label === 'draw') {
-                        odds['X'] = { value: convertedValue, oddId: outcome.outcomeId };
-                    } else if (label === '2' || label === 'away') {
-                        odds['2'] = { value: convertedValue, oddId: outcome.outcomeId };
-                    }
+                if (label === '1' || label === 'home') {
+                    odds['1'] = { value: convertedValue, oddId: outcome.outcomeId || `${apiMatch.id}_home_1` };
+                } else if (label === 'x' || label === 'draw') {
+                    odds['X'] = { value: convertedValue, oddId: outcome.outcomeId || `${apiMatch.id}_draw_X` };
+                } else if (label === '2' || label === 'away') {
+                    odds['2'] = { value: convertedValue, oddId: outcome.outcomeId || `${apiMatch.id}_away_2` };
+                }
                 }
             });
         }
@@ -85,11 +85,11 @@ const transformLiveMatchData = (apiMatch) => {
                 const convertedValue = (value / 1000).toFixed(2);
                 
                 if (label === '1' || label === 'home') {
-                    odds['1'] = { value: convertedValue, oddId: outcome.outcomeId };
+                    odds['1'] = { value: convertedValue, oddId: outcome.outcomeId || `${apiMatch.id}_home_1` };
                 } else if (label === 'x' || label === 'draw') {
-                    odds['X'] = { value: convertedValue, oddId: outcome.outcomeId };
+                    odds['X'] = { value: convertedValue, oddId: outcome.outcomeId || `${apiMatch.id}_draw_X` };
                 } else if (label === '2' || label === 'away') {
-                    odds['2'] = { value: convertedValue, oddId: outcome.outcomeId };
+                    odds['2'] = { value: convertedValue, oddId: outcome.outcomeId || `${apiMatch.id}_away_2` };
                 }
             }
         });
@@ -134,7 +134,8 @@ const transformLiveMatchData = (apiMatch) => {
             id: apiMatch.groupId, // Add leagueId to fix missing leagueId issue
             name: apiMatch.leagueName || 'Live Match',
             country: apiMatch.parentName || '',
-            imageUrl: getFotmobLogoByUnibetId(apiMatch.groupId) || '/api/placeholder/20/20'
+            imageUrl: getFotmobLogoByUnibetId(apiMatch.groupId) || null,
+            icon: '⚽' // Default fallback icon
         },
         team1: homeTeam,
         team2: awayTeam,

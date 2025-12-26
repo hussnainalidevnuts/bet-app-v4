@@ -66,6 +66,27 @@ const BettingHistoryPage = ({ userId }) => {
     });
   };
 
+  // Helper function to format selection with player name for player markets
+  const formatSelection = (bet) => {
+    // Check if this is a player market (has player name in betDetails or unibetMeta)
+    const playerName = bet.betDetails?.name || bet.unibetMeta?.participant;
+    const marketDescription = (bet.betDetails?.market_description || bet.betDetails?.market_name || bet.unibetMeta?.marketName || '').toLowerCase();
+    const isPlayerMarket = marketDescription.includes('player') || marketDescription.includes('shots on target') || marketDescription.includes('shots');
+    
+    // For market_id === "37" (handicap markets), use existing format
+    if (bet.betDetails?.market_id === "37") {
+      return `${bet.betDetails?.label} ${bet.betDetails?.total} / ${bet.betDetails?.name}`;
+    }
+    
+    // For player markets, include player name with selection
+    if (isPlayerMarket && playerName && bet.selection) {
+      return `${bet.selection} - ${playerName}`;
+    }
+    
+    // Default: just return selection
+    return bet.selection || "-";
+  };
+
   // const toggleCombinationExpansion = React.useCallback((betId, event) => {
   //   // Prevent default behavior to avoid scroll issues
   //   if (event) {
@@ -244,11 +265,8 @@ const BettingHistoryPage = ({ userId }) => {
                         </div>
                       </TableCell>
                       <TableCell className="max-w-32">
-                        <div className="truncate" title={leg.selection}>
-                          {leg.betDetails?.market_id === "37" 
-                            ? `${leg.betDetails?.label} ${leg.betDetails?.total} / ${leg.betDetails?.name}`
-                            : (leg.selection || "-")
-                          }
+                        <div className="truncate" title={formatSelection(leg)}>
+                          {formatSelection(leg)}
                         </div>
                       </TableCell>
                       <TableCell className="max-w-20">
@@ -403,11 +421,7 @@ const BettingHistoryPage = ({ userId }) => {
             <div className="flex justify-between">
               <span className="text-gray-500">Selection:</span>
               <span className="text-gray-900">
-                {isCombo ? "Multiple Selections" : (
-                  bet.betDetails?.market_id === "37" 
-                    ? `${bet.betDetails?.label} ${bet.betDetails?.total} / ${bet.betDetails?.name}`
-                    : (bet.selection || "-")
-                )}
+                {isCombo ? "Multiple Selections" : formatSelection(bet)}
               </span>
             </div>
             {!isCombo && (
@@ -533,11 +547,8 @@ const BettingHistoryPage = ({ userId }) => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Selection:</span>
-                    <span className="text-gray-900 truncate ml-2">
-                      {leg.betDetails?.market_id === "37" 
-                        ? `${leg.betDetails?.label} ${leg.betDetails?.total} / ${leg.betDetails?.name}`
-                        : (leg.selection || "-")
-                      }
+                    <span className="text-gray-900 truncate ml-2" title={formatSelection(leg)}>
+                      {formatSelection(leg)}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -864,12 +875,8 @@ const BettingHistoryPage = ({ userId }) => {
                                 })()}
                               </TableCell>
                               <TableCell className="max-w-48">
-                                <div className="truncate" title={isCombo ? "Multiple Selections" : item.selection}>
-                                  {isCombo ? "Multiple Selections" : (
-                                    item.betDetails?.market_id === "37" 
-                                      ? `${item.betDetails?.label} ${item.betDetails?.total} / ${item.betDetails?.name}`
-                                      : (item.selection || "-")
-                                  )}
+                                <div className="truncate" title={isCombo ? "Multiple Selections" : formatSelection(item)}>
+                                  {isCombo ? "Multiple Selections" : formatSelection(item)}
                                 </div>
                               </TableCell>
                               <TableCell className="max-w-32">

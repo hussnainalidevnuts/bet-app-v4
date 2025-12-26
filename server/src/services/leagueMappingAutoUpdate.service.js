@@ -239,11 +239,19 @@ class LeagueMappingAutoUpdate {
             // Get x-mas token (required for authentication)
             let xmasToken = null;
             try {
-                const xmasResponse = await axios.get('http://46.101.91.154:6006/', { timeout: 5000 });
-                xmasToken = xmasResponse.data['x-mas'];
-                console.log(`[LeagueMapping] ✅ Got x-mas token`);
+                console.log(`[LeagueMapping] 🔑 Attempting to fetch x-mas token...`);
+                const xmasResponse = await Promise.race([
+                    axios.get('http://46.101.91.154:6006/', { timeout: 5000 }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('x-mas token fetch timeout')), 8000))
+                ]);
+                xmasToken = xmasResponse.data?.['x-mas'];
+                if (xmasToken) {
+                    console.log(`[LeagueMapping] ✅ Got x-mas token`);
+                } else {
+                    console.warn(`[LeagueMapping] ⚠️ x-mas token response missing token`);
+                }
             } catch (xmasError) {
-                console.warn(`[LeagueMapping] ⚠️ Could not get x-mas token, trying without it...`);
+                console.warn(`[LeagueMapping] ⚠️ Could not get x-mas token (${xmasError.message}), trying without it...`);
             }
 
             const headers = {
@@ -565,12 +573,104 @@ class LeagueMappingAutoUpdate {
     }
 
     /**
+     * Generate leagueUtils.js file from CSV mappings
+     */
+    async generateLeagueUtils() {
+        console.log('[LeagueMapping] 🔄 Generating leagueUtils.js from CSV...');
+        
+        try {
+            // Read CSV file
+            if (!fs.existsSync(this.clientCsvPath)) {
+                console.warn('[LeagueMapping] ⚠️ Client CSV not found, cannot generate leagueUtils.js');
+                return false;
+            }
+
+            const csvContent = fs.readFileSync(this.clientCsvPath, 'utf8');
+            const lines = csvContent.split('\n').slice(1); // Skip header
+
+            const mappings = [];
+            
+            for (const line of lines) {
+                if (!line.trim() || line.startsWith(',')) continue;
+                
+                const [unibetId, unibetName, fotmobId, fotmobName, matchType, country] = 
+                    line.split(',').map(s => s.trim().replace(/"/g, ''));
+
+                if (unibetId && fotmobId) {
+                    mappings.push({
+                        unibetId,
+                        unibetName: unibetName || 'Unknown',
+                        fotmobId,
+                        fotmobName: fotmobName || 'Unknown',
+                        country: country || ''
+                    });
+                }
+            }
+
+            // Sort by league name for better organization
+            mappings.sort((a, b) => {
+                const nameA = (a.unibetName || '').toLowerCase();
+                const nameB = (b.unibetName || '').toLowerCase();
+                return nameA.localeCompare(nameB);
+            });
+
+            // Generate the file content
+            let fileContent = `// Simple utility to get Fotmob logo URL from Unibet league ID
+// Based on league_mapping_clean.csv
+// Auto-generated - DO NOT EDIT MANUALLY (will be overwritten by league mapping job)
+
+const UNIBET_TO_FOTMOB_MAPPING = {
+`;
+
+            // Add mappings with comments
+            for (const mapping of mappings) {
+                const comment = mapping.country 
+                    ? `${mapping.unibetName} (${mapping.country})`
+                    : mapping.unibetName;
+                fileContent += `  '${mapping.unibetId}': '${mapping.fotmobId}', // ${comment}\n`;
+            }
+
+            fileContent += `};
+
+export const getFotmobLogoByUnibetId = (unibetId) => {
+  if (!unibetId) {
+    return null;
+  }
+  
+  const fotmobId = UNIBET_TO_FOTMOB_MAPPING[String(unibetId)];
+  
+  if (!fotmobId) {
+    return null;
+  }
+  
+  const url = \`https://images.fotmob.com/image_resources/logo/leaguelogo/\${fotmobId}.png\`;
+  return url;
+};
+`;
+
+            // Write to client folder
+            const clientLeagueUtilsPath = path.join(__dirname, '../../../client/lib/leagueUtils.js');
+            fs.writeFileSync(clientLeagueUtilsPath, fileContent, 'utf8');
+            
+            console.log(`[LeagueMapping] ✅ Generated leagueUtils.js with ${mappings.length} mappings`);
+            console.log(`[LeagueMapping] 📁 Saved to: ${clientLeagueUtilsPath}`);
+            
+            return true;
+        } catch (error) {
+            console.error('[LeagueMapping] ❌ Error generating leagueUtils.js:', error);
+            return false;
+        }
+    }
+
+    /**
      * Main execution method
      */
     async execute() {
+        const startTime = Date.now();
         console.log('[LeagueMapping] ========================================');
         console.log('[LeagueMapping] 🚀 Starting League Mapping Auto-Update');
         console.log('[LeagueMapping] ========================================');
+        console.log(`[LeagueMapping] ⏰ Start time: ${new Date().toISOString()}`);
 
         try {
             // 1. Load existing mappings
@@ -667,22 +767,40 @@ class LeagueMappingAutoUpdate {
             console.log(`  - Already exists (skipped): ${skippedCount}`);
             console.log(`  - No match found: ${notFoundCount}`);
             console.log('[LeagueMapping] ========================================');
+            
+            // Generate leagueUtils.js from updated CSV
+            await this.generateLeagueUtils();
+            
+            console.log('[LeagueMapping] ========================================');
             console.log(''); // Empty line for better readability
 
+            const endTime = Date.now();
+            const duration = ((endTime - startTime) / 1000).toFixed(2);
+            
             const result = {
                 success: true,
                 newMappings: newMappingsCount,
                 skipped: skippedCount,
-                notFound: notFoundCount
+                notFound: notFoundCount,
+                duration: `${duration}s`
             };
+            
+            console.log(`[LeagueMapping] ⏰ Total execution time: ${duration} seconds`);
+            console.log(`[LeagueMapping] ⏰ End time: ${new Date().toISOString()}`);
             
             // Ensure we return immediately without any blocking operations
             return result;
         } catch (error) {
+            const endTime = Date.now();
+            const duration = ((endTime - startTime) / 1000).toFixed(2);
+            
             console.error('[LeagueMapping] ========================================');
             console.error('[LeagueMapping] ❌ League Mapping Auto-Update Failed');
             console.error('[LeagueMapping] ========================================');
-            console.error('[LeagueMapping] Error:', error);
+            console.error(`[LeagueMapping] ⏰ Failed after: ${duration} seconds`);
+            console.error(`[LeagueMapping] ⏰ Error time: ${new Date().toISOString()}`);
+            console.error('[LeagueMapping] Error:', error.message || error);
+            console.error('[LeagueMapping] Stack:', error.stack);
             throw error;
         }
     }

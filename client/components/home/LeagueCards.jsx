@@ -270,16 +270,16 @@ const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButt
                                                             'odds structure': match.odds ? Object.keys(match.odds) : 'no odds'
                                                         });
                                                          console.log('🔍 In-Play SEARCHING FOR ODDID:', {
-                                                             'match.kambiLiveData': match.kambiLiveData,
-                                                             'match.liveData': match.liveData,
-                                                             'match.liveOdds': match.liveOdds,
-                                                             'match.betOffers': match.betOffers,
-                                                             'match.outcomes': match.outcomes,
-                                                             'match.mainBetOffer': match.mainBetOffer,
-                                                             'match.mainBetOffer?.outcomes': match.mainBetOffer?.outcomes,
-                                                             'full match object': match
-                                                         });
-                                                        return createBetHandler(match, 'Home', getOddValue('home') || getOddValue('1'), '1x2', oddId, { marketId: "1_home", label: "Home", name: `Win - ${match.team1 || match.participants?.[0]?.name || 'Team 1'}`, marketDescription: "Full Time Result" })(e);
+                                                            'match.kambiLiveData': match.kambiLiveData,
+                                                            'match.liveData': match.liveData,
+                                                            'match.liveOdds': match.liveOdds,
+                                                            'match.betOffers': match.betOffers,
+                                                            'match.outcomes': match.outcomes,
+                                                            'match.mainBetOffer': match.mainBetOffer,
+                                                            'match.mainBetOffer?.outcomes': match.mainBetOffer?.outcomes,
+                                                            'full match object': match
+                                                        });
+                                                        return createBetHandler(match, 'Home', getOddValue('home') || getOddValue('1'), '1x2', oddId || `${match.id}_home_1`, { marketId: "1_home", label: "Home", name: `Win - ${match.team1 || match.participants?.[0]?.name || 'Team 1'}`, marketDescription: "Full Time Result" })(e);
                                                     }
                                                     : undefined
                                                 }
@@ -351,7 +351,7 @@ const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButt
                                                              'match.mainBetOffer?.outcomes': match.mainBetOffer?.outcomes,
                                                              'full match object': match
                                                          });
-                                                        return createBetHandler(match, 'Draw', getOddValue('draw') || getOddValue('X'), '1x2', oddId, { marketId: "1_draw", label: "Draw", name: `Draw - ${match.team1 || match.participants?.[0]?.name || 'Team 1'} vs ${match.team2 || match.participants?.[1]?.name || 'Team 2'}`, marketDescription: "Full Time Result" })(e);
+                                                        return createBetHandler(match, 'Draw', getOddValue('draw') || getOddValue('X'), '1x2', oddId || `${match.id}_draw_X`, { marketId: "1_draw", label: "Draw", name: `Draw - ${match.team1 || match.participants?.[0]?.name || 'Team 1'} vs ${match.team2 || match.participants?.[1]?.name || 'Team 2'}`, marketDescription: "Full Time Result" })(e);
                                                     }
                                                     : undefined
                                                 }
@@ -423,7 +423,7 @@ const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButt
                                                              'match.mainBetOffer?.outcomes': match.mainBetOffer?.outcomes,
                                                              'full match object': match
                                                          });
-                                                        return createBetHandler(match, 'Away', getOddValue('away') || getOddValue('2'), '1x2', oddId, { marketId: "1_away", label: "Away", name: `Win - ${match.team2 || match.participants?.[1]?.name || 'Team 2'}`, marketDescription: "Full Time Result" })(e);
+                                                        return createBetHandler(match, 'Away', getOddValue('away') || getOddValue('2'), '1x2', oddId || `${match.id}_away_2`, { marketId: "1_away", label: "Away", name: `Win - ${match.team2 || match.participants?.[1]?.name || 'Team 2'}`, marketDescription: "Full Time Result" })(e);
                                                     }
                                                     : undefined
                                                 }
@@ -673,8 +673,24 @@ const LeagueCards = ({
                             away: awayOutcome ? { value: awayOutcome.odds / 1000, oddId: awayOutcome.id } : null
                         };
                     } else {
-                        // Old format
-                        oddsData = match.odds_main || match.odds || {};
+                        // Old format - may not have oddId, so we need to add fallback
+                        const rawOdds = match.odds_main || match.odds || {};
+                        // Transform to ensure oddId exists
+                        if (rawOdds.home) {
+                            oddsData.home = typeof rawOdds.home === 'object' 
+                                ? { ...rawOdds.home, oddId: rawOdds.home.oddId || `${match.id}_home_1` }
+                                : { value: rawOdds.home, oddId: `${match.id}_home_1` };
+                        }
+                        if (rawOdds.draw) {
+                            oddsData.draw = typeof rawOdds.draw === 'object'
+                                ? { ...rawOdds.draw, oddId: rawOdds.draw.oddId || `${match.id}_draw_X` }
+                                : { value: rawOdds.draw, oddId: `${match.id}_draw_X` };
+                        }
+                        if (rawOdds.away) {
+                            oddsData.away = typeof rawOdds.away === 'object'
+                                ? { ...rawOdds.away, oddId: rawOdds.away.oddId || `${match.id}_away_2` }
+                                : { value: rawOdds.away, oddId: `${match.id}_away_2` };
+                        }
                     }
                     
 
@@ -688,14 +704,14 @@ const LeagueCards = ({
                                     // Object format: { home: { value, oddId } }
                                     odds['1'] = { 
                                         value: Number(oddsData.home.value).toFixed(2), 
-                                        oddId: oddsData.home.oddId || null,
+                                        oddId: oddsData.home.oddId || `${match.id}_home_1`,
                                         suspended: oddsData.home.suspended || false
                                     };
                                 } else if (typeof oddsData.home === 'number') {
                                     // Simple format: { home: value }
                                     odds['1'] = { 
                                         value: Number(oddsData.home).toFixed(2), 
-                                        oddId: null,
+                                        oddId: `${match.id}_home_1`,
                                         suspended: false
                                     };
                                 }
@@ -706,14 +722,14 @@ const LeagueCards = ({
                                     // Object format: { draw: { value, oddId } }
                                     odds['X'] = { 
                                         value: Number(oddsData.draw.value).toFixed(2), 
-                                        oddId: oddsData.draw.oddId || null,
+                                        oddId: oddsData.draw.oddId || `${match.id}_draw_X`,
                                         suspended: oddsData.draw.suspended || false
                                     };
                                 } else if (typeof oddsData.draw === 'number') {
                                     // Simple format: { draw: value }
                                     odds['X'] = { 
                                         value: Number(oddsData.draw).toFixed(2), 
-                                        oddId: null,
+                                        oddId: `${match.id}_draw_X`,
                                         suspended: false
                                     };
                                 }
@@ -724,14 +740,14 @@ const LeagueCards = ({
                                     // Object format: { away: { value, oddId } }
                                     odds['2'] = { 
                                         value: Number(oddsData.away.value).toFixed(2), 
-                                        oddId: oddsData.away.oddId || null,
+                                        oddId: oddsData.away.oddId || `${match.id}_away_2`,
                                         suspended: oddsData.away.suspended || false
                                     };
                                 } else if (typeof oddsData.away === 'number') {
                                     // Simple format: { away: value }
                                     odds['2'] = { 
                                         value: Number(oddsData.away).toFixed(2), 
-                                        oddId: null,
+                                        oddId: `${match.id}_away_2`,
                                         suspended: false
                                     };
                                 }

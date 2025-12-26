@@ -698,7 +698,7 @@ export const placeBetThunk = createAsyncThunk(
           
           return {
             matchId: bet.match.id,
-            oddId: bet.oddId,
+            oddId: bet.oddId || `${bet.match.id}_${label.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}`,
             betOption: label, // Always use label for betOption
             odds: bet.odds,
             stake: combinationStake, // Same stake for all legs

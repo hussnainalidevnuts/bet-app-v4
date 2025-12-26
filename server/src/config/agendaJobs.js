@@ -117,19 +117,19 @@ const scheduleFotmobCacheJob = async () => {
     try {
       // Schedule at 11:00 PM Pakistan Time (UTC+5) = 6:00 PM UTC (18:00 UTC)
       // Cron syntax: "minute hour dayOfMonth month dayOfWeek"
-      // TESTING: Schedule at 8:50 PM Pakistan Time (LOCAL)
+      // TESTING: Schedule at 7:20 PM Pakistan Time (LOCAL)
       // Cron syntax: "minute hour dayOfMonth month dayOfWeek"
       // NOTE: Agenda.js interprets cron in SERVER'S LOCAL TIMEZONE (PKT = UTC+5)
-      // "50 20 * * *" = 8:50 PM PKT (LOCAL) = 3:50 PM UTC
+      // "20 19 * * *" = 7:20 PM PKT (LOCAL) = 2:20 PM UTC
       // TODO: Change back to "0 23 * * *" for production (11:00 PM PKT LOCAL TIME)
       console.log('[Agenda] ========================================');
       console.log('[Agenda] Scheduling FotMob cache refresh job...');
-      console.log('[Agenda] ⚠️ TESTING MODE: Time: 8:50 PM PKT (LOCAL TIME)');
-      console.log('[Agenda] Cron: "50 20 * * *"');
+      console.log('[Agenda] ⚠️ TESTING MODE: Time: 7:20 PM PKT (LOCAL TIME)');
+      console.log('[Agenda] Cron: "20 19 * * *"');
       console.log('[Agenda] NOTE: Cron uses server local timezone (PKT)');
       console.log('[Agenda] ========================================');
       
-      const scheduledJob = await agenda.every("50 20 * * *", "refreshFotmobMultidayCache");
+      const scheduledJob = await agenda.every("20 19 * * *", "refreshFotmobMultidayCache");
       
       if (scheduledJob) {
         const nextRunPKT = scheduledJob.attrs.nextRunAt ? (() => {
@@ -169,20 +169,20 @@ const scheduleLeagueMappingJob = async () => {
   
   if (!leagueMappingJobScheduled) {
     try {
-      // TESTING: Schedule at 8:35 PM Pakistan Time (LOCAL)
+      // TESTING: Schedule at 7:20 PM Pakistan Time (LOCAL)
       // Cron syntax: "minute hour dayOfMonth month dayOfWeek"
       // NOTE: Agenda.js interprets cron in SERVER'S LOCAL TIMEZONE (PKT = UTC+5)
-      // "35 20 * * *" = 8:35 PM PKT (LOCAL) = 3:35 PM UTC
+      // "20 19 * * *" = 7:20 PM PKT (LOCAL) = 2:20 PM UTC
       // TODO: Change back to "0 9 * * *" for production (9:00 AM PKT LOCAL TIME)
       console.log('[Agenda] ========================================');
       console.log('[Agenda] Scheduling League Mapping auto-update job...');
-      console.log('[Agenda] ⚠️ TESTING MODE: Time: 8:35 PM PKT (LOCAL TIME)');
-      console.log('[Agenda] Cron: "35 20 * * *"');
+      console.log('[Agenda] ⚠️ TESTING MODE: Time: 7:20 PM PKT (LOCAL TIME)');
+      console.log('[Agenda] Cron: "20 19 * * *"');
       console.log('[Agenda] NOTE: Cron uses server local timezone (PKT)');
       console.log('[Agenda] ========================================');
       
       console.log('[Agenda] About to call agenda.every() for updateLeagueMapping...');
-      const scheduledJob = await agenda.every("35 20 * * *", "updateLeagueMapping");
+      const scheduledJob = await agenda.every("20 19 * * *", "updateLeagueMapping");
       console.log('[Agenda] agenda.every() returned:', scheduledJob ? 'Job object' : 'null/undefined');
       
       if (scheduledJob) {
@@ -437,9 +437,21 @@ agenda.define("updateLeagueMapping", async (job) => {
   console.log(`[Agenda] Job ID: ${job.attrs._id}`);
   console.log(`[Agenda] Scheduled time: ${job.attrs.nextRunAt}`);
   
+  // Add timeout wrapper (10 minutes max)
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => {
+      reject(new Error('League Mapping job timed out after 10 minutes'));
+    }, 10 * 60 * 1000); // 10 minutes
+  });
+  
   try {
     const updater = new LeagueMappingAutoUpdate();
-    const result = await updater.execute();
+    
+    // Race between execution and timeout
+    const result = await Promise.race([
+      updater.execute(),
+      timeoutPromise
+    ]);
     
     const endTime = new Date();
     const endUtcTime = endTime.toISOString();
@@ -459,12 +471,20 @@ agenda.define("updateLeagueMapping", async (job) => {
     // Return result directly, don't wrap in Promise.resolve
     return result;
   } catch (error) {
+    const endTime = new Date();
+    const endUtcTime = endTime.toISOString();
+    const endPktTime = new Date(endTime.getTime() + (5 * 60 * 60 * 1000)).toISOString().replace('Z', ' PKT');
+    const duration = ((endTime.getTime() - now.getTime()) / 1000).toFixed(2);
+    
     console.error(`[Agenda] ========================================`);
     console.error(`[Agenda] ❌ League Mapping Auto-Update Job FAILED`);
     console.error(`[Agenda] ========================================`);
-    console.error(`[Agenda] Error at UTC: ${utcTime}`);
-    console.error(`[Agenda] Error at PKT: ${pktTime}`);
-    console.error(`[Agenda] Error:`, error);
+    console.error(`[Agenda] Started at UTC: ${utcTime}`);
+    console.error(`[Agenda] Started at PKT: ${pktTime}`);
+    console.error(`[Agenda] Failed at UTC: ${endUtcTime}`);
+    console.error(`[Agenda] Failed at PKT: ${endPktTime}`);
+    console.error(`[Agenda] Duration before failure: ${duration} seconds`);
+    console.error(`[Agenda] Error:`, error.message || error);
     console.error(`[Agenda] Stack:`, error.stack);
     console.error(`[Agenda] ========================================\n`);
     
@@ -690,30 +710,31 @@ export const initializeAgendaJobs = async () => {
     
     console.log(`[Agenda] ========================================\n`);
     
-    // Add job status checker for debugging (runs every 30 seconds)
+    // Add job status checker for debugging (runs every 5 minutes, less verbose)
     const checkJobStatus = async () => {
       try {
         const jobs = await agenda.jobs({ name: 'updateLeagueMapping' });
         if (jobs.length > 0) {
           jobs.forEach((job, index) => {
             const nextRunUTC = job.attrs.nextRunAt;
-            const nextRunPKT = nextRunUTC ? (() => {
-              const pktDate = new Date(nextRunUTC);
-              pktDate.setUTCHours(pktDate.getUTCHours() + 5); // Add 5 hours for PKT
-              return pktDate.toISOString().replace('Z', ' PKT');
-            })() : 'N/A';
             const now = new Date();
             const timeUntil = nextRunUTC ? nextRunUTC.getTime() - now.getTime() : null;
             const minutesUntil = timeUntil ? Math.floor(timeUntil / (1000 * 60)) : null;
-            const secondsUntil = timeUntil ? Math.floor((timeUntil % (1000 * 60)) / 1000) : null;
             
-            console.log(`[Agenda] 📊 Job Status Check - updateLeagueMapping #${index + 1}:`);
-            console.log(`[Agenda]   - Job ID: ${job.attrs._id}`);
-            console.log(`[Agenda]   - Next run (PKT): ${nextRunPKT}`);
-            console.log(`[Agenda]   - Time until run: ${timeUntil ? (minutesUntil + 'm ' + secondsUntil + 's') : 'N/A'}`);
-            console.log(`[Agenda]   - Locked: ${job.attrs.lockedAt ? 'YES (running)' : 'NO (idle)'}`);
-            console.log(`[Agenda]   - Last run: ${job.attrs.lastRunAt ? new Date(job.attrs.lastRunAt).toISOString() : 'Never'}`);
-            console.log(`[Agenda]   - Repeat interval: ${job.attrs.repeatInterval || 'N/A'}`);
+            // Only log if job is running or if there's an issue
+            if (job.attrs.lockedAt || (timeUntil && timeUntil < 0)) {
+              const nextRunPKT = nextRunUTC ? (() => {
+                const pktDate = new Date(nextRunUTC);
+                pktDate.setUTCHours(pktDate.getUTCHours() + 5);
+                return pktDate.toISOString().replace('Z', ' PKT');
+              })() : 'N/A';
+              
+              console.log(`[Agenda] 📊 Job Status - updateLeagueMapping:`);
+              console.log(`[Agenda]   - Status: ${job.attrs.lockedAt ? 'RUNNING' : 'IDLE'}`);
+              console.log(`[Agenda]   - Next run (PKT): ${nextRunPKT}`);
+              console.log(`[Agenda]   - Time until run: ${minutesUntil ? (minutesUntil + 'm') : 'N/A'}`);
+            }
+            // Silent check - no logging for normal idle state
           });
         } else {
           console.log('[Agenda] ⚠️ No updateLeagueMapping jobs found in database!');
@@ -723,12 +744,12 @@ export const initializeAgendaJobs = async () => {
       }
     };
     
-    // Check job status every 30 seconds (for debugging)
-    console.log('[Agenda] 🔍 Starting job status checker (every 30 seconds)...');
-    setInterval(checkJobStatus, 30000);
+    // Check job status every 5 minutes (reduced from 30 seconds for production)
+    console.log('[Agenda] 🔍 Starting job status checker (every 5 minutes)...');
+    setInterval(checkJobStatus, 300000); // 5 minutes = 300000ms
     
-    // Run initial check after 5 seconds
-    setTimeout(checkJobStatus, 5000);
+    // Run initial check after 10 seconds
+    setTimeout(checkJobStatus, 10000);
     
   } catch (error) {
     agendaJobsInitialized = false; // Reset flag on error so it can be retried

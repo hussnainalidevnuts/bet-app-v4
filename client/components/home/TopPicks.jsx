@@ -32,13 +32,14 @@ const transformMatchData = (apiMatch, league) => {
             
             // Handle simple object format: { home: 2.1, draw: 3.4, away: 3.2 }
             if (apiMatch.odds.home && typeof apiMatch.odds.home === 'number') {
-                odds['1'] = { value: apiMatch.odds.home.toFixed(2), oddId: null };
+                // Generate fallback oddId from matchId + label
+                odds['1'] = { value: apiMatch.odds.home.toFixed(2), oddId: `${apiMatch.id}_home_1` };
             }
             if (apiMatch.odds.draw && typeof apiMatch.odds.draw === 'number') {
-                odds['X'] = { value: apiMatch.odds.draw.toFixed(2), oddId: null };
+                odds['X'] = { value: apiMatch.odds.draw.toFixed(2), oddId: `${apiMatch.id}_draw_X` };
             }
             if (apiMatch.odds.away && typeof apiMatch.odds.away === 'number') {
-                odds['2'] = { value: apiMatch.odds.away.toFixed(2), oddId: null };
+                odds['2'] = { value: apiMatch.odds.away.toFixed(2), oddId: `${apiMatch.id}_away_2` };
             }
         } else if (Array.isArray(apiMatch.odds)) {
             // Handle array format

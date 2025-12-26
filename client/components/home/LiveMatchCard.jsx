@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,8 @@ import { getFotmobLogoByUnibetId } from '@/lib/leagueUtils';
 const LiveMatchCard = ({ match }) => {
     // Track previous odds to detect changes and force re-render
     const prevOddsRef = useRef(null);
+    // Track image error state for fallback icon
+    const [imageError, setImageError] = useState(false);
     
     useEffect(() => {
         const currentOdds = match.odds ? JSON.stringify(match.odds) : null;
@@ -21,6 +23,12 @@ const LiveMatchCard = ({ match }) => {
         }
         prevOddsRef.current = currentOdds;
     }, [match.odds, match.id]);
+    
+    // Reset image error when league changes
+    useEffect(() => {
+        setImageError(false);
+    }, [match.league.id, match.league.imageUrl]);
+    
     const { createBetHandler } = useBetting();
     
     // Create a properly formatted match object for betting (same as BettingTabs.jsx)
@@ -59,17 +67,17 @@ const LiveMatchCard = ({ match }) => {
                 <div className="p-4">
                     <div className='flex align-center gap-2 justify-between mb-2'>
                         <div className="flex items-center gap-2">
-                            {(getFotmobLogoByUnibetId(match.league.id) || match.league.imageUrl) ? (
+                            {!imageError && (getFotmobLogoByUnibetId(match.league.id) || match.league.imageUrl) ? (
                                 <img 
                                     src={getFotmobLogoByUnibetId(match.league.id) || match.league.imageUrl} 
                                     className='w-4 h-4 object-contain' 
                                     alt={match.league.name}
-                                    onError={e => { e.target.style.display = 'none'; }}
+                                    onError={() => setImageError(true)}
                                 />
-                            ) : match.league.icon ? (
-                                <span className="text-green-400 text-sm">{match.league.icon}</span>
-                            ) : null}
-                            <div className="text-xs text-gray-500">
+                            ) : (
+                                <span className="text-green-400 text-sm">{match.league.icon || '⚽'}</span>
+                            )}
+                            <div className="text-xs text-gray-500" key={`${match.league.name}-${match.league.country}`}>
                                 {match.league.country ? `${match.league.name} (${match.league.country})` : match.league.name}
                             </div>
                         </div>
@@ -156,7 +164,7 @@ const LiveMatchCard = ({ match }) => {
                             <Button
                                 size={"sm"}
                                 className="flex-1 flex justify-between py-2 gap-0 betting-button"
-                                onClick={createBetHandler(formattedMatch, "Home", match.odds['1'].value, '1x2', match.odds['1'].oddId, { 
+                                onClick={createBetHandler(formattedMatch, "Home", match.odds['1'].value, '1x2', match.odds['1'].oddId || `${match.id}_home_1`, { 
                                     marketId: "1", 
                                     label: "Home", 
                                     name: `Win - ${formattedMatch.team1}`, 
@@ -171,7 +179,7 @@ const LiveMatchCard = ({ match }) => {
                             <Button
                                 className="flex-1 flex justify-between py-2 gap-0 betting-button"
                                 size={"sm"}
-                                onClick={createBetHandler(formattedMatch, "Draw", match.odds['X'].value, '1x2', match.odds['X'].oddId, { marketId: "1", label: "Draw", name: `Draw - ${formattedMatch.team1} vs ${formattedMatch.team2}`, marketDescription: "Full Time Result" })}
+                                onClick={createBetHandler(formattedMatch, "Draw", match.odds['X'].value, '1x2', match.odds['X'].oddId || `${match.id}_draw_X`, { marketId: "1", label: "Draw", name: `Draw - ${formattedMatch.team1} vs ${formattedMatch.team2}`, marketDescription: "Full Time Result" })}
                             >
                                 <div className="text-[11px]">X</div>
                                 <div className='text-[13px] font-bold'>{match.odds['X'].value}</div>
@@ -181,7 +189,7 @@ const LiveMatchCard = ({ match }) => {
                             <Button
                                 size={"sm"}
                                 className="flex-1 flex justify-between py-2 gap-0 betting-button"
-                                onClick={createBetHandler(formattedMatch, "Away", match.odds['2'].value, '1x2', match.odds['2'].oddId, { marketId: "1", label: "Away", name: `Win - ${formattedMatch.team2}`, marketDescription: "Full Time Result" })}
+                                onClick={createBetHandler(formattedMatch, "Away", match.odds['2'].value, '1x2', match.odds['2'].oddId || `${match.id}_away_2`, { marketId: "1", label: "Away", name: `Win - ${formattedMatch.team2}`, marketDescription: "Full Time Result" })}
                             >
                                 <div className="text-[11px]">2</div>
                                 <div className='text-[13px] font-bold'>{match.odds['2'].value}</div>

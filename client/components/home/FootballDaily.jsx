@@ -18,9 +18,14 @@ const transformApiMatchToDisplayFormat = (apiMatch, league) => {
     const odds = {};
     if (apiMatch.odds) {
         if (typeof apiMatch.odds === 'object' && !Array.isArray(apiMatch.odds)) {
-            if (apiMatch.odds.home && !isNaN(apiMatch.odds.home.value)) odds['1'] = { value: apiMatch.odds.home.value.toFixed(2), oddId: apiMatch.odds.home.oddId };
-            if (apiMatch.odds.draw && !isNaN(apiMatch.odds.draw.value)) odds['X'] = { value: apiMatch.odds.draw.value.toFixed(2), oddId: apiMatch.odds.draw.oddId };
-            if (apiMatch.odds.away && !isNaN(apiMatch.odds.away.value)) odds['2'] = { value: apiMatch.odds.away.value.toFixed(2), oddId: apiMatch.odds.away.oddId };
+            // Handle object format with oddId
+            if (apiMatch.odds.home && !isNaN(apiMatch.odds.home.value)) odds['1'] = { value: apiMatch.odds.home.value.toFixed(2), oddId: apiMatch.odds.home.oddId || `${apiMatch.id}_home_1` };
+            if (apiMatch.odds.draw && !isNaN(apiMatch.odds.draw.value)) odds['X'] = { value: apiMatch.odds.draw.value.toFixed(2), oddId: apiMatch.odds.draw.oddId || `${apiMatch.id}_draw_X` };
+            if (apiMatch.odds.away && !isNaN(apiMatch.odds.away.value)) odds['2'] = { value: apiMatch.odds.away.value.toFixed(2), oddId: apiMatch.odds.away.oddId || `${apiMatch.id}_away_2` };
+            // Handle simple number format
+            if (apiMatch.odds.home && typeof apiMatch.odds.home === 'number') odds['1'] = { value: apiMatch.odds.home.toFixed(2), oddId: `${apiMatch.id}_home_1` };
+            if (apiMatch.odds.draw && typeof apiMatch.odds.draw === 'number') odds['X'] = { value: apiMatch.odds.draw.toFixed(2), oddId: `${apiMatch.id}_draw_X` };
+            if (apiMatch.odds.away && typeof apiMatch.odds.away === 'number') odds['2'] = { value: apiMatch.odds.away.toFixed(2), oddId: `${apiMatch.id}_away_2` };
         } else if (Array.isArray(apiMatch.odds)) {
             // Legacy array format (if still present)
             apiMatch.odds.forEach(odd => {

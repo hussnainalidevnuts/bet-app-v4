@@ -892,10 +892,17 @@ class BetService {
       user.balance -= stake;
       await user.save();
 
+      // Ensure userId is ObjectId for consistency
+      const userIdObj = typeof userId === "string" 
+        ? new mongoose.Types.ObjectId(userId) 
+        : (userId instanceof mongoose.Types.ObjectId ? userId : new mongoose.Types.ObjectId(userId.toString()));
+      
+      console.log(`[placeBet] Creating combination bet with userId: ${userId} (ObjectId: ${userIdObj})`);
+      
       // Create the combination bet document with cleaner structure
       // Main bet document represents the overall combination, not just the first leg
       const bet = new Bet({
-        userId,
+        userId: userIdObj,
         // For combination bets, use first match details for required fields
         matchId: firstLegData.matchData.id,
         oddId: `combo_${Date.now()}`, // Unique ID for combination bet
@@ -1450,12 +1457,28 @@ class BetService {
     console.log(`[placeBet] Stake: ${stake}`);
     console.log(`[placeBet] Deducting Stake: ${balanceBefore} - ${stake} = ${balanceBefore - stake}`);
 
-    user.balance -= stake;
-    await user.save();
+    // Deduct balance with error handling
+    try {
+      user.balance -= stake;
+      await user.save();
+      
+      const balanceAfter = user.balance || 0;
+      console.log(`[placeBet] Balance After: ${balanceAfter}`);
+      console.log(`[placeBet] Balance Change: ${balanceAfter - balanceBefore} (should be -${stake})`);
+      
+      // Verify balance was actually deducted
+      if (Math.abs((balanceAfter - balanceBefore) + stake) > 0.01) {
+        console.error(`[placeBet] ⚠️ WARNING: Balance deduction mismatch! Expected: -${stake}, Actual: ${balanceAfter - balanceBefore}`);
+      }
+    } catch (balanceError) {
+      console.error(`[placeBet] ❌ ERROR: Failed to deduct balance:`, balanceError);
+      throw new CustomError(
+        `Failed to deduct balance: ${balanceError.message}`,
+        500,
+        "BALANCE_DEDUCTION_FAILED"
+      );
+    }
     
-    const balanceAfter = user.balance || 0;
-    console.log(`[placeBet] Balance After: ${balanceAfter}`);
-    console.log(`[placeBet] Balance Change: ${balanceAfter - balanceBefore} (should be -${stake})`);
     console.log(`[placeBet] ===========================================\n`);
 
     // Use the robust getTeamsFromMatchData method for single bets too
@@ -1537,8 +1560,15 @@ class BetService {
       final_marketId: betDetails.market_id || odds.market_id
     });
 
+    // Ensure userId is ObjectId for consistency
+    const userIdObj = typeof userId === "string" 
+      ? new mongoose.Types.ObjectId(userId) 
+      : (userId instanceof mongoose.Types.ObjectId ? userId : new mongoose.Types.ObjectId(userId.toString()));
+    
+    console.log(`[placeBet] Creating bet with userId: ${userId} (ObjectId: ${userIdObj})`);
+    
     const bet = new Bet({
-      userId,
+      userId: userIdObj,
       matchId,
       oddId,
       marketId: betDetails.market_id || odds.market_id, // Use resolved market_id from betDetails
@@ -1606,7 +1636,26 @@ class BetService {
       console.warn(`⚠️ This bet may be cancelled during outcome calculation`);
     }
 
-    await bet.save();
+    // Save bet with error handling
+    try {
+      await bet.save();
+      console.log(`[placeBet] ✅ Bet saved successfully with ID: ${bet._id}`);
+    } catch (saveError) {
+      console.error(`[placeBet] ❌ ERROR: Failed to save bet:`, saveError);
+      // Rollback balance if bet save failed
+      try {
+        user.balance += stake;
+        await user.save();
+        console.log(`[placeBet] ✅ Balance rolled back due to bet save failure`);
+      } catch (rollbackError) {
+        console.error(`[placeBet] ❌ CRITICAL: Failed to rollback balance:`, rollbackError);
+      }
+      throw new CustomError(
+        `Failed to save bet: ${saveError.message}`,
+        500,
+        "BET_SAVE_FAILED"
+      );
+    }
 
     const nowUTC = this.getCurrentUTCTime();
     const now = new Date();
@@ -3128,8 +3177,13 @@ class BetService {
       throw new CustomError("User ID is required", 400, "USER_ID_REQUIRED");
     }
     
+    // Ensure userId is ObjectId for proper query matching
+    const userIdObj = typeof userId === "string" 
+      ? new mongoose.Types.ObjectId(userId) 
+      : (userId instanceof mongoose.Types.ObjectId ? userId : new mongoose.Types.ObjectId(userId.toString()));
+    
     // Build query with filters
-    const query = { userId };
+    const query = { userId: userIdObj };
     
     // Date range filter - only apply if values are provided and not empty
     if ((filters.dateFrom && filters.dateFrom.trim() !== '') || 
@@ -3151,8 +3205,21 @@ class BetService {
     }
     
     // ✅ FIX: Use .lean() for faster JSON serialization (converts Mongoose docs to plain JS objects)
+    console.log(`[BetService.getUserBets] Query:`, JSON.stringify(query, null, 2));
     const bets = await Bet.find(query).sort({ createdAt: -1 }).lean();
-    console.log(`[BetService.getUserBets] Found ${bets.length} bets for user ${userId} with filters:`, filters);
+    console.log(`[BetService.getUserBets] Found ${bets.length} bets for user ${userId} (ObjectId: ${userIdObj}) with filters:`, filters);
+    
+    // Log first few bets for debugging
+    if (bets.length > 0) {
+      console.log(`[BetService.getUserBets] Sample bets (first 3):`, bets.slice(0, 3).map(b => ({
+        id: b._id,
+        userId: b.userId,
+        status: b.status,
+        createdAt: b.createdAt,
+        event: b.event
+      })));
+    }
+    
     return bets;
   }
 

@@ -36,19 +36,25 @@ export async function GET(request) {
     cache.isRefreshing = true;
     
     // ✅ FIX: Use NEXT_PUBLIC_BASE_API_URL first (without /api)
-    // If not available, use NEXT_PUBLIC_API_URL and remove /api suffix if present
-    let backendUrl = process.env.NEXT_PUBLIC_BASE_API_URL || 
-                     process.env.API_URL || 
-                     'http://localhost:4000';
+    // Priority: NEXT_PUBLIC_BASE_API_URL > NEXT_PUBLIC_API_URL (remove /api) > default
+    let backendUrl = process.env.NEXT_PUBLIC_BASE_API_URL;
     
-    // If using NEXT_PUBLIC_API_URL (which has /api), remove the /api suffix
-    if (!process.env.NEXT_PUBLIC_BASE_API_URL && process.env.NEXT_PUBLIC_API_URL) {
+    // If NEXT_PUBLIC_BASE_API_URL not set, try NEXT_PUBLIC_API_URL
+    if (!backendUrl && process.env.NEXT_PUBLIC_API_URL) {
       backendUrl = process.env.NEXT_PUBLIC_API_URL;
       // Remove /api suffix if present
       if (backendUrl.endsWith('/api')) {
         backendUrl = backendUrl.replace(/\/api$/, '');
       }
     }
+    
+    // Fallback to default
+    if (!backendUrl) {
+      backendUrl = process.env.API_URL || 'http://localhost:4000';
+    }
+    
+    // Ensure no trailing slash
+    backendUrl = backendUrl.replace(/\/$/, '');
     
     const url = `${backendUrl}/api/admin/leagues/mapping`;
     

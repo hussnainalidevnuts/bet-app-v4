@@ -144,32 +144,33 @@ const MatchListPage = ({ config }) => {
         );
     }
 
-    // Show error state
-    if (error) {
-        return (
-            <div className="bg-slate-100 min-h-screen relative">
-                <div className="lg:mr-80 xl:mr-96">
-                    <div className="p-2 sm:p-3 md:p-4">
-                        <div className="bg-white p-8 text-center border-l-4 border-red-500">
-                            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                                Error Loading Matches
-                            </h3>
-                            <p className="text-gray-500 mb-4">
-                                {error || "An error occurred while fetching matches. Please try again."}
-                            </p>
-                            {retryFunction && (
-                                <Button 
-                                    variant="outline" 
-                                    onClick={retryFunction}
-                                >
-                                    Try Again
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-                </div>
+    // Show error state - only if we have no data at all
+    // ✅ FIX: Don't show error if we have some data (might be partial load)
+    if (error && (!leagues || leagues.length === 0)) {
+      return (
+        <div className="bg-slate-100 min-h-screen relative">
+          <div className="lg:mr-80 xl:mr-96">
+            <div className="p-2 sm:p-3 md:p-4">
+              <div className="bg-white p-8 text-center border-l-4 border-red-500">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  Error Loading Matches
+                </h3>
+                <p className="text-gray-500 mb-4">
+                  {error || "An error occurred while fetching matches. Please try again."}
+                </p>
+                {retryFunction && (
+                  <Button 
+                    variant="outline" 
+                    onClick={retryFunction}
+                  >
+                    Try Again
+                  </Button>
+                )}
+              </div>
             </div>
-        );
+          </div>
+        </div>
+      );
     }
 
     return (

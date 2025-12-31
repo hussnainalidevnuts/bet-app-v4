@@ -40,8 +40,8 @@ export class UnibetCalcController {
                 
                 const queryStartTime = Date.now();
                 bets = await Bet.find(query)
-                    .sort({ createdAt: 1 })
-                    .limit(parseInt(limit));
+                .sort({ createdAt: 1 })
+                .limit(parseInt(limit));
                 const queryDuration = Date.now() - queryStartTime;
                 
                 console.log(`📊 [processAll] ✅ Database query completed in ${queryDuration}ms`);
@@ -424,8 +424,8 @@ export class UnibetCalcController {
             const updatedBet = await Bet.findByIdAndUpdate(
                 betId,
                 {
-                    status: 'cancelled',
-                    payout: 0,
+                        status: 'cancelled',
+                        payout: 0,
                     profit: 0,
                     $set: {
                         'result.status': 'cancelled',
@@ -877,7 +877,7 @@ export class UnibetCalcController {
             
             // Adapt results back to bet-app format
             const updatedBet = BetSchemaAdapter.adaptCombinationCalculatorResult(results, bet);
-            
+
             console.log(`🔍 [processCombinationBetInternal] Updated bet status: ${updatedBet.status}`);
             console.log(`🔍 [processCombinationBetInternal] Updated bet payout: ${updatedBet.payout}`);
             console.log(`🔍 [processCombinationBetInternal] Result summary:`, {

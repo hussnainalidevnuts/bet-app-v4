@@ -235,7 +235,16 @@ const liveMatchesSlice = createSlice({
       })
       .addCase(fetchLiveMatches.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        // ✅ FIX: Only set error if we don't have existing data
+        // If we have existing data, keep it and don't show error (silent failure)
+        if (state.data.length === 0 && state.matches.length === 0) {
+          // Only show error on initial load failure
+          state.error = action.payload;
+        } else {
+          // If we have existing data, don't overwrite with error (allows retry)
+          console.warn('⚠️ Live matches fetch failed, but keeping existing data:', action.payload);
+          // Keep existing data visible, don't set error
+        }
       })
       // Silent live matches update (no loading state changes)
       .addCase(silentUpdateLiveMatches.fulfilled, (state, action) => {

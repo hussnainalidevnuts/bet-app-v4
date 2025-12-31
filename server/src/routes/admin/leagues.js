@@ -165,4 +165,88 @@ router.post('/popular', async (req, res) => {
   }
 });
 
+// GET /api/admin/leagues/mapping - Get league mapping for frontend (Unibet→Fotmob + filtering data)
+router.get('/mapping', async (req, res) => {
+  try {
+    console.log('📋 Fetching league mapping for frontend...');
+    
+    // Load the CSV data
+    const csvPath = path.join(__dirname, '../../unibet-calc/league_mapping_clean.csv');
+    
+    if (!fs.existsSync(csvPath)) {
+      console.error('❌ CSV file not found at:', csvPath);
+      return res.status(404).json({
+        success: false,
+        error: 'CSV file not found',
+        path: csvPath
+      });
+    }
+
+    const csvContent = fs.readFileSync(csvPath, 'utf-8');
+    const lines = csvContent.split('\n').filter(line => line.trim());
+    
+    // Skip header line
+    const dataLines = lines.slice(1);
+    
+    // Build mapping objects
+    const unibetToFotmobMapping = {};
+    const allowedLeagueIds = [];
+    const allowedLeagueNames = [];
+    
+    dataLines.forEach((line) => {
+      if (!line.trim()) return;
+      
+      // Parse CSV with quoted values
+      const fields = line.split(',').map(field => field.replace(/^"|"$/g, '').trim());
+      const [unibetId, unibetName, fotmobId, fotmobName, matchType, country] = fields;
+      
+      // Add to Unibet→Fotmob mapping (for icons)
+      if (unibetId && fotmobId) {
+        unibetToFotmobMapping[unibetId] = fotmobId;
+      }
+      
+      // Add to allowed league IDs (for filtering)
+      if (unibetId) {
+        allowedLeagueIds.push(unibetId.trim());
+      }
+      
+      // Add to allowed league names (for filtering)
+      if (unibetName && unibetName.trim()) {
+        allowedLeagueNames.push(unibetName.trim());
+        allowedLeagueNames.push(unibetName.trim().toLowerCase());
+        
+        // Also add Fotmob name for matching
+        if (fotmobName && fotmobName.trim()) {
+          allowedLeagueNames.push(fotmobName.trim());
+          allowedLeagueNames.push(fotmobName.trim().toLowerCase());
+        }
+      }
+    });
+
+    console.log(`✅ Built mapping: ${Object.keys(unibetToFotmobMapping).length} leagues`);
+    console.log(`✅ Allowed league IDs: ${allowedLeagueIds.length}`);
+    console.log(`✅ Allowed league names: ${allowedLeagueNames.length}`);
+
+    res.json({
+      success: true,
+      data: {
+        unibetToFotmobMapping,
+        allowedLeagueIds,
+        allowedLeagueNames,
+        totalLeagues: allowedLeagueIds.length
+      },
+      timestamp: new Date().toISOString(),
+      cacheHint: 'Cache this response for 1 hour' // Frontend can cache
+    });
+
+  } catch (error) {
+    console.error('❌ Error fetching league mapping:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch league mapping',
+      message: error.message
+    });
+  }
+});
+
 export default router;

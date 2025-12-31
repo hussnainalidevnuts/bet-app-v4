@@ -12,6 +12,7 @@ import SidebarWrapper from "@/components/SidebarWrapper";
 import ContentWrapper from "@/components/ContentWrapper";
 import WebSocketInitializer from "@/components/WebSocketInitializer";
 import WebSocketDebugger from "@/components/WebSocketDebugger";
+import LeagueMappingPreloader from "@/components/LeagueMappingPreloader";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,6 +25,7 @@ export default function RootLayout({ children }) {
         <ReduxProvider>
           <WebSocketInitializer />
           <WebSocketDebugger />
+          <LeagueMappingPreloader />
           <AuthProvider>
             <SidebarProvider>
               {/* <LayoutWrapper>{children}</LayoutWrapper> */}

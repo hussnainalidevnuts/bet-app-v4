@@ -9,13 +9,12 @@ const __dirname = path.dirname(__filename);
 
 class LeagueMappingAutoUpdate {
     constructor() {
-        this.clientCsvPath = path.join(__dirname, '../../../client/league_mapping_clean.csv');
+        // ✅ REMOVED: clientCsvPath - No longer needed, frontend uses backend API
         this.serverCsvPath = path.join(__dirname, '../unibet-calc/league_mapping_clean.csv');
         this.urlsCsvPath = path.join(__dirname, '../../../league_mapping_with_urls.csv');
         
         // ✅ Add path verification logging
         console.log('[LeagueMapping] 📁 File paths initialized:');
-        console.log(`[LeagueMapping]   - Client CSV: ${this.clientCsvPath}`);
         console.log(`[LeagueMapping]   - Server CSV: ${this.serverCsvPath}`);
         console.log(`[LeagueMapping]   - URLs CSV: ${this.urlsCsvPath}`);
         console.log(`[LeagueMapping]   - URLs CSV exists: ${fs.existsSync(this.urlsCsvPath)}`);
@@ -616,15 +615,8 @@ class LeagueMappingAutoUpdate {
                 }
             };
 
-            // Append to both CSV files
-            if (fs.existsSync(this.clientCsvPath)) {
-                await ensureNewline(this.clientCsvPath);
-                await fs.promises.appendFile(this.clientCsvPath, row + '\n', 'utf8');
-                console.log(`[LeagueMapping] ✅ Added to client CSV: ${mapping.unibetName} → ${mapping.fotmobName}`);
-            } else {
-                console.warn(`[LeagueMapping] ⚠️ Client CSV not found: ${this.clientCsvPath}`);
-            }
-
+            // ✅ REMOVED: Client CSV update - Frontend now uses backend API
+            // Append to server CSV file only
             if (fs.existsSync(this.serverCsvPath)) {
                 await ensureNewline(this.serverCsvPath);
                 await fs.promises.appendFile(this.serverCsvPath, row + '\n', 'utf8');
@@ -881,95 +873,10 @@ class LeagueMappingAutoUpdate {
     }
 
     /**
-     * Generate leagueUtils.js file from CSV mappings
+     * ✅ REMOVED: generateLeagueUtils() function
+     * Frontend now fetches league mapping from backend API (/api/admin/leagues/mapping)
+     * No need to generate client-side files anymore
      */
-    async generateLeagueUtils() {
-        console.log('[LeagueMapping] 🔄 Generating leagueUtils.js from CSV...');
-        
-        try {
-            // Read CSV file
-            if (!fs.existsSync(this.clientCsvPath)) {
-                console.warn('[LeagueMapping] ⚠️ Client CSV not found, cannot generate leagueUtils.js');
-                return false;
-            }
-
-            // ✅ FIX: Use async readFile
-            const csvContent = await fs.promises.readFile(this.clientCsvPath, 'utf8');
-            const lines = csvContent.split('\n').slice(1); // Skip header
-
-            const mappings = [];
-            
-            for (const line of lines) {
-                if (!line.trim() || line.startsWith(',')) continue;
-                
-                const [unibetId, unibetName, fotmobId, fotmobName, matchType, country] = 
-                    line.split(',').map(s => s.trim().replace(/"/g, ''));
-
-                if (unibetId && fotmobId) {
-                    mappings.push({
-                        unibetId,
-                        unibetName: unibetName || 'Unknown',
-                        fotmobId,
-                        fotmobName: fotmobName || 'Unknown',
-                        country: country || ''
-                    });
-                }
-            }
-
-            // Sort by league name for better organization
-            mappings.sort((a, b) => {
-                const nameA = (a.unibetName || '').toLowerCase();
-                const nameB = (b.unibetName || '').toLowerCase();
-                return nameA.localeCompare(nameB);
-            });
-
-            // Generate the file content
-            let fileContent = `// Simple utility to get Fotmob logo URL from Unibet league ID
-// Based on league_mapping_clean.csv
-// Auto-generated - DO NOT EDIT MANUALLY (will be overwritten by league mapping job)
-
-const UNIBET_TO_FOTMOB_MAPPING = {
-`;
-
-            // Add mappings with comments
-            for (const mapping of mappings) {
-                const comment = mapping.country 
-                    ? `${mapping.unibetName} (${mapping.country})`
-                    : mapping.unibetName;
-                fileContent += `  '${mapping.unibetId}': '${mapping.fotmobId}', // ${comment}\n`;
-            }
-
-            fileContent += `};
-
-export const getFotmobLogoByUnibetId = (unibetId) => {
-  if (!unibetId) {
-    return null;
-  }
-  
-  const fotmobId = UNIBET_TO_FOTMOB_MAPPING[String(unibetId)];
-  
-  if (!fotmobId) {
-    return null;
-  }
-  
-  const url = \`https://images.fotmob.com/image_resources/logo/leaguelogo/\${fotmobId}.png\`;
-  return url;
-};
-`;
-
-            // ✅ FIX: Use async writeFile
-            const clientLeagueUtilsPath = path.join(__dirname, '../../../client/lib/leagueUtils.js');
-            await fs.promises.writeFile(clientLeagueUtilsPath, fileContent, 'utf8');
-            
-            console.log(`[LeagueMapping] ✅ Generated leagueUtils.js with ${mappings.length} mappings`);
-            console.log(`[LeagueMapping] 📁 Saved to: ${clientLeagueUtilsPath}`);
-            
-            return true;
-        } catch (error) {
-            console.error('[LeagueMapping] ❌ Error generating leagueUtils.js:', error);
-            return false;
-        }
-    }
 
     /**
      * Main execution method
@@ -1088,8 +995,9 @@ export const getFotmobLogoByUnibetId = (unibetId) => {
             console.log(`  - No match found: ${notFoundCount}`);
             console.log('[LeagueMapping] ========================================');
             
-            // Generate leagueUtils.js from updated CSV
-            await this.generateLeagueUtils();
+            // ✅ REMOVED: generateLeagueUtils() call
+            // Frontend now fetches league mapping from backend API
+            // No need to generate client-side files anymore
             
             console.log('[LeagueMapping] ========================================');
             console.log(''); // Empty line for better readability

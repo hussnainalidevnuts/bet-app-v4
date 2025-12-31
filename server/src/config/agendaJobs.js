@@ -95,7 +95,7 @@ const scheduleBetProcessingJob = async () => {
       );
       const job = await Promise.race([jobPromise, timeoutPromise]);
       
-      betProcessingJobScheduled = true;
+    betProcessingJobScheduled = true;
       console.log('[Agenda] ✅ Automated bet processing job scheduled successfully');
       console.log(`[Agenda] ✅ Job ID: ${job.attrs._id}`);
       console.log(`[Agenda] ✅ Next run: ${job.attrs.nextRunAt}`);
@@ -327,14 +327,14 @@ export const checkFixtureCacheAndManageJobs = async () => {
   // These jobs don't depend on liveFixturesService, so they should always be scheduled
   console.log('[Agenda] Scheduling automated bet processing job...');
   try {
-    await scheduleBetProcessingJob();
+  await scheduleBetProcessingJob();
   } catch (error) {
     console.error('[Agenda] ❌ Failed to schedule bet processing job in checkFixtureCacheAndManageJobs:', error.message);
   }
   
   console.log('[Agenda] Scheduling FotMob multi-day cache refresh job...');
   try {
-    await scheduleFotmobCacheJob();
+  await scheduleFotmobCacheJob();
   } catch (error) {
     console.error('[Agenda] ❌ Failed to schedule FotMob cache job in checkFixtureCacheAndManageJobs:', error.message);
   }
@@ -710,7 +710,7 @@ export const initializeAgendaJobs = async () => {
         setTimeout(() => reject(new Error('Timeout: agenda.jobs() took too long (10s)')), 10000)
       );
       existingJobs = await Promise.race([jobsPromise, timeoutPromise]);
-      console.log(`[Agenda] Found ${existingJobs.length} existing jobs to clean up`);
+    console.log(`[Agenda] Found ${existingJobs.length} existing jobs to clean up`);
     } catch (error) {
       console.error('[Agenda] ❌ Error or timeout fetching existing jobs:', error.message);
       console.error('[Agenda] ⚠️ Continuing with cleanup despite error...');
@@ -864,7 +864,7 @@ export const initializeAgendaJobs = async () => {
       }, 15000); // 15 second overall timeout
       
       try {
-        // Log current scheduled jobs (summary only)
+    // Log current scheduled jobs (summary only)
         console.log('[Agenda] 🔍 Fetching scheduled jobs from database...');
         let jobs = [];
         try {
@@ -886,23 +886,23 @@ export const initializeAgendaJobs = async () => {
         console.log(`\n[Agenda] ========================================`);
         console.log(`[Agenda] 📊 JOB SUMMARY`);
         console.log(`[Agenda] ========================================`);
-        console.log(`[Agenda] Total scheduled jobs: ${jobs.length}`);
+    console.log(`[Agenda] Total scheduled jobs: ${jobs.length}`);
         
         if (jobs.length === 0) {
           console.error(`[Agenda] ⚠️ WARNING: No jobs scheduled!`);
         }
-        
-        // Group jobs by name and show summary
-        const jobSummary = {};
-        jobs.forEach(job => {
-          const name = job.attrs.name;
-          if (!jobSummary[name]) {
-            jobSummary[name] = { count: 0, nextRun: job.attrs.nextRunAt, interval: job.attrs.repeatInterval };
-          }
-          jobSummary[name].count++;
-        });
-        
-        Object.entries(jobSummary).forEach(([name, info]) => {
+    
+    // Group jobs by name and show summary
+    const jobSummary = {};
+    jobs.forEach(job => {
+      const name = job.attrs.name;
+      if (!jobSummary[name]) {
+        jobSummary[name] = { count: 0, nextRun: job.attrs.nextRunAt, interval: job.attrs.repeatInterval };
+      }
+      jobSummary[name].count++;
+    });
+    
+    Object.entries(jobSummary).forEach(([name, info]) => {
           const nextRunPKT = info.nextRun ? new Date(info.nextRun.getTime() + (5 * 60 * 60 * 1000)).toISOString().replace('Z', ' PKT') : 'N/A';
           console.log(`\n[Agenda] ─────────────────────────────────────`);
           console.log(`[Agenda] Job Name: ${name}`);

@@ -49,7 +49,7 @@ const InPlayPage = () => {
         };
 
         // Start polling immediately (no delay)
-        startPolling();
+            startPolling();
 
         // Cleanup function
         return () => {

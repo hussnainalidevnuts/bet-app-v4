@@ -706,7 +706,13 @@ const Sidebar = () => {
                                                         {expandedCountries['international'] && (
                                                             <div className="mt-2">
                                                                 {popularLeagues
-                                                                    ?.filter(league => isInternationalLeague(league.name))
+                                                                    ?.filter(league => {
+                                                                        // ✅ FIX: Show leagues that are international by name OR by country
+                                                                        const isInternationalByName = isInternationalLeague(league.name);
+                                                                        const isInternationalByCountry = league.country?.name === 'International' || 
+                                                                                                          league.country?.official_name === 'International';
+                                                                        return isInternationalByName || isInternationalByCountry;
+                                                                    })
                                                                     ?.map(league => {
                                                                         const leagueHref = league.id === 'odds-boost' ? '/' : `/leagues/${league.id}`;
                                                                         return (
@@ -753,6 +759,9 @@ const Sidebar = () => {
                                                             const country = groupedLeagues[countryId];
                                                             // Exclude 'other' group
                                                             if (countryId === 'other' || country.name === 'Other') return false;
+                                                            
+                                                            // ✅ FIX: Exclude 'International' country group - we already have a dedicated International Leagues Accordion above
+                                                            if (countryId === 'international' || country.name === 'International') return false;
                                                             
                                                             // Check if all leagues in this country are international
                                                             const hasNonInternationalLeagues = country.leagues.some(league => 

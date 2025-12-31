@@ -168,56 +168,11 @@ function extractFootballMatches(data) {
     }
   }
   
-  // Apply league filtering based on CSV file (SAME AS BACKEND)
-  console.log('🔍 [NEXT API] Applying league filtering...');
-  const stats = getLeagueFilterStats();
-  console.log(`📊 [NEXT API] Total allowed leagues: ${stats.totalAllowedLeagues}`);
-  
-  const filteredAllMatches = filterMatchesByAllowedLeagues(allMatches);
-  const filteredLiveMatches = filterMatchesByAllowedLeagues(liveMatches);
-  const filteredUpcomingMatches = filterMatchesByAllowedLeagues(upcomingMatches);
-  
-  console.log(`✅ [NEXT API] League filtering complete:`);
-  console.log(`   - All matches: ${allMatches.length} → ${filteredAllMatches.length}`);
-  console.log(`   - Live matches: ${liveMatches.length} → ${filteredLiveMatches.length}`);
-  console.log(`   - Upcoming matches: ${upcomingMatches.length} → ${filteredUpcomingMatches.length}`);
-
-  // Filter upcoming matches to only show matches within next 24 hours (SAME AS BACKEND)
-  const now = new Date();
-  const twentyFourHoursLater = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  
-  const upcomingMatchesWithin24Hours = filteredUpcomingMatches.filter(match => {
-    // Use start field (from event.start) or starting_at if available
-    const matchStartTimeStr = match.start || match.starting_at;
-    
-    if (!matchStartTimeStr) {
-      return false; // Exclude matches without start time
-    }
-    
-    const matchStartTime = new Date(matchStartTimeStr);
-    
-    // Check if date is valid
-    if (isNaN(matchStartTime.getTime())) {
-      console.warn(`⚠️ [NEXT API] Invalid start time for match ${match.id}: ${matchStartTimeStr}`);
-      return false;
-    }
-    
-    // Only include matches that start within the next 24 hours (from now)
-    const isWithin24Hours = matchStartTime >= now && matchStartTime <= twentyFourHoursLater;
-    
-    return isWithin24Hours;
-  });
-  
-  console.log(`⏰ [NEXT API] Time filtering for upcoming matches:`);
-  console.log(`   - Before 24h filter: ${filteredUpcomingMatches.length}`);
-  console.log(`   - After 24h filter: ${upcomingMatchesWithin24Hours.length}`);
-  console.log(`   - Current time: ${now.toISOString()}`);
-  console.log(`   - 24 hours later: ${twentyFourHoursLater.toISOString()}`);
-
+  // Return raw matches without filtering (filtering moved to async GET function)
   return { 
-    allMatches: filteredAllMatches, 
-    liveMatches: filteredLiveMatches, 
-    upcomingMatches: upcomingMatchesWithin24Hours 
+    allMatches, 
+    liveMatches, 
+    upcomingMatches 
   };
 }
 
@@ -370,8 +325,72 @@ export async function GET(request) {
     
     console.log(`✅ [NEXT API] Successfully fetched Unibet API response`);
     
-    // Extract and filter matches (SAME LOGIC AS BACKEND)
+    // Extract matches (SAME LOGIC AS BACKEND)
     const { allMatches, liveMatches, upcomingMatches } = extractFootballMatches(data);
+    
+    // Apply league filtering based on backend API
+    console.log('🔍 [NEXT API] Applying league filtering...');
+    let filteredAllMatches = allMatches;
+    let filteredLiveMatches = liveMatches;
+    let filteredUpcomingMatches = upcomingMatches;
+    
+    try {
+      const stats = await getLeagueFilterStats();
+      console.log(`📊 [NEXT API] Total allowed leagues: ${stats.totalAllowedLeagues}`);
+      
+      // ✅ FIX: Only filter if we have league mapping data
+      // If mapping fails or returns 0 leagues, allow all matches through (fail-open)
+      if (stats.totalAllowedLeagues > 0) {
+        filteredAllMatches = await filterMatchesByAllowedLeagues(allMatches);
+        filteredLiveMatches = await filterMatchesByAllowedLeagues(liveMatches);
+        filteredUpcomingMatches = await filterMatchesByAllowedLeagues(upcomingMatches);
+        
+        console.log(`✅ [NEXT API] League filtering complete:`);
+        console.log(`   - All matches: ${allMatches.length} → ${filteredAllMatches.length}`);
+        console.log(`   - Live matches: ${liveMatches.length} → ${filteredLiveMatches.length}`);
+        console.log(`   - Upcoming matches: ${upcomingMatches.length} → ${filteredUpcomingMatches.length}`);
+      } else {
+        console.warn('⚠️ [NEXT API] League mapping not available (0 leagues) - allowing all matches through');
+        console.log(`📊 [NEXT API] No filtering applied - showing all ${allMatches.length} matches`);
+      }
+    } catch (error) {
+      // ✅ FIX: If filtering fails, allow all matches through (fail-open approach)
+      console.error('❌ [NEXT API] League filtering failed:', error.message);
+      console.warn('⚠️ [NEXT API] Allowing all matches through due to filtering error');
+      // Keep original matches (no filtering applied)
+    }
+
+    // Filter upcoming matches to only show matches within next 24 hours (SAME AS BACKEND)
+    const now = new Date();
+    const twentyFourHoursLater = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    
+    const upcomingMatchesWithin24Hours = filteredUpcomingMatches.filter(match => {
+      // Use start field (from event.start) or starting_at if available
+      const matchStartTimeStr = match.start || match.starting_at;
+      
+      if (!matchStartTimeStr) {
+        return false; // Exclude matches without start time
+      }
+      
+      const matchStartTime = new Date(matchStartTimeStr);
+      
+      // Check if date is valid
+      if (isNaN(matchStartTime.getTime())) {
+        console.warn(`⚠️ [NEXT API] Invalid start time for match ${match.id}: ${matchStartTimeStr}`);
+        return false;
+      }
+      
+      // Only include matches that start within the next 24 hours (from now)
+      const isWithin24Hours = matchStartTime >= now && matchStartTime <= twentyFourHoursLater;
+      
+      return isWithin24Hours;
+    });
+    
+    console.log(`⏰ [NEXT API] Time filtering for upcoming matches:`);
+    console.log(`   - Before 24h filter: ${filteredUpcomingMatches.length}`);
+    console.log(`   - After 24h filter: ${upcomingMatchesWithin24Hours.length}`);
+    console.log(`   - Current time: ${now.toISOString()}`);
+    console.log(`   - 24 hours later: ${twentyFourHoursLater.toISOString()}`);
     
     // ✅ OPTIMIZATION: Try to get Kambi data quickly (race condition)
     // If Kambi completes in < 1s, merge it. Otherwise return without it.
@@ -382,7 +401,7 @@ export async function GET(request) {
     });
     
     // Race: Wait max 1 second for Kambi, then return matches
-    let enrichedLiveMatches = liveMatches;
+    let enrichedLiveMatches = filteredLiveMatches;
     let liveDataMap = {};
     
     try {
@@ -393,7 +412,7 @@ export async function GET(request) {
       
       if (kambiData) {
         liveDataMap = extractKambiLiveData(kambiData);
-        enrichedLiveMatches = mergeKambiLiveDataWithMatches(liveMatches, liveDataMap);
+        enrichedLiveMatches = mergeKambiLiveDataWithMatches(filteredLiveMatches, liveDataMap);
         console.log(`✨ [NEXT API] Kambi data merged quickly (${Object.keys(liveDataMap).length} matches)`);
       } else {
         console.log(`⏱️ [NEXT API] Kambi data not ready in time, returning without it (will update in background)`);
@@ -407,8 +426,8 @@ export async function GET(request) {
     const responseData = {
       success: true,
       matches: enrichedLiveMatches, // May or may not have Kambi data
-      allMatches: allMatches,
-      upcomingMatches: upcomingMatches,
+      allMatches: filteredAllMatches,
+      upcomingMatches: upcomingMatchesWithin24Hours,
       totalMatches: enrichedLiveMatches.length,
       totalAllMatches: allMatches.length,
       lastUpdated: new Date().toISOString(),
@@ -432,7 +451,7 @@ export async function GET(request) {
       kambiPromise.then(kambiData => {
         if (kambiData) {
           const bgLiveDataMap = extractKambiLiveData(kambiData);
-          const bgEnrichedMatches = mergeKambiLiveDataWithMatches(liveMatches, bgLiveDataMap);
+          const bgEnrichedMatches = mergeKambiLiveDataWithMatches(filteredLiveMatches, bgLiveDataMap);
           
           // Update cache with enriched data (for next request)
           cache.data = {

@@ -1,157 +1,145 @@
 // League filtering utility for Next.js API routes
-// Same logic as backend server/src/utils/leagueFilter.js
+// Fetches filtering data from backend API (instead of reading CSV)
 
-import fs from 'fs';
-import path from 'path';
-
-// Cache for league mapping data
+// In-memory cache
 let leagueMappingCache = null;
+let mappingPromise = null;
 
 /**
- * Load and parse the league mapping CSV file
- * @returns {Object} - Object with allowed league names and IDs
+ * Fetch league mapping from backend API
+ * Detects if running server-side (Next.js API route) or client-side
+ * @returns {Promise<Object>}
  */
-export function loadLeagueMapping() {
+async function fetchLeagueMappingFromBackend() {
+  try {
+    // Detect if running server-side (Next.js API route) or client-side
+    const isServerSide = typeof window === 'undefined';
+    
+    let url;
+    if (isServerSide) {
+      // Server-side: Call backend directly (bypass Next.js API route)
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 
+                         process.env.API_URL || 
+                         'http://localhost:4000';
+      url = `${backendUrl}/api/admin/leagues/mapping`;
+    } else {
+      // Client-side: Use Next.js API route (handles CORS)
+      url = '/api/admin/leagues/mapping';
+    }
+    
+    const response = await fetch(url, {
+      headers: {
+        'Cache-Control': 'max-age=3600', // Cache for 1 hour
+        'accept': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Backend API returned ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (result.success && result.data) {
+      const { allowedLeagueIds, allowedLeagueNames, totalLeagues } = result.data;
+      
+      console.log(`✅ [NEXT API] Loaded ${totalLeagues} allowed leagues from backend`);
+      
+      return {
+        allowedLeagueNames: new Set(allowedLeagueNames),
+        allowedLeagueIds: new Set(allowedLeagueIds),
+        totalLeagues
+      };
+    } else {
+      throw new Error('Invalid API response format');
+    }
+  } catch (error) {
+    console.error('❌ [NEXT API] Error fetching league mapping from backend:', error.message);
+    // ✅ FIX: Return empty sets but don't throw - allows matches to show if mapping fails
+    // This prevents blocking the entire page if league mapping API is down
+    // Note: This means all matches will pass filtering if mapping fails (fail-open approach)
+    console.warn('⚠️ [NEXT API] League mapping failed - allowing all matches through (fail-open)');
+    return { 
+      allowedLeagueNames: new Set(), 
+      allowedLeagueIds: new Set(), 
+      totalLeagues: 0 
+    };
+  }
+}
+
+/**
+ * Load and parse the league mapping from backend API
+ * @returns {Promise<Object>} - Object with allowed league names and IDs
+ */
+export async function loadLeagueMapping() {
+  // Return cached data if available
   if (leagueMappingCache) {
     return leagueMappingCache;
   }
-
-  try {
-    
-    // Path to the CSV file - try multiple possible locations
-    // Priority: client folder (for Vercel deployment) > root > server folder
-    const possiblePaths = [
-      path.join(process.cwd(), 'league_mapping_clean.csv'), // Client folder (for Vercel)
-      path.join(process.cwd(), '..', 'league_mapping_clean.csv'), // Root directory
-      path.join(process.cwd(), 'server/src/unibet-calc/league_mapping_clean.csv'), // Server folder (local dev)
-      path.join(process.cwd(), '..', 'server/src/unibet-calc/league_mapping_clean.csv'), // Alternative path
-    ];
-    
-    let csvPath = null;
-    for (const testPath of possiblePaths) {
-      if (fs.existsSync(testPath)) {
-        csvPath = testPath;
-        break;
-      }
-    }
-    
-    if (!csvPath) {
-      console.error('❌ [NEXT API] League mapping CSV file not found in any of these locations:');
-      possiblePaths.forEach((testPath, index) => {
-        console.error(`   ${index + 1}. ${testPath}`);
-      });
-      return { allowedLeagueNames: new Set(), allowedLeagueIds: new Set(), totalLeagues: 0 };
-    }
-    
-    console.log('✅ [NEXT API] Found CSV file at:', csvPath);
-
-    const csvContent = fs.readFileSync(csvPath, 'utf-8');
-    const lines = csvContent.split('\n').filter(line => line.trim());
-    
-    // Skip header line
-    const dataLines = lines.slice(1);
-    
-    const allowedLeagueNames = new Set();
-    const allowedLeagueIds = new Set();
-    
-    dataLines.forEach((line, index) => {
-      if (line.trim()) {
-        const [unibetId, unibetName, fotmobId, fotmobName, matchType, country] = line.split(',');
-        
-        if (unibetName && unibetName.trim()) {
-          // Add both exact name and cleaned name variations
-          allowedLeagueNames.add(unibetName.trim());
-          allowedLeagueNames.add(unibetName.trim().toLowerCase());
-          
-          // Also add Fotmob name for matching
-          if (fotmobName && fotmobName.trim()) {
-            allowedLeagueNames.add(fotmobName.trim());
-            allowedLeagueNames.add(fotmobName.trim().toLowerCase());
-          }
-        }
-        
-        if (unibetId && unibetId.trim()) {
-          allowedLeagueIds.add(unibetId.trim());
-        }
-      }
-    });
-
-    leagueMappingCache = {
-      allowedLeagueNames,
-      allowedLeagueIds,
-      totalLeagues: allowedLeagueIds.size
-    };
-
-    console.log(`✅ [NEXT API] Loaded ${leagueMappingCache.totalLeagues} allowed leagues from CSV`);
-    console.log(`📋 [NEXT API] Sample league IDs:`, Array.from(allowedLeagueIds).slice(0, 10));
-    
-    return leagueMappingCache;
-  } catch (error) {
-    console.error('❌ [NEXT API] Error loading league mapping CSV:', error.message);
-    return { allowedLeagueNames: new Set(), allowedLeagueIds: new Set(), totalLeagues: 0 };
+  
+  // If already fetching, wait for that promise
+  if (mappingPromise) {
+    return mappingPromise;
   }
+  
+  // Start fetching
+  mappingPromise = fetchLeagueMappingFromBackend();
+  leagueMappingCache = await mappingPromise;
+  mappingPromise = null;
+  
+  return leagueMappingCache;
 }
 
 /**
  * Check if a league ID is in the allowed list
  * @param {string|number} leagueId - The Unibet league ID to check
- * @returns {boolean} - Whether the league is allowed
+ * @returns {Promise<boolean>} - Whether the league is allowed
  */
-export function isLeagueAllowed(leagueId) {
+export async function isLeagueAllowed(leagueId) {
   if (!leagueId) {
     return false;
   }
 
-  const { allowedLeagueIds } = loadLeagueMapping();
+  const { allowedLeagueIds } = await loadLeagueMapping();
   
   // Convert to string for comparison
   const leagueIdStr = String(leagueId);
   
   // Check exact match
-  if (allowedLeagueIds.has(leagueIdStr)) {
-    return true;
-  }
-  
-  return false;
+  return allowedLeagueIds.has(leagueIdStr);
 }
 
 /**
  * Filter matches to only include those from allowed leagues
  * @param {Array} matches - Array of match objects
- * @returns {Array} - Filtered array of matches
+ * @returns {Promise<Array>} - Filtered array of matches
  */
-export function filterMatchesByAllowedLeagues(matches) {
+export async function filterMatchesByAllowedLeagues(matches) {
   if (!Array.isArray(matches)) {
     return [];
   }
 
-  const { allowedLeagueIds } = loadLeagueMapping();
-  
+  const { allowedLeagueIds } = await loadLeagueMapping();
   
   const filteredMatches = matches.filter(match => {
     // ONLY use groupId field (Unibet league ID) - STRICT METHOD (same as backend)
     const hasGroupId = !!match.groupId;
-    const isAllowed = hasGroupId && isLeagueAllowed(match.groupId);
+    const isAllowed = hasGroupId && allowedLeagueIds.has(String(match.groupId));
     
-    if (hasGroupId && isAllowed) {
-      return true;
-    }
-    
-    return false;
+    return hasGroupId && isAllowed;
   });
 
   console.log(`🔍 [NEXT API] League filtering: ${matches.length} total matches → ${filteredMatches.length} allowed matches`);
-  
   
   return filteredMatches;
 }
 
 /**
  * Get statistics about league filtering
- * @returns {Object} - Statistics about the league mapping
+ * @returns {Promise<Object>} - Statistics about the league mapping
  */
-export function getLeagueFilterStats() {
-  const mapping = loadLeagueMapping();
+export async function getLeagueFilterStats() {
+  const mapping = await loadLeagueMapping();
   return {
     totalAllowedLeagues: mapping.totalLeagues || 0,
     allowedLeagueNames: Array.from(mapping.allowedLeagueNames || []),

@@ -60,7 +60,7 @@ const BetSlip = () => {
     const [isPlacingBet, setIsPlacingBet] = React.useState(false);
     const isMobile = useIsMobile();
     
-    // New state for 7-second odds validation
+    // New state for 5-second odds validation
     const [pendingPlaceBet, setPendingPlaceBet] = useState(false);
     const [countdown, setCountdown] = useState(0);
     const [stabilityWait, setStabilityWait] = useState(false);
@@ -232,9 +232,9 @@ const BetSlip = () => {
             }
         }
 
-        // Start 7-second validation
+        // Start 5-second validation
         setPendingPlaceBet(true);
-        setCountdown(7);
+        setCountdown(5);
     };
 
     const executePlaceBet = async () => {

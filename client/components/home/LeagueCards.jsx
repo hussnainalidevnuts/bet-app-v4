@@ -154,6 +154,7 @@ const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButt
                         <div className="flex items-center flex-shrink-0">
                             {!hideOdds && (
                                 <div 
+                                    key={`odds-container-${match.id}`}
                                     className="flex gap-1"
                                     onClick={(e) => {
                                         // Prevent Link navigation when clicking on odds buttons
@@ -222,11 +223,18 @@ const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButt
                                         return value;
                                     };
                                     
+                                    // ✅ Create stable odds key to prevent glitch when odds change
+                                    const homeValue = getOddValue('home') || getOddValue('1');
+                                    const drawValue = getOddValue('draw') || getOddValue('X');
+                                    const awayValue = getOddValue('away') || getOddValue('2');
+                                    const oddsKey = `${match.id}-${homeValue || 'null'}-${drawValue || 'null'}-${awayValue || 'null'}`;
+                                    
                                     return (
                                         <>
                                             {/* Always render all three buttons to maintain fixed layout */}
                                             {/* Home/1 Button */}
                                             <Button
+                                                key={`home-${oddsKey}`}
                                                 size="sm"
                                                 className={getOddButtonClass({ suspended: getSuspendedStatus('home') || getSuspendedStatus('1') || (getOddValue('home') === null && getOddValue('1') === null) })}
                                                 onClick={isOddClickable({ suspended: getSuspendedStatus('home') || getSuspendedStatus('1') || !(displayOdds.home || displayOdds['1']) })
@@ -299,6 +307,7 @@ const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButt
                                             
                                             {/* Draw/X Button */}
                                             <Button
+                                                key={`draw-${oddsKey}`}
                                                 size="sm"
                                                 className={getOddButtonClass({ suspended: getSuspendedStatus('draw') || getSuspendedStatus('X') || (getOddValue('draw') === null && getOddValue('X') === null) })}
                                                 onClick={isOddClickable({ suspended: getSuspendedStatus('draw') || getSuspendedStatus('X') || !(displayOdds.draw || displayOdds['X']) })
@@ -371,6 +380,7 @@ const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButt
                                             
                                             {/* Away/2 Button */}
                                             <Button
+                                                key={`away-${oddsKey}`}
                                                 size="sm"
                                                 className={getOddButtonClass({ suspended: getSuspendedStatus('away') || getSuspendedStatus('2') || (getOddValue('away') === null && getOddValue('2') === null) })}
                                                 onClick={isOddClickable({ suspended: getSuspendedStatus('away') || getSuspendedStatus('2') || !(displayOdds.away || displayOdds['2']) })

@@ -856,6 +856,50 @@ export const initializeAgendaJobs = async () => {
     
     // ✅ IMPORTANT: Continue immediately - don't wait for FotMob cache refresh
     console.log('[Agenda] ⏭️ FotMob cache refresh started in background, continuing with initialization...');
+    
+    // Immediately update League Mapping when server starts (force update on startup)
+    // ✅ FIX: Run in background to avoid blocking server startup
+    console.log('[Agenda] Triggering immediate League Mapping update on server startup (non-blocking)...');
+    // Don't await - let it run in background
+    (async () => {
+      try {
+        const updater = new LeagueMappingAutoUpdate();
+        console.log('[Agenda] Starting League Mapping update in background...');
+        const result = await updater.execute();
+        console.log('[Agenda] ✅ League Mapping update completed successfully on startup');
+        console.log('[Agenda] Background League Mapping update finished');
+        console.log('[Agenda] ✅ League Mapping update async task completed - returning control');
+        // ✅ CRITICAL: Force event loop to continue - don't let this block other operations
+        setImmediate(() => {
+          console.log('[Agenda] 🔄 League Mapping update background task fully released');
+          // ✅ CRITICAL FIX: Add another setImmediate to ensure event loop continues
+          setImmediate(() => {
+            console.log('[Agenda] 🔄 Event loop fully released after League Mapping update (nested setImmediate)');
+            // ✅ CRITICAL: Add one more setImmediate to ensure Agenda.js operations complete
+            setImmediate(() => {
+              console.log('[Agenda] 🔄 Final event loop release after League Mapping update');
+            });
+          });
+        });
+      } catch (error) {
+        console.error('[Agenda] ❌ Error updating League Mapping on startup:', error);
+        console.error('[Agenda] Error stack:', error.stack);
+        // ✅ CRITICAL FIX: Force event loop to continue even on error
+        setImmediate(() => {
+          console.log('[Agenda] 🔄 Event loop released after League Mapping update error');
+        });
+        // Don't block server startup if League Mapping update fails
+      }
+    })().catch(err => {
+      console.error('[Agenda] ❌ Unhandled error in League Mapping update background task:', err);
+      // ✅ CRITICAL FIX: Force event loop to continue even on unhandled error
+      setImmediate(() => {
+        console.log('[Agenda] 🔄 Event loop released after League Mapping update unhandled error');
+      });
+    }); // Immediately invoked async function - runs in background
+    
+    // ✅ IMPORTANT: Continue immediately - don't wait for League Mapping update
+    console.log('[Agenda] ⏭️ League Mapping update started in background, continuing with initialization...');
     console.log('[Agenda] ✅ Agenda jobs initialization completed');
     console.log('[Agenda] Server ready to accept requests');
     

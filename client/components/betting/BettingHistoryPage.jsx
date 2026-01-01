@@ -270,11 +270,8 @@ const BettingHistoryPage = ({ userId }) => {
                         </div>
                       </TableCell>
                       <TableCell className="max-w-20">
-                        <div className="truncate" title={leg.betDetails?.total || (leg.unibetMeta?.handicapLine ? (leg.unibetMeta.handicapLine / 1000).toFixed(1) : "-")}>
-                          {leg.betDetails?.market_id === "37" 
-                            ? (leg.betDetails?.total || (leg.unibetMeta?.handicapLine ? (leg.unibetMeta.handicapLine / 1000).toFixed(1) : "-"))
-                            : (leg.betDetails?.total || (leg.unibetMeta?.handicapLine ? (leg.unibetMeta.handicapLine / 1000).toFixed(1) : "-"))
-                          }
+                        <div className="truncate" title={`$${(leg.stake || bet.stake).toFixed(2)}`}>
+                          ${(leg.stake || bet.stake).toFixed(2)}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -428,10 +425,7 @@ const BettingHistoryPage = ({ userId }) => {
               <div className="flex justify-between">
                 <span className="text-gray-500">Value:</span>
                 <span className="text-gray-900">
-                  {bet.betDetails?.market_id === "37" 
-                    ? bet.betDetails?.total
-                    : (bet.betDetails?.total || "-")
-                  }
+                  ${bet.stake?.toFixed(2) || "0.00"}
                 </span>
               </div>
             )}
@@ -554,10 +548,7 @@ const BettingHistoryPage = ({ userId }) => {
                   <div className="flex justify-between">
                     <span className="text-gray-500">Value:</span>
                     <span className="text-gray-900">
-                      {leg.betDetails?.market_id === "37" 
-                        ? (leg.betDetails?.total || (leg.unibetMeta?.handicapLine ? (leg.unibetMeta.handicapLine / 1000).toFixed(1) : "-"))
-                        : (leg.betDetails?.total || (leg.unibetMeta?.handicapLine ? (leg.unibetMeta.handicapLine / 1000).toFixed(1) : "-"))
-                      }
+                      ${(leg.stake || bet.stake).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -880,12 +871,8 @@ const BettingHistoryPage = ({ userId }) => {
                                 </div>
                               </TableCell>
                               <TableCell className="max-w-32">
-                                <div className="truncate" title={isCombo ? "N/A" : item.betDetails?.total}>
-                                  {isCombo ? "N/A" : (
-                                    item.betDetails?.market_id === "37" 
-                                      ? item.betDetails?.total
-                                      : (item.betDetails?.total || "-")
-                                  )}
+                                <div className="truncate" title={isCombo ? "N/A" : `$${item.stake?.toFixed(2) || "0.00"}`}>
+                                  {isCombo ? "N/A" : `$${item.stake?.toFixed(2) || "0.00"}`}
                                 </div>
                               </TableCell>
                               <TableCell>

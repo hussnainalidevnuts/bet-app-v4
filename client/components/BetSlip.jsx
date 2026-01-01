@@ -215,6 +215,23 @@ const BetSlip = () => {
             return;
         }
 
+        // ✅ Check for empty stakes in single bets and warn user (keep bet slip open)
+        if (activeTab === 'singles' && bets.length > 1) {
+            const emptyStakes = bets.filter(bet => {
+                const stake = betSlip.stake.singles[bet.id];
+                return !stake || stake === 0 || stake === '' || parseFloat(stake) === 0;
+            });
+            
+            if (emptyStakes.length > 0) {
+                toast.warning(
+                    `⚠️ You have ${emptyStakes.length} bet${emptyStakes.length > 1 ? 's' : ''} with no stake entered. Please enter stakes for all bets before placing.`,
+                    { duration: 5000 }
+                );
+                // Don't proceed with bet placement - keep bet slip open for user to enter stakes
+                return;
+            }
+        }
+
         // Start 7-second validation
         setPendingPlaceBet(true);
         setCountdown(7);

@@ -279,15 +279,15 @@ const MatchItem = ({ match, isInPlay, createBetHandler, buttonsReady, getOddButt
                                                             'odds structure': match.odds ? Object.keys(match.odds) : 'no odds'
                                                         });
                                                          console.log('🔍 In-Play SEARCHING FOR ODDID:', {
-                                                            'match.kambiLiveData': match.kambiLiveData,
-                                                            'match.liveData': match.liveData,
-                                                            'match.liveOdds': match.liveOdds,
-                                                            'match.betOffers': match.betOffers,
-                                                            'match.outcomes': match.outcomes,
-                                                            'match.mainBetOffer': match.mainBetOffer,
-                                                            'match.mainBetOffer?.outcomes': match.mainBetOffer?.outcomes,
-                                                            'full match object': match
-                                                        });
+                                                             'match.kambiLiveData': match.kambiLiveData,
+                                                             'match.liveData': match.liveData,
+                                                             'match.liveOdds': match.liveOdds,
+                                                             'match.betOffers': match.betOffers,
+                                                             'match.outcomes': match.outcomes,
+                                                             'match.mainBetOffer': match.mainBetOffer,
+                                                             'match.mainBetOffer?.outcomes': match.mainBetOffer?.outcomes,
+                                                             'full match object': match
+                                                         });
                                                         return createBetHandler(match, 'Home', getOddValue('home') || getOddValue('1'), '1x2', oddId || `${match.id}_home_1`, { marketId: "1_home", label: "Home", name: `Win - ${match.team1 || match.participants?.[0]?.name || 'Team 1'}`, marketDescription: "Full Time Result" })(e);
                                                     }
                                                     : undefined

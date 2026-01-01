@@ -10,8 +10,8 @@ export const initializeSocket = (server) => {
         if (!origin) return callback(null, true);
         
         const allowedOrigins = [
-          process.env.CLIENT_URL || "http://localhost:3000",
-          "http://69.197.164.180:3000",
+        process.env.CLIENT_URL || "http://localhost:3000",
+        "http://69.197.164.180:3000",
           "http://69.197.164.180",
           // ✅ NEW VERCEL DEPLOYMENT
           "https://bet-app-v1-qtnw.vercel.app",

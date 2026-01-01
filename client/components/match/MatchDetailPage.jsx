@@ -391,7 +391,8 @@ const MatchDetailPage = ({ matchId }) => {
 
             transformedClassifiedOdds[categoryId] = {
                 label: getCategoryLabel(categoryId),
-                markets_data: groupedMarkets
+                markets_data: groupedMarkets,
+                priority: getCategoryPriority(categoryId)
             };
         });
         
@@ -899,20 +900,20 @@ function getCategoryLabel(categoryId) {
 // Explicit ordering for the tabs so they match the bookmaker UI
 function getCategoryPriority(categoryId) {
     const order = [
-        'three-way-line',
-        'asian-lines',
         'match-regular-time',
-        'player-shots-on-target',
-        'player-cards',
         'goal-scorer',
         'player-goals',
+        'half-time',
+        'corners',
+        'three-way-line',
+        'asian-lines',
+        'player-shots-on-target',
+        'player-cards',
         'goalkeeper-saves',
         'player-assist',
         'player-specials',
         'player-fouls',
         'player-shots',
-        'half-time',
-        'corners',
         'cards',
         'match-team-shots',
         'match-team-fouls',

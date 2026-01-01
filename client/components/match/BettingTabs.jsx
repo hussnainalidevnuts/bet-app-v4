@@ -641,6 +641,19 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
             });
             if (flattened.length) renderedOptions = flattened;
         }
+        
+        // Sort Over/Under markets by total value in ascending order
+        const hasOverUnder = renderedOptions.some(opt => 
+            opt.label && (opt.label.toLowerCase().includes('over') || opt.label.toLowerCase().includes('under'))
+        );
+        if (hasOverUnder && !isPlayerShots && !isResultMarket && !isHandicapMarket) {
+            const sortByTotal = (a, b) => {
+                const totalA = a.total != null ? Number(a.total) : 0;
+                const totalB = b.total != null ? Number(b.total) : 0;
+                return totalA - totalB;
+            };
+            renderedOptions = [...renderedOptions].sort(sortByTotal);
+        }
 
         return (
             <div className={`grid ${gridClass} gap-1`}>
@@ -696,9 +709,15 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
     const renderTotalGoalsOptions = (options, section) => {
         // For Exact Total Goals, show all options in a single grid (no partition)
         if (section.title?.toLowerCase().includes('exact total goals')) {
+            // Sort by total value in ascending order
+            const sortedOptions = [...options].sort((a, b) => {
+                const totalA = a.total != null ? Number(a.total) : 0;
+                const totalB = b.total != null ? Number(b.total) : 0;
+                return totalA - totalB;
+            });
             return (
                 <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-1">
-                    {options.map((option, idx) => {
+                    {sortedOptions.map((option, idx) => {
                         return (
                             <BettingOptionButton
                                 key={`exact-total-${option.label}-${idx}`}
@@ -734,6 +753,15 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
         const underOptions = options.filter(opt =>
             opt.label && opt.label.toLowerCase().includes('under')
         );
+        
+        // Sort by total value in ascending order
+        const sortByTotal = (a, b) => {
+            const totalA = a.total != null ? Number(a.total) : 0;
+            const totalB = b.total != null ? Number(b.total) : 0;
+            return totalA - totalB;
+        };
+        overOptions.sort(sortByTotal);
+        underOptions.sort(sortByTotal);
 
         // Fallback: if neither Over nor Under is present (e.g., Odd/Even), render a simple grid
         if (overOptions.length === 0 && underOptions.length === 0) {
@@ -842,6 +870,15 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
         const underOptions = options.filter(opt =>
             opt.label && opt.label.toLowerCase().includes('under')
         );
+        
+        // Sort by total value in ascending order
+        const sortByTotal = (a, b) => {
+            const totalA = a.total != null ? Number(a.total) : 0;
+            const totalB = b.total != null ? Number(b.total) : 0;
+            return totalA - totalB;
+        };
+        overOptions.sort(sortByTotal);
+        underOptions.sort(sortByTotal);
 
         // Fallback: if neither Over nor Under is present, render a simple grid
         if (overOptions.length === 0 && underOptions.length === 0) {

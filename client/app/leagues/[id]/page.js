@@ -1,5 +1,6 @@
 import LeagueDetailPage from "@/components/league/LeagueDetailPage";
 
-export default function LeagueDetail({ params }) {
-  return <LeagueDetailPage leagueId={params.id} />;
+export default async function LeagueDetail({ params }) {
+  const { id } = await params;
+  return <LeagueDetailPage leagueId={id} />;
 }

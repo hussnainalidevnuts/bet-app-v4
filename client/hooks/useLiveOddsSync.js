@@ -55,19 +55,19 @@ export const useLiveOddsSync = (matchId) => {
 
     // Priority 2: Check liveOdds (Kambi API format - also updated frequently)
     if (liveMatch.liveOdds && liveMatch.liveOdds.outcomes) {
-      liveMatch.liveOdds.outcomes.forEach(outcome => {
-        // Convert from Kambi API format (13000 -> 13.00) if needed
-        const oddsValue = typeof outcome.odds === 'number' ? 
-          (outcome.odds > 1000 ? outcome.odds / 1000 : outcome.odds) : 
-          parseFloat(outcome.odds);
-        
+    liveMatch.liveOdds.outcomes.forEach(outcome => {
+      // Convert from Kambi API format (13000 -> 13.00) if needed
+      const oddsValue = typeof outcome.odds === 'number' ? 
+        (outcome.odds > 1000 ? outcome.odds / 1000 : outcome.odds) : 
+        parseFloat(outcome.odds);
+      
         // Overwrite if already in map (mainBetOffer takes priority, but liveOdds can update)
-        oddsMap.set(outcome.id, {
-          odds: oddsValue,
-          status: outcome.status,
-          suspended: outcome.status !== 'OPEN'
-        });
+      oddsMap.set(outcome.id, {
+        odds: oddsValue,
+        status: outcome.status,
+        suspended: outcome.status !== 'OPEN'
       });
+    });
     }
 
     // Priority 3: Check matchBetOffers (fallback - may be stale, but has more markets)

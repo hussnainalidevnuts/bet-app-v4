@@ -16,7 +16,7 @@ let lastCsvModified = null; // ✅ Track CSV file modification time
 // Load league_mapping_with_urls.csv (ID -> URL mapping) - Now with Unibet_ID column
 function loadLeagueMappingWithUrls() {
   try {
-    const csvPath = path.join(__dirname, '../../../../league_mapping_with_urls.csv');
+    const csvPath = path.join(__dirname, '../../unibet-calc/league_mapping_with_urls.csv');
     
     if (!fs.existsSync(csvPath)) {
       console.warn('⚠️ league_mapping_with_urls.csv not found');
@@ -37,7 +37,9 @@ function loadLeagueMappingWithUrls() {
     
     dataLines.forEach(line => {
       if (!line.trim()) return;
-      const [unibetId, unibetUrl, unibetName, fotmobUrl, fotmobName, matchType, country] = line.split(',');
+      // ✅ FIX: Handle quoted values in CSV
+      const fields = line.split(',').map(field => field.replace(/^"|"$/g, '').trim());
+      const [unibetId, unibetUrl, unibetName, fotmobUrl, fotmobName, matchType, country] = fields;
       if (unibetId && unibetUrl) {
         // Store Unibet_ID as key and Unibet_URL as value - Direct mapping!
         const id = parseInt(unibetId);
@@ -54,7 +56,7 @@ function loadLeagueMappingWithUrls() {
 // ✅ NEW: Check if CSV file was modified and reload if needed
 function checkAndReloadCsv() {
   try {
-    const csvPath = path.join(__dirname, '../../../../league_mapping_with_urls.csv');
+    const csvPath = path.join(__dirname, '../../unibet-calc/league_mapping_with_urls.csv');
     if (!fs.existsSync(csvPath)) return false;
     
     const stats = fs.statSync(csvPath);
@@ -90,7 +92,7 @@ function getLeagueUrl(leagueId) {
   
   // ✅ FINAL FALLBACK: Read CSV file directly (in case cache is still stale)
   try {
-    const csvPath = path.join(__dirname, '../../../../league_mapping_with_urls.csv');
+    const csvPath = path.join(__dirname, '../../unibet-calc/league_mapping_with_urls.csv');
     if (fs.existsSync(csvPath)) {
       const csvContent = fs.readFileSync(csvPath, 'utf-8');
       const lines = csvContent.split('\n').filter(line => line.trim());
@@ -98,7 +100,9 @@ function getLeagueUrl(leagueId) {
       
       for (const line of dataLines) {
         if (!line.trim()) continue;
-        const [unibetId, unibetUrl] = line.split(',');
+        // ✅ FIX: Handle quoted values in CSV
+        const fields = line.split(',').map(field => field.replace(/^"|"$/g, '').trim());
+        const [unibetId, unibetUrl] = fields;
         if (unibetId && parseInt(unibetId) === leagueId && unibetUrl) {
           const url = unibetUrl.trim();
           // Update cache for next time
@@ -119,7 +123,7 @@ function getLeagueUrl(leagueId) {
 loadLeagueMappingWithUrls();
 
 // ✅ NEW: Watch for CSV file changes
-const csvPath = path.join(__dirname, '../../../../league_mapping_with_urls.csv');
+const csvPath = path.join(__dirname, '../../unibet-calc/league_mapping_with_urls.csv');
 if (fs.existsSync(csvPath)) {
   fs.watchFile(csvPath, { interval: 2000 }, (curr, prev) => {
     if (curr.mtime !== prev.mtime) {

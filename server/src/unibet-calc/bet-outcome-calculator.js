@@ -8025,7 +8025,7 @@ class BetOutcomeCalculator {
                 if (matchResult.cancellationReason) {
                     console.log(`\n🚫 CANCELLING BET: ${matchResult.cancellationReason}`);
                     console.log(`📝 Reason: ${matchResult.error}`);
-                    
+
                     // ✅ FIX: Create detailed cancellation reason with code and error message
                     let detailedReason = `${matchResult.cancellationReason}: ${matchResult.error}`;
                     if (matchResult.debugInfo?.searchSteps && matchResult.debugInfo.searchSteps.length > 0) {

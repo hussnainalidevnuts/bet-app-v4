@@ -11,7 +11,7 @@ class LeagueMappingAutoUpdate {
     constructor() {
         // ✅ REMOVED: clientCsvPath - No longer needed, frontend uses backend API
         this.serverCsvPath = path.join(__dirname, '../unibet-calc/league_mapping_clean.csv');
-        this.urlsCsvPath = path.join(__dirname, '../../../league_mapping_with_urls.csv');
+        this.urlsCsvPath = path.join(__dirname, '../unibet-calc/league_mapping_with_urls.csv');
         
         // ✅ Add path verification logging
         console.log('[LeagueMapping] 📁 File paths initialized:');
@@ -664,10 +664,9 @@ class LeagueMappingAutoUpdate {
         
         return str
             .toLowerCase()
-            .replace(/[''"]/g, '_') // Replace apostrophes/quotes with underscores FIRST
-            .replace(/[^a-z0-9\s_-]/g, '') // Remove other special chars (but keep spaces, hyphens, underscores)
-            .replace(/\s+/g, '_') // Replace spaces with underscores
-            .replace(/-+/g, '_') // Replace hyphens with underscores
+            .replace(/[''"]/g, '') // Remove apostrophes/quotes
+            .replace(/[^a-z0-9\s-]/g, '') // Remove special chars (but keep spaces and hyphens)
+            .replace(/\s+/g, '_') // Replace spaces with underscores (preserve hyphens)
             .replace(/_+/g, '_') // Replace multiple underscores with single
             .replace(/^_+|_+$/g, '') // Remove leading/trailing underscores
             .trim();

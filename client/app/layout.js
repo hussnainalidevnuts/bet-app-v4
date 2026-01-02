@@ -30,8 +30,8 @@ export default function RootLayout({ children }) {
             <SidebarProvider>
               {/* <LayoutWrapper>{children}</LayoutWrapper> */}
               <div className="bg-gray-100 h-screen flex flex-col">
-                {/* Header - sticky on mobile, normal on desktop */}
-                <div className="flex-shrink-0 sticky top-0 z-50 md:relative md:z-auto">
+                {/* Header - fixed on mobile (no sticky wrapper), normal on desktop */}
+                <div className="flex-shrink-0">
                   <Header />
                 </div>
 

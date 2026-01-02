@@ -331,6 +331,17 @@ body {
   overflow: hidden;
 }
 
+/* iOS Safari viewport fix - handles dynamic toolbar and safe areas */
+@supports (-webkit-touch-callout: none) {
+  body {
+    min-height: -webkit-fill-available;
+  }
+  
+  .h-screen {
+    min-height: -webkit-fill-available;
+  }
+}
+
 /* === CUSTOM TOASTER STYLES === */
 /* You can customize these styles to match your app's design */
 

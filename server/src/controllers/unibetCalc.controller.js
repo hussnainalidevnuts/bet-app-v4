@@ -427,8 +427,8 @@ export class UnibetCalcController {
             const updatedBet = await Bet.findByIdAndUpdate(
                 betId,
                 {
-                    status: 'cancelled',
-                    payout: 0,
+                        status: 'cancelled',
+                        payout: 0,
                     profit: 0,
                     $set: {
                         'result.actualOutcome': existingResult.actualOutcome || null,

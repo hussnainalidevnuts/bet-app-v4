@@ -1,0 +1,25 @@
+Assalam-o-Alaikum,
+
+Humein betting application ke liye Google Gemini AI API key ki zaroorat hai.
+
+**API Details:**
+- Service: Google Gemini AI
+- Model: gemini-2.5-flash
+- Purpose: League mapping feature (automatic league matching)
+
+**API Key Link:**
+https://aistudio.google.com/apikey
+
+**Steps:**
+1. Link par jayen
+2. Google account se login karein
+3. "Create API Key" click karein
+4. API key copy karein
+5. Environment variable mein add karein: GEMINI_API_KEY=your_key_here
+
+**Note:** Free tier available hai, production ke liye paid plan recommended.
+
+Shukriya!
+
+
+

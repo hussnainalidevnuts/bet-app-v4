@@ -659,28 +659,11 @@ export default class BaseBetOutcomeCalculationService {
 
   /**
    * Calculate Player Goals outcome (First/Last/Anytime Goalscorer)
+   * Uses FotMob events data instead of Unibet API winning field
    */
   calculatePlayerGoals(bet, matchData) {
-    // This would require detailed match events data
-    // For now, we'll use the winning field from the odds if available
-    const selectedOdd = this.findSelectedOdd(bet, matchData);
-
-    if (!selectedOdd) {
-      return {
-        status: "canceled",
-        payout: bet.stake,
-        reason: "Odd not found in match data",
-      };
-    }
-
-    const isWinning = selectedOdd.winning === true;
-
-    return {
-      status: isWinning ? "won" : "lost",
-      payout: isWinning ? bet.stake * bet.odds : 0,
-      playerName: bet.betOption,
-      reason: `Player goal bet: ${isWinning ? "Won" : "Lost"}`,
-    };
+    // Use the same logic as calculateGoalscorers which uses FotMob events data
+    return this.calculateGoalscorers(bet, matchData);
   }
 
   /**
@@ -836,27 +819,78 @@ export default class BaseBetOutcomeCalculationService {
   }
 
   /**
-   * Calculate Player Cards outcome
+   * Calculate Player Cards outcome using FotMob events data
    */
   calculatePlayerCards(bet, matchData) {
-    // Similar to player goals, this requires detailed match events
-    const selectedOdd = this.findSelectedOdd(bet, matchData);
-
-    if (!selectedOdd) {
+    // Check if events data is available (FotMob format)
+    const playerName = bet.betDetails?.name || bet.betOption;
+    
+    if (!playerName) {
       return {
         status: "canceled",
         payout: bet.stake,
-        reason: "Odd not found in match data",
+        reason: "Player name not found in bet details",
       };
     }
 
-    const isWinning = selectedOdd.winning === true;
+    // Try to get cards from FotMob events (new format: header.events.events)
+    let cardEvents = [];
+    
+    // Check header.events.events (primary FotMob location)
+    if (matchData.header?.events?.events && Array.isArray(matchData.header.events.events)) {
+      cardEvents = matchData.header.events.events.filter(
+        (event) => event.type === "Card" && event.card && event.player?.name
+      );
+    }
+    
+    // Check content.matchFacts.events.events (alternative FotMob location)
+    if (cardEvents.length === 0 && matchData.content?.matchFacts?.events?.events && Array.isArray(matchData.content.matchFacts.events.events)) {
+      cardEvents = matchData.content.matchFacts.events.events.filter(
+        (event) => event.type === "Card" && event.card && event.player?.name
+      );
+    }
+    
+    // Fallback: Check legacy events format (old API format with type_id)
+    if (cardEvents.length === 0 && matchData.events && Array.isArray(matchData.events)) {
+      // Note: Old format might not have card type_id, but we'll try
+      // Cards are typically type_id: 28 or 66 based on market
+      const cardTypeIds = [28, 66]; // Player Cards market IDs
+      cardEvents = matchData.events.filter(
+        (event) => cardTypeIds.includes(event.type_id) && event.player_name
+      );
+    }
+
+    if (cardEvents.length === 0) {
+      // No cards found - player didn't get any cards, so bet loses
+      return {
+        status: "lost",
+        payout: 0,
+        reason: `Player ${playerName} did not receive any cards`,
+      };
+    }
+
+    // Check if the player received any card
+    const playerCards = cardEvents.filter((card) => {
+      const cardPlayerName = card.player?.name || card.player_name;
+      return cardPlayerName && this.playerNamesMatch(cardPlayerName, playerName);
+    });
+
+    const isWinning = playerCards.length > 0;
 
     return {
       status: isWinning ? "won" : "lost",
       payout: isWinning ? bet.stake * bet.odds : 0,
-      playerName: bet.betOption,
-      reason: `Player card bet: ${isWinning ? "Won" : "Lost"}`,
+      playerName: playerName,
+      reason: `Player card bet: ${isWinning ? "Won" : "Lost"} - ${playerCards.length} card(s) received`,
+      debugInfo: {
+        totalCardsInMatch: cardEvents.length,
+        playerCards: playerCards.length,
+        cardDetails: playerCards.map(c => ({
+          player: c.player?.name || c.player_name,
+          card: c.card,
+          time: c.time || c.minute
+        }))
+      }
     };
   }
 
@@ -2579,38 +2613,117 @@ export default class BaseBetOutcomeCalculationService {
   }
 
   /**
-   * Calculate outcome for unknown or generic market types using winning field
+   * Calculate outcome for unknown or generic market types using FotMob data
+   * No longer depends on Unibet API's winning field - uses FotMob match data directly
    */
   calculateGenericOutcome(bet, matchData) {
-    // For unknown market types, try to use the winning field from odds
-    const selectedOdd = this.findSelectedOdd(bet, matchData);
+    console.log(`[calculateGenericOutcome] Calculating outcome from FotMob data for unknown market`);
+    console.log(`[calculateGenericOutcome] Bet details:`, {
+      market_id: bet.betDetails?.market_id,
+      label: bet.betDetails?.label,
+      betOption: bet.betOption,
+      name: bet.betDetails?.name,
+      market_description: bet.betDetails?.market_description
+    });
 
-    if (!selectedOdd) {
-      return {
-        status: "canceled",
-        payout: bet.stake,
-        reason: "Odd not found in match data",
-      };
-    }
+    const marketId = bet.betDetails?.market_id || bet.marketId;
+    const betLabel = bet.betDetails?.label || bet.betOption || bet.betDetails?.name || '';
+    const marketDescription = bet.betDetails?.market_description || '';
 
-    // If winning field is available, use it
-    if (selectedOdd.hasOwnProperty("winning")) {
-      const isWinning = selectedOdd.winning === true;
+    // Try to extract match scores from FotMob data
+    const scores = this.extractMatchScores(matchData);
+    const { homeScore, awayScore } = scores;
+
+    console.log(`[calculateGenericOutcome] Match scores: ${homeScore}-${awayScore}`);
+
+    // Try to infer market type from description or label
+    const normalizedDescription = marketDescription.toLowerCase();
+    const normalizedLabel = betLabel.toLowerCase();
+
+    // Check if it's a result-based market (1X2)
+    if (normalizedLabel === '1' || normalizedLabel === 'home' || normalizedLabel === 'home win') {
+      const isWinning = homeScore > awayScore;
       return {
         status: isWinning ? "won" : "lost",
         payout: isWinning ? bet.stake * bet.odds : 0,
-        reason: `Generic calculation using winning field: ${
-          isWinning ? "Won" : "Lost"
-        }`,
-        winningField: selectedOdd.winning,
+        reason: `Home win: ${homeScore}-${awayScore} (${isWinning ? "Won" : "Lost"})`,
       };
     }
 
-    // If no winning field, return canceled with refund
+    if (normalizedLabel === '2' || normalizedLabel === 'away' || normalizedLabel === 'away win') {
+      const isWinning = awayScore > homeScore;
+      return {
+        status: isWinning ? "won" : "lost",
+        payout: isWinning ? bet.stake * bet.odds : 0,
+        reason: `Away win: ${homeScore}-${awayScore} (${isWinning ? "Won" : "Lost"})`,
+      };
+    }
+
+    if (normalizedLabel === 'x' || normalizedLabel === 'draw' || normalizedLabel === 'tie') {
+      const isWinning = homeScore === awayScore;
+      return {
+        status: isWinning ? "won" : "lost",
+        payout: isWinning ? bet.stake * bet.odds : 0,
+        reason: `Draw: ${homeScore}-${awayScore} (${isWinning ? "Won" : "Lost"})`,
+      };
+    }
+
+    // Check if it's an Over/Under market
+    if (normalizedDescription.includes('over') || normalizedLabel.includes('over')) {
+      const total = bet.betDetails?.total ? parseFloat(bet.betDetails.total) : null;
+      if (total !== null) {
+        const totalGoals = homeScore + awayScore;
+        const isWinning = totalGoals > total;
+        return {
+          status: isWinning ? "won" : "lost",
+          payout: isWinning ? bet.stake * bet.odds : 0,
+          reason: `Over ${total}: ${totalGoals} goals (${isWinning ? "Won" : "Lost"})`,
+        };
+      }
+    }
+
+    if (normalizedDescription.includes('under') || normalizedLabel.includes('under')) {
+      const total = bet.betDetails?.total ? parseFloat(bet.betDetails.total) : null;
+      if (total !== null) {
+        const totalGoals = homeScore + awayScore;
+        const isWinning = totalGoals < total;
+        return {
+          status: isWinning ? "won" : "lost",
+          payout: isWinning ? bet.stake * bet.odds : 0,
+          reason: `Under ${total}: ${totalGoals} goals (${isWinning ? "Won" : "Lost"})`,
+        };
+      }
+    }
+
+    // Check if it's Both Teams to Score
+    if (normalizedDescription.includes('both teams') || normalizedDescription.includes('btts')) {
+      const bothScored = homeScore > 0 && awayScore > 0;
+      const isWinning = (normalizedLabel === 'yes' || normalizedLabel === '1') ? bothScored : !bothScored;
+      return {
+        status: isWinning ? "won" : "lost",
+        payout: isWinning ? bet.stake * bet.odds : 0,
+        reason: `Both teams to score: ${bothScored ? "Yes" : "No"} (${isWinning ? "Won" : "Lost"})`,
+      };
+    }
+
+    // Check if it's Odd/Even goals
+    if (normalizedDescription.includes('odd') || normalizedDescription.includes('even')) {
+      const totalGoals = homeScore + awayScore;
+      const isOdd = totalGoals % 2 === 1;
+      const isWinning = (normalizedLabel === 'odd' || normalizedLabel === '1') ? isOdd : !isOdd;
+      return {
+        status: isWinning ? "won" : "lost",
+        payout: isWinning ? bet.stake * bet.odds : 0,
+        reason: `Odd/Even: ${totalGoals} goals (${isWinning ? "Won" : "Lost"})`,
+      };
+    }
+
+    // If we can't determine the outcome, return canceled with refund
+    console.log(`[calculateGenericOutcome] ⚠️ Unable to determine outcome from FotMob data, refunding stake`);
     return {
       status: "canceled",
       payout: bet.stake,
-      reason: "Unable to calculate outcome for this market type",
+      reason: `Unable to calculate outcome for unknown market type (market_id: ${marketId}, label: ${betLabel})`,
     };
   }
 

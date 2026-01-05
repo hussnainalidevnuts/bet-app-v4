@@ -321,18 +321,15 @@ class BetOutcomeCalculator {
     }
 
     /**
-     * Load league mapping from CSV file
+     * Load league mapping from Cloudinary CSV
      */
     async loadLeagueMapping() {
         try {
-            const mappingPath = path.join(__dirname, 'league_mapping_clean.csv');
-
-            if (!fs.existsSync(mappingPath)) {
-                console.log('⚠️ League mapping file not found, using empty mapping');
-                return;
-            }
-
-            const csvContent = fs.readFileSync(mappingPath, 'utf8');
+            // Import dynamically to avoid circular dependency
+            const { downloadLeagueMappingClean } = await import('../utils/cloudinaryCsvLoader.js');
+            
+            console.log('📥 Loading league mapping from Cloudinary...');
+            const csvContent = await downloadLeagueMappingClean();
             const lines = csvContent.split('\n').slice(1); // Skip header
 
             this.leagueMapping.clear();
@@ -8613,56 +8610,7 @@ class BetOutcomeCalculator {
             }
         }
         
-        // Create team restriction if bet was won
-        if (outcome.status === 'won' && originalBet) {
-            try {
-                const TeamRestriction = (await import('../models/TeamRestriction.js')).default;
-                // BetService is exported as an instance, not a class
-                const betService = (await import('../services/bet.service.js')).default;
-                
-                // Extract team name from bet
-                const homeName = bet.homeName || originalBet.unibetMeta?.homeName;
-                const awayName = bet.awayName || originalBet.unibetMeta?.awayName;
-                const selection = bet.outcomeLabel || originalBet.betOption || originalBet.selection;
-                
-                if (homeName && awayName && selection) {
-                    const selectedTeam = betService.extractTeamFromBetSelection(selection, homeName, awayName);
-                    
-                    if (selectedTeam) {
-                        console.log(`\n🚫 ========== CREATING TEAM RESTRICTION ==========`);
-                        console.log(`🚫 User ID: ${originalBet.userId || bet.userId}`);
-                        console.log(`🚫 Team: ${selectedTeam}`);
-                        console.log(`🚫 Winning Bet ID: ${betId}`);
-                        
-                        // Create restriction for 7 days
-                        const expiresAt = new Date();
-                        expiresAt.setDate(expiresAt.getDate() + 7);
-                        
-                        const restriction = new TeamRestriction({
-                            userId: originalBet.userId || bet.userId,
-                            teamName: selectedTeam,
-                            normalizedTeamName: selectedTeam.toLowerCase().trim(),
-                            winningBetId: betId,
-                            expiresAt: expiresAt
-                        });
-                        
-                        await restriction.save();
-                        
-                        console.log(`🚫 Team restriction created successfully`);
-                        console.log(`🚫 Restriction expires at: ${expiresAt.toISOString()}`);
-                        console.log(`🚫 ===========================================\n`);
-                    } else {
-                        console.log(`🚫 No team restriction needed - bet is not team-specific (selection: ${selection})`);
-                    }
-                } else {
-                    console.log(`🚫 Cannot create team restriction - missing team names or selection`);
-                }
-            } catch (restrictionError) {
-                // Don't fail bet processing if restriction creation fails
-                console.error(`⚠️ Error creating team restriction:`, restrictionError.message);
-                console.error(`⚠️ Bet processing will continue despite restriction error`);
-            }
-        }
+        // ✅ REMOVED: Team restriction creation code - feature disabled
             } else {
                 console.log(`\n🔍 STEP 6 SKIPPED: Database update disabled for combination bet leg`);
             }

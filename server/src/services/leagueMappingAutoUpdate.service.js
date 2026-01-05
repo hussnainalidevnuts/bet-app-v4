@@ -3,6 +3,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import axios from 'axios';
 import { GoogleGenAI } from '@google/genai';
+import { v2 as cloudinary } from 'cloudinary';
+import { downloadLeagueMappingClean } from '../utils/cloudinaryCsvLoader.js';
 import { normalizeTeamName, calculateNameSimilarity } from '../unibet-calc/utils/fotmob-helpers.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -28,19 +30,14 @@ class LeagueMappingAutoUpdate {
     }
 
     /**
-     * Load existing mappings from CSV files
+     * Load existing mappings from Cloudinary CSV
      */
-    loadExistingMappings() {
-        console.log('[LeagueMapping] Loading existing mappings from CSV...');
+    async loadExistingMappings() {
+        console.log('[LeagueMapping] Loading existing mappings from Cloudinary...');
         
         try {
-            // Read server CSV (both should be same, but we'll check server one)
-            if (!fs.existsSync(this.serverCsvPath)) {
-                console.warn('[LeagueMapping] Server CSV file not found:', this.serverCsvPath);
-                return;
-            }
-
-            const csvContent = fs.readFileSync(this.serverCsvPath, 'utf8');
+            // Download from Cloudinary (with local file fallback)
+            const csvContent = await downloadLeagueMappingClean();
             const lines = csvContent.split('\n').slice(1); // Skip header
 
             this.existingMappings.clear();
@@ -1063,6 +1060,99 @@ If no match found, return:
      */
 
     /**
+     * Upload CSV files to Cloudinary
+     */
+    async uploadCsvToCloudinary() {
+        try {
+            // Configure Cloudinary
+            cloudinary.config({
+                cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+                api_key: process.env.CLOUDINARY_API_KEY,
+                api_secret: process.env.CLOUDINARY_API_SECRET
+            });
+
+            if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+                console.log('[LeagueMapping] ⚠️ Cloudinary credentials not found, skipping upload');
+                return { success: false, reason: 'Cloudinary credentials not configured' };
+            }
+
+            console.log('[LeagueMapping] ☁️ Starting Cloudinary upload...');
+            
+            const uploads = [];
+
+            // Upload league_mapping_clean.csv (always update same file)
+            if (fs.existsSync(this.serverCsvPath)) {
+                console.log('[LeagueMapping] 📤 Uploading league_mapping_clean.csv...');
+                const cleanCsvUpload = cloudinary.uploader.upload(this.serverCsvPath, {
+                    resource_type: 'raw',
+                    public_id: `league-mapping/league_mapping_clean`,
+                    overwrite: true,
+                    format: 'csv'
+                });
+                uploads.push({ name: 'league_mapping_clean.csv', promise: cleanCsvUpload });
+            }
+
+            // Upload league_mapping_with_urls.csv (always update same file)
+            if (fs.existsSync(this.urlsCsvPath)) {
+                console.log('[LeagueMapping] 📤 Uploading league_mapping_with_urls.csv...');
+                const urlsCsvUpload = cloudinary.uploader.upload(this.urlsCsvPath, {
+                    resource_type: 'raw',
+                    public_id: `league-mapping/league_mapping_with_urls`,
+                    overwrite: true,
+                    format: 'csv'
+                });
+                uploads.push({ name: 'league_mapping_with_urls.csv', promise: urlsCsvUpload });
+            }
+
+            if (uploads.length === 0) {
+                console.log('[LeagueMapping] ⚠️ No CSV files found to upload');
+                return { success: false, reason: 'No CSV files found' };
+            }
+
+            // Wait for all uploads to complete
+            const results = await Promise.allSettled(uploads.map(u => u.promise));
+            
+            const uploaded = [];
+            const failed = [];
+
+            results.forEach((result, index) => {
+                if (result.status === 'fulfilled') {
+                    uploaded.push({
+                        file: uploads[index].name,
+                        url: result.value.secure_url,
+                        public_id: result.value.public_id
+                    });
+                    console.log(`[LeagueMapping] ✅ Uploaded ${uploads[index].name}: ${result.value.secure_url}`);
+                } else {
+                    failed.push({
+                        file: uploads[index].name,
+                        error: result.reason?.message || 'Unknown error'
+                    });
+                    console.error(`[LeagueMapping] ❌ Failed to upload ${uploads[index].name}:`, result.reason?.message);
+                }
+            });
+
+            console.log('[LeagueMapping] ☁️ Cloudinary upload completed');
+            console.log(`[LeagueMapping]   - Successfully uploaded: ${uploaded.length} file(s)`);
+            if (failed.length > 0) {
+                console.log(`[LeagueMapping]   - Failed: ${failed.length} file(s)`);
+            }
+
+            return {
+                success: uploaded.length > 0,
+                uploaded,
+                failed
+            };
+        } catch (error) {
+            console.error('[LeagueMapping] ❌ Error uploading to Cloudinary:', error.message);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    /**
      * Main execution method
      */
     async execute() {
@@ -1109,7 +1199,7 @@ If no match found, return:
         try {
             // 1. Load existing mappings
             console.log('[LeagueMapping] 📋 Step 1: Loading existing mappings...');
-            this.loadExistingMappings();
+            await this.loadExistingMappings();
             console.log('[LeagueMapping] ✅ Step 1 complete: Existing mappings loaded');
 
             // 2. Get today's date
@@ -1251,6 +1341,20 @@ If no match found, return:
             
             console.log(`[LeagueMapping] ⏰ Total execution time: ${duration} seconds`);
             console.log(`[LeagueMapping] ⏰ End time: ${new Date().toISOString()}`);
+            
+            // Upload CSV files to Cloudinary after job completes
+            try {
+                const uploadResult = await this.uploadCsvToCloudinary();
+                if (uploadResult.success) {
+                    console.log('[LeagueMapping] ☁️ CSV files uploaded to Cloudinary successfully');
+                    result.cloudinaryUpload = uploadResult;
+                } else {
+                    console.log('[LeagueMapping] ⚠️ Cloudinary upload skipped or failed:', uploadResult.reason || uploadResult.error);
+                }
+            } catch (uploadError) {
+                console.error('[LeagueMapping] ⚠️ Cloudinary upload error (non-blocking):', uploadError.message);
+                // Don't fail the job if upload fails
+            }
             
             // Ensure we return immediately without any blocking operations
             return result;

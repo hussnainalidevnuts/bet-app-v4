@@ -1,49 +1,21 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { downloadLeagueMappingClean } from './cloudinaryCsvLoader.js';
 
 // Cache for league mapping data
 let leagueMappingCache = null;
 
 /**
- * Load and parse the league mapping CSV file
+ * Load and parse the league mapping CSV file from Cloudinary
  * @returns {Object} - Object with allowed league names and IDs
  */
-export function loadLeagueMapping() {
+export async function loadLeagueMapping() {
   if (leagueMappingCache) {
     return leagueMappingCache;
   }
 
   try {
-    // Path to the CSV file - try multiple possible locations
-    const possiblePaths = [
-      path.join(__dirname, '../unibet-calc/league_mapping_clean.csv'), // From src/utils to src/unibet-calc
-      path.join(process.cwd(), 'server/src/unibet-calc/league_mapping_clean.csv'), // Absolute path
-      path.join(__dirname, '../../src/unibet-calc/league_mapping_clean.csv') // Alternative relative path
-    ];
-    
-    let csvPath = null;
-    for (const testPath of possiblePaths) {
-      if (fs.existsSync(testPath)) {
-        csvPath = testPath;
-        break;
-      }
-    }
-    
-    if (!csvPath) {
-      console.error('❌ League mapping CSV file not found in any of these locations:');
-      possiblePaths.forEach((testPath, index) => {
-        console.error(`   ${index + 1}. ${testPath}`);
-      });
-      return { allowedLeagueNames: new Set(), allowedLeagueIds: new Set() };
-    }
-    
-    console.log('✅ Found CSV file at:', csvPath);
-
-    const csvContent = fs.readFileSync(csvPath, 'utf-8');
+    // Download CSV from Cloudinary (with local file fallback)
+    console.log('📥 Loading league mapping from Cloudinary...');
+    const csvContent = await downloadLeagueMappingClean();
     const lines = csvContent.split('\n').filter(line => line.trim());
     
     // Skip header line
@@ -95,12 +67,12 @@ export function loadLeagueMapping() {
  * @param {string|number} leagueId - The Unibet league ID to check
  * @returns {boolean} - Whether the league is allowed
  */
-export function isLeagueAllowed(leagueId) {
+export async function isLeagueAllowed(leagueId) {
   if (!leagueId) {
     return false;
   }
 
-  const { allowedLeagueIds } = loadLeagueMapping();
+  const { allowedLeagueIds } = await loadLeagueMapping();
   
   // Convert to string for comparison
   const leagueIdStr = String(leagueId);
@@ -118,12 +90,12 @@ export function isLeagueAllowed(leagueId) {
  * @param {string} leagueName - The league name to check
  * @returns {boolean} - Whether the league is allowed
  */
-export function isLeagueNameAllowed(leagueName) {
+export async function isLeagueNameAllowed(leagueName) {
   if (!leagueName || typeof leagueName !== 'string') {
     return false;
   }
 
-  const { allowedLeagueNames } = loadLeagueMapping();
+  const { allowedLeagueNames } = await loadLeagueMapping();
   
   // Check exact match
   if (allowedLeagueNames.has(leagueName)) {
@@ -151,12 +123,12 @@ export function isLeagueNameAllowed(leagueName) {
  * @param {Array} matches - Array of match objects
  * @returns {Array} - Filtered array of matches
  */
-export function filterMatchesByAllowedLeagues(matches) {
+export async function filterMatchesByAllowedLeagues(matches) {
   if (!Array.isArray(matches)) {
     return [];
   }
 
-  const { allowedLeagueIds } = loadLeagueMapping();
+  const { allowedLeagueIds } = await loadLeagueMapping();
   
   const filteredMatches = matches.filter(match => {
     // ONLY use groupId field (Unibet league ID) - STRICT METHOD
@@ -176,8 +148,8 @@ export function filterMatchesByAllowedLeagues(matches) {
  * Get statistics about league filtering
  * @returns {Object} - Statistics about the league mapping
  */
-export function getLeagueFilterStats() {
-  const mapping = loadLeagueMapping();
+export async function getLeagueFilterStats() {
+  const mapping = await loadLeagueMapping();
   return {
     totalAllowedLeagues: mapping.totalLeagues || 0,
     allowedLeagueNames: Array.from(mapping.allowedLeagueNames || []),

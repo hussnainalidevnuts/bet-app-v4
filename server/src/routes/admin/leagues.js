@@ -1,36 +1,17 @@
 import express from 'express';
 import { loadLeagueMapping } from '../../utils/leagueFilter.js';
 import League from '../../models/League.js';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-// Get __dirname equivalent for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { downloadLeagueMappingClean } from '../../utils/cloudinaryCsvLoader.js';
 
 const router = express.Router();
 
-// GET /api/admin/leagues - Get all leagues from CSV file
+// GET /api/admin/leagues - Get all leagues from Cloudinary CSV
 router.get('/', async (req, res) => {
   try {
-    console.log('📋 Fetching leagues from CSV file...');
-    console.log('📁 Current directory:', __dirname);
+    console.log('📋 Fetching leagues from Cloudinary CSV...');
     
-    // Load the CSV data
-    const csvPath = path.join(__dirname, '../../unibet-calc/league_mapping_clean.csv');
-    console.log('📁 CSV path:', csvPath);
-    
-    if (!fs.existsSync(csvPath)) {
-      console.error('❌ CSV file not found at:', csvPath);
-      return res.status(404).json({
-        success: false,
-        error: 'CSV file not found',
-        path: csvPath
-      });
-    }
-
-    const csvContent = fs.readFileSync(csvPath, 'utf-8');
+    // Load the CSV data from Cloudinary
+    const csvContent = await downloadLeagueMappingClean();
     const lines = csvContent.split('\n').filter(line => line.trim());
     
     // Skip header line
@@ -168,21 +149,10 @@ router.post('/popular', async (req, res) => {
 // GET /api/admin/leagues/mapping - Get league mapping for frontend (Unibet→Fotmob + filtering data)
 router.get('/mapping', async (req, res) => {
   try {
-    console.log('📋 Fetching league mapping for frontend...');
+    console.log('📋 Fetching league mapping for frontend from Cloudinary...');
     
-    // Load the CSV data
-    const csvPath = path.join(__dirname, '../../unibet-calc/league_mapping_clean.csv');
-    
-    if (!fs.existsSync(csvPath)) {
-      console.error('❌ CSV file not found at:', csvPath);
-      return res.status(404).json({
-        success: false,
-        error: 'CSV file not found',
-        path: csvPath
-      });
-    }
-
-    const csvContent = fs.readFileSync(csvPath, 'utf-8');
+    // Load the CSV data from Cloudinary
+    const csvContent = await downloadLeagueMappingClean();
     const lines = csvContent.split('\n').filter(line => line.trim());
     
     // Skip header line

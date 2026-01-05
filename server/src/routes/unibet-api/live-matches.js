@@ -454,7 +454,7 @@ router.get('/status', (req, res) => {
 });
 
 // Helper function to extract football matches (matching working unibet-api)
-function extractFootballMatches(data) {
+async function extractFootballMatches(data) {
   const allMatches = [];
   const liveMatches = [];
   const upcomingMatches = [];
@@ -592,12 +592,12 @@ function extractFootballMatches(data) {
   
   // Apply league filtering based on CSV file
   console.log('🔍 Applying league filtering...');
-  const stats = getLeagueFilterStats();
+  const stats = await getLeagueFilterStats();
   console.log(`📊 Total allowed leagues: ${stats.totalAllowedLeagues}`);
   
-  const filteredAllMatches = filterMatchesByAllowedLeagues(allMatches);
-  const filteredLiveMatches = filterMatchesByAllowedLeagues(liveMatches);
-  const filteredUpcomingMatches = filterMatchesByAllowedLeagues(upcomingMatches);
+  const filteredAllMatches = await filterMatchesByAllowedLeagues(allMatches);
+  const filteredLiveMatches = await filterMatchesByAllowedLeagues(liveMatches);
+  const filteredUpcomingMatches = await filterMatchesByAllowedLeagues(upcomingMatches);
   
   console.log(`✅ League filtering complete:`);
   console.log(`   - All matches: ${allMatches.length} → ${filteredAllMatches.length}`);

@@ -56,7 +56,31 @@ async function refreshAllFootballCache() {
     const url = `${ALL_FOOTBALL_API_URL}?includeParticipants=true&useCombined=true&ncid=${Date.now()}`;
     const data = await fetchWithRetry(url, ALL_FOOTBALL_HEADERS);
     
-    const { allMatches, liveMatches, upcomingMatches } = extractFootballMatches(data);
+    // ✅ FIX: Add safety checks for extractFootballMatches
+    const result = await extractFootballMatches(data);
+    
+    if (!result) {
+      console.error('❌ extractFootballMatches returned undefined');
+      throw new Error('extractFootballMatches returned undefined');
+    }
+    
+    let { allMatches, liveMatches, upcomingMatches } = result;
+    
+    // ✅ FIX: Ensure arrays exist
+    if (!allMatches || !Array.isArray(allMatches)) {
+      console.error('❌ allMatches is invalid:', allMatches);
+      throw new Error('Invalid allMatches from extractFootballMatches');
+    }
+    
+    if (!liveMatches || !Array.isArray(liveMatches)) {
+      console.warn('⚠️ No live matches found, using empty array');
+      liveMatches = [];
+    }
+    
+    if (!upcomingMatches || !Array.isArray(upcomingMatches)) {
+      console.warn('⚠️ No upcoming matches found, using empty array');
+      upcomingMatches = [];
+    }
     
     // Fetch live odds
     console.log('🎲 Fetching live odds to enrich match data...');

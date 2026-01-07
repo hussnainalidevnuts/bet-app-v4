@@ -824,7 +824,7 @@ export default class BaseBetOutcomeCalculationService {
   calculatePlayerCards(bet, matchData) {
     // Check if events data is available (FotMob format)
     const playerName = bet.betDetails?.name || bet.betOption;
-    
+
     if (!playerName) {
       return {
         status: "canceled",
@@ -842,7 +842,7 @@ export default class BaseBetOutcomeCalculationService {
         (event) => event.type === "Card" && event.card && event.player?.name
       );
     }
-    
+
     // Check content.matchFacts.events.events (alternative FotMob location)
     if (cardEvents.length === 0 && matchData.content?.matchFacts?.events?.events && Array.isArray(matchData.content.matchFacts.events.events)) {
       cardEvents = matchData.content.matchFacts.events.events.filter(

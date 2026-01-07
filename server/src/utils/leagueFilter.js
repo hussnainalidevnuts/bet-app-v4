@@ -46,12 +46,19 @@ export async function loadLeagueMapping() {
       }
     });
 
+    // ✅ FIX: Count unique league IDs, not names (multiple leagues can have same name)
     leagueMappingCache = {
       allowedLeagueNames,
       allowedLeagueIds,
-      totalLeagues: allowedLeagueNames.size
+      totalLeagues: allowedLeagueIds.size
     };
 
+    // ✅ FIX: Add debugging logs for CSV parsing
+    console.log(`📊 CSV Parsing Stats:`);
+    console.log(`   - Total data lines: ${dataLines.length}`);
+    console.log(`   - Unique league IDs found: ${allowedLeagueIds.size}`);
+    console.log(`   - Unique league name variations: ${allowedLeagueNames.size}`);
+    console.log(`   - Sample IDs:`, Array.from(allowedLeagueIds).slice(0, 10));
     console.log(`✅ Loaded ${leagueMappingCache.totalLeagues} allowed leagues from CSV`);
     console.log(`📋 Sample leagues:`, Array.from(allowedLeagueNames).slice(0, 10));
     

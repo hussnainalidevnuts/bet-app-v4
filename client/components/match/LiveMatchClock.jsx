@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Clock, Tv } from 'lucide-react';
-import apiClient from '@/config/axios';
+// ✅ REMOVED: import apiClient from '@/config/axios';
+// ✅ Now using Next.js API route instead of backend
 
 const LiveMatchClock = ({ matchId, isLive = false, initialLiveData = null, onScoreUpdate, onLiveDataUpdate }) => {
     const [liveData, setLiveData] = useState(initialLiveData);
@@ -14,44 +15,61 @@ const LiveMatchClock = ({ matchId, isLive = false, initialLiveData = null, onSco
     const syncRef = useRef(null);
     const lastSyncRef = useRef(Date.now());
 
-    // Fetch live data from API
+    // ✅ FIX: Fetch live data from Next.js API route (same as homepage)
     const fetchLiveData = async () => {
         if (!matchId || !isLive) return;
         
         try {
             setIsSyncing(true);
-            const response = await apiClient.get(`/matches/${matchId}/live`);
+            // ✅ Use Next.js API route instead of backend
+            const response = await fetch(`/api/unibet/live-matches?ncid=${Date.now()}`);
+            const data = await response.json();
             
-            if (response.data.success && response.data.liveData) {
-                setLiveData(response.data.liveData);
-                lastSyncRef.current = Date.now();
-                console.log('🔄 Live data synced:', response.data.liveData?.matchClock);
-                console.log('📊 Score data:', response.data.liveData?.score);
+            if (data.success && data.matches) {
+                // Find this specific match in the matches array
+                const match = data.matches.find(m => String(m.id) === String(matchId));
                 
-                // Update score if callback provided
-                if (onScoreUpdate && response.data.liveData.score) {
-                    console.log('📊 Updating score via callback:', response.data.liveData.score);
-                    console.log('📊 Score home:', response.data.liveData.score.home);
-                    console.log('📊 Score away:', response.data.liveData.score.away);
-                    onScoreUpdate(response.data.liveData.score);
-                }
-
-                // Update live data if callback provided
-                if (onLiveDataUpdate) {
-                    console.log('📊 Updating live data via callback:', response.data.liveData);
-                    onLiveDataUpdate(response.data.liveData);
-                }
-                
-                // Force immediate score update
-                setTimeout(() => {
-                    if (response.data.liveData.score && onScoreUpdate) {
-                        console.log('📊 Delayed score update:', response.data.liveData.score);
-                        onScoreUpdate(response.data.liveData.score);
+                if (match && match.kambiLiveData) {
+                    const kambiData = match.kambiLiveData;
+                    
+                    // Transform Kambi data to match expected format
+                    const transformedLiveData = {
+                        matchClock: {
+                            minute: kambiData.matchClock?.minute || 0,
+                            second: kambiData.matchClock?.second || 0,
+                            period: kambiData.matchClock?.period || '1st half',
+                            running: kambiData.matchClock?.running || false,
+                            minutesLeftInPeriod: kambiData.matchClock?.minutesLeftInPeriod,
+                            secondsLeftInMinute: kambiData.matchClock?.secondsLeftInMinute
+                        },
+                        score: kambiData.score ? {
+                            home: kambiData.score.home || 0,
+                            away: kambiData.score.away || 0
+                        } : null,
+                        statistics: kambiData.statistics || null
+                    };
+                    
+                    setLiveData(transformedLiveData);
+                    lastSyncRef.current = Date.now();
+                    console.log('🔄 Live data synced from Next.js API:', transformedLiveData?.matchClock);
+                    console.log('📊 Score data:', transformedLiveData?.score);
+                    
+                    // Update score if callback provided
+                    if (onScoreUpdate && transformedLiveData.score) {
+                        console.log('📊 Updating score via callback:', transformedLiveData.score);
+                        onScoreUpdate(transformedLiveData.score);
                     }
-                }, 100);
+
+                    // Update live data if callback provided
+                    if (onLiveDataUpdate) {
+                        console.log('📊 Updating live data via callback:', transformedLiveData);
+                        onLiveDataUpdate(transformedLiveData);
+                    }
+                } else {
+                    console.log('⚠️ Match not found in live matches or no Kambi data');
+                }
             } else {
-                console.log('⚠️ Match not found in live data or not currently live');
-                // Don't set liveData if match is not live
+                console.log('⚠️ No live matches in response');
             }
         } catch (error) {
             console.error('❌ Failed to fetch live data:', error);

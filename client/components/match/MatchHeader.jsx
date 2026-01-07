@@ -8,7 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar"
 import { Button } from "@/components/ui/button"
 import { formatToLocalTime } from '@/lib/utils';
 import Link from "next/link";
-import apiClient from '@/config/axios';
+// ✅ REMOVED: import apiClient from '@/config/axios';
+// ✅ Now using Next.js API route instead of backend
 
 const isMatchLive = (match) => {
     if (!match || !match.start) return false;
@@ -67,28 +68,48 @@ const MatchHeader = ({ matchData, onScoreUpdate }) => {
         setIsDropdownOpen(!isDropdownOpen)
     }
 
-    // Fetch live match data with card details
+    // ✅ FIX: Fetch live match data from Next.js API route (same as homepage)
     const fetchLiveData = async () => {
         if (!matchData?.id || !isLive) return;
         
         try {
             console.log('🔍 Fetching live data for match:', matchData.id);
-            const response = await apiClient.get(`/matches/${matchData.id}/live`);
+            // ✅ Use Next.js API route instead of backend
+            const response = await fetch(`/api/unibet/live-matches?ncid=${Date.now()}`);
+            const data = await response.json();
             
-            // Log the complete API response for live score and time
-            
-            
-            if (response.data?.success && response.data?.liveData) {
+            if (data.success && data.matches) {
+                // Find this specific match in the matches array
+                const match = data.matches.find(m => String(m.id) === String(matchData.id));
                 
-                setFetchedLiveData(response.data.liveData);
+                if (match && match.kambiLiveData) {
+                    const kambiData = match.kambiLiveData;
+                    
+                    // Transform Kambi data to match expected format
+                    const transformedLiveData = {
+                        score: kambiData.score ? {
+                            home: kambiData.score.home || 0,
+                            away: kambiData.score.away || 0
+                        } : null,
+                        matchClock: {
+                            minute: kambiData.matchClock?.minute || 0,
+                            second: kambiData.matchClock?.second || 0,
+                            period: kambiData.matchClock?.period || '1st half',
+                            running: kambiData.matchClock?.running || false
+                        },
+                        statistics: kambiData.statistics || null
+                    };
+                    
+                    setFetchedLiveData(transformedLiveData);
+                    console.log('✅ Live data fetched from Next.js API:', transformedLiveData);
+                } else {
+                    console.log('⚠️ Match not found in live matches or no Kambi data');
+                }
             } else {
-                console.log('⚠️ No live data in response or success=false');
-                console.log('⚠️ Response success:', response.data?.success);
-                console.log('⚠️ Response liveData:', response.data?.liveData);
+                console.log('⚠️ No live matches in response');
             }
         } catch (error) {
             console.error('❌ Error fetching live data:', error);
-           
         }
     }
 

@@ -47,7 +47,13 @@ router.get('/', async (req, res) => {
     
     // Load the CSV data from Cloudinary
     const csvContent = await downloadLeagueMappingClean();
+    
+    // ✅ ADD: Log CSV content size
+    console.log(`📊 CSV content size: ${csvContent.length} bytes`);
+    console.log(`📊 CSV content preview (first 500 chars): ${csvContent.substring(0, 500)}`);
+    
     const lines = csvContent.split('\n').filter(line => line.trim());
+    console.log(`📊 Total lines (including header): ${lines.length}`);
     
     // Skip header line
     const dataLines = lines.slice(1);
@@ -61,8 +67,10 @@ router.get('/', async (req, res) => {
     );
 
     const leagues = [];
+    const seenIds = new Set(); // ✅ ADD: Track seen IDs to detect duplicates
     let skippedCount = 0;
     let errorCount = 0;
+    let duplicateCount = 0; // ✅ ADD: Track duplicates
     
     dataLines.forEach((line, index) => {
       if (!line.trim()) {
@@ -74,6 +82,11 @@ router.get('/', async (req, res) => {
         // ✅ IMPROVED: Better CSV parsing that handles quoted values with commas
         const fields = parseCsvLine(line);
         const [unibetId, unibetName, fotmobId, fotmobName, matchType, country] = fields;
+        
+        // ✅ ADD: Log first few lines for debugging
+        if (index < 5) {
+          console.log(`📋 Line ${index + 2}: UnibetID=${unibetId}, Name=${unibetName}, FotmobID=${fotmobId}`);
+        }
         
         // Skip if essential fields are missing
         if (!unibetId || !unibetName || !fotmobId) {
@@ -88,6 +101,14 @@ router.get('/', async (req, res) => {
           skippedCount++;
           return;
         }
+        
+        // ✅ ADD: Check for duplicates
+        if (seenIds.has(leagueId)) {
+          console.warn(`⚠️ Line ${index + 2}: Skipping - Duplicate Unibet ID: ${leagueId} (${unibetName})`);
+          duplicateCount++;
+          return;
+        }
+        seenIds.add(leagueId);
         
         // ✅ FIX: Normalize country name - trim and ensure consistent casing
         const normalizedCountry = country?.trim() || 'Other';
@@ -119,16 +140,25 @@ router.get('/', async (req, res) => {
       }
     });
 
-    console.log(`✅ Loaded ${leagues.length} leagues from CSV`);
+    console.log(`✅ Loaded ${leagues.length} unique leagues from CSV`);
     console.log(`⚠️ Skipped ${skippedCount} empty/invalid lines`);
+    console.log(`🔄 Found ${duplicateCount} duplicate league IDs`);
     console.log(`❌ Errors: ${errorCount}`);
-    console.log(`📊 Expected: ${dataLines.length}, Got: ${leagues.length}, Skipped: ${skippedCount + errorCount}`);
+    console.log(`📊 Expected: ${dataLines.length}, Got: ${leagues.length}, Skipped: ${skippedCount + duplicateCount + errorCount}`);
+    
+    // ✅ ADD: Log unique IDs count
+    const uniqueIds = new Set(leagues.map(l => l.id));
+    console.log(`📊 Unique league IDs: ${uniqueIds.size}`);
+    if (uniqueIds.size !== leagues.length) {
+      console.warn(`⚠️ WARNING: Found ${leagues.length - uniqueIds.size} duplicate league IDs in final array!`);
+    }
 
     res.json({
       success: true,
       data: leagues,
       total: leagues.length,
       skipped: skippedCount,
+      duplicates: duplicateCount, // ✅ ADD: Include duplicates in response
       errors: errorCount,
       expected: dataLines.length
     });

@@ -380,7 +380,7 @@ const Sidebar = () => {
                     );
                     
                     if (!alreadyInCountry) {
-                        groups[countryId].leagues.push(league);
+                    groups[countryId].leagues.push(league);
                         seenLeagueIds.add(leagueId);
                     }
                 }
@@ -423,7 +423,7 @@ const Sidebar = () => {
                 );
                 
                 if (!alreadyInCountry) {
-                    groups[countryId].leagues.push(league);
+                groups[countryId].leagues.push(league);
                     seenLeagueIds.add(leagueId);
                 }
             });

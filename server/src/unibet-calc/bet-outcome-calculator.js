@@ -8607,7 +8607,7 @@ class BetOutcomeCalculator {
         } else {
             console.log(`💰 No user ID found, skipping balance update`);
             console.log(`💰 ===========================================\n`);
-            }
+        }
         }
         
         // ✅ REMOVED: Team restriction creation code - feature disabled

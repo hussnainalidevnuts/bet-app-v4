@@ -78,11 +78,12 @@ const LiveMatchClock = ({ matchId, isLive = false, initialLiveData = null, onSco
         console.log('🔄 Starting live data fetch for match:', matchId);
         fetchLiveData();
 
-        // Sync with API every 45 seconds
+        // Sync with API every 200ms (0.2 seconds) for real-time updates
         syncRef.current = setInterval(() => {
+            if (typeof document !== 'undefined' && document.hidden) return; // pause when tab hidden
             console.log('🔄 Periodic sync for match:', matchId);
             fetchLiveData();
-        }, 45000);
+        }, 200);
 
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);

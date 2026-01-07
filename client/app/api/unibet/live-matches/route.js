@@ -41,6 +41,9 @@ let kambiCache = {
 const KAMBI_CACHE_DURATION = 5000; // Use cached data for 5 seconds to avoid rate limits
 const KAMBI_RETRY_DELAY = 2000; // Wait 2 seconds before retry on 410
 
+// ✅ Track previous stats and suspension timers per match
+const matchStatsHistory = new Map(); // { matchId: { corners, goals, cards, suspendedUntil } }
+
 // Proxy configuration (for 410 fallback)
 const PROXY_CONFIG = {
   host: process.env.KAMBI_PROXY_HOST || '104.252.62.178',
@@ -396,6 +399,108 @@ function extractKambiLiveData(kambiData) {
   return liveDataMap;
 }
 
+// ✅ Helper function to extract stats from live data
+function extractStats(liveData) {
+  const stats = liveData?.statistics?.football || {};
+  const score = liveData?.score || {};
+  
+  return {
+    homeCorners: stats.home?.corners || 0,
+    awayCorners: stats.away?.corners || 0,
+    homeGoals: score.home || 0,
+    awayGoals: score.away || 0,
+    homeYellowCards: stats.home?.yellowCards || 0,
+    awayYellowCards: stats.away?.yellowCards || 0,
+    homeRedCards: stats.home?.redCards || 0,
+    awayRedCards: stats.away?.redCards || 0
+  };
+}
+
+// ✅ Helper function to check if stats changed
+function hasStatsChanged(matchId, newStats) {
+  const previous = matchStatsHistory.get(matchId);
+  
+  if (!previous) {
+    // First time seeing this match, store stats
+    const stats = extractStats(newStats);
+    matchStatsHistory.set(matchId, {
+      ...stats,
+      suspendedUntil: null
+    });
+    return false; // No change on first detection
+  }
+  
+  const newStatsData = extractStats(newStats);
+  
+  // Check if corners, goals, or cards changed
+  const cornersChanged = 
+    previous.homeCorners !== newStatsData.homeCorners ||
+    previous.awayCorners !== newStatsData.awayCorners;
+    
+  const goalsChanged = 
+    previous.homeGoals !== newStatsData.homeGoals ||
+    previous.awayGoals !== newStatsData.awayGoals;
+    
+  const cardsChanged = 
+    previous.homeYellowCards !== newStatsData.homeYellowCards ||
+    previous.awayYellowCards !== newStatsData.awayYellowCards ||
+    previous.homeRedCards !== newStatsData.homeRedCards ||
+    previous.awayRedCards !== newStatsData.awayRedCards;
+  
+  if (cornersChanged || goalsChanged || cardsChanged) {
+    // Stats changed, suspend for 15 seconds
+    const suspendedUntil = Date.now() + 15000; // 15 seconds from now
+    matchStatsHistory.set(matchId, {
+      ...newStatsData,
+      suspendedUntil
+    });
+    
+    console.log(`⏸️ [NEXT API] Match ${matchId}: Stats changed - Suspending markets for 15s`, {
+      cornersChanged,
+      goalsChanged,
+      cardsChanged,
+      previous: previous,
+      new: newStatsData
+    });
+    
+    return true;
+  }
+  
+  // Update stats but keep suspension state if still suspended
+  const currentTime = Date.now();
+  const isStillSuspended = previous.suspendedUntil && currentTime < previous.suspendedUntil;
+  
+  matchStatsHistory.set(matchId, {
+    ...newStatsData,
+    suspendedUntil: isStillSuspended ? previous.suspendedUntil : null
+  });
+  
+  return false;
+}
+
+// ✅ Helper function to check if match markets should be suspended
+function isMatchSuspended(matchId) {
+  const history = matchStatsHistory.get(matchId);
+  if (!history || !history.suspendedUntil) {
+    return false;
+  }
+  
+  const currentTime = Date.now();
+  if (currentTime >= history.suspendedUntil) {
+    // Suspension expired, clear it
+    if (history.suspendedUntil) {
+      console.log(`✅ [NEXT API] Match ${matchId}: Suspension expired, markets active again`);
+    }
+    matchStatsHistory.set(matchId, {
+      ...history,
+      suspendedUntil: null
+    });
+    return false;
+  }
+  
+  return true;
+}
+
 // Function to merge Kambi live data with Unibet matches
 function mergeKambiLiveDataWithMatches(matches, liveDataMap) {
   if (!liveDataMap || Object.keys(liveDataMap).length === 0) {
@@ -416,19 +521,43 @@ function mergeKambiLiveDataWithMatches(matches, liveDataMap) {
     const enrichedMatch = { ...match };
     
     if (matchLiveData) {
-      console.log(`✅ [NEXT API] Found live data for match ${match.id}:`, {
-        hasMatchClock: !!matchLiveData.matchClock,
-        hasScore: !!matchLiveData.score,
-        hasStatistics: !!matchLiveData.statistics
-      });
-      enrichedMatch.kambiLiveData = matchLiveData;
+      // ✅ Check if stats changed and suspend if needed
+      hasStatsChanged(match.id, matchLiveData);
+      const shouldSuspend = isMatchSuspended(match.id);
+      
+      if (shouldSuspend) {
+        console.log(`⏸️ [NEXT API] Match ${match.id}: Markets suspended due to stats change`);
+      }
+      
+      enrichedMatch.kambiLiveData = {
+        ...matchLiveData,
+        marketsSuspended: shouldSuspend,
+        suspendedUntil: matchStatsHistory.get(match.id)?.suspendedUntil || null
+      };
+      
+      // ✅ Apply suspension to mainBetOffer outcomes if present
+      if (enrichedMatch.mainBetOffer && enrichedMatch.mainBetOffer.outcomes) {
+        enrichedMatch.mainBetOffer.outcomes = enrichedMatch.mainBetOffer.outcomes.map(outcome => ({
+          ...outcome,
+          // Override suspended status if stats changed
+          suspended: shouldSuspend ? true : (outcome.suspended || false),
+          suspendedByStats: shouldSuspend // Flag to indicate suspension due to stats
+        }));
+        
+        if (shouldSuspend) {
+          console.log(`⏸️ [NEXT API] Match ${match.id}: Suspended ${enrichedMatch.mainBetOffer.outcomes.length} outcomes in mainBetOffer`);
+        }
+      }
     }
     
     return enrichedMatch;
   });
   
   const matchesWithLiveData = enrichedMatches.filter(m => m.kambiLiveData).length;
+  const suspendedMatches = enrichedMatches.filter(m => m.kambiLiveData?.marketsSuspended).length;
+  
   console.log(`✨ [NEXT API] Enriched ${matchesWithLiveData} out of ${matches.length} matches with Kambi live data`);
+  console.log(`⏸️ [NEXT API] Suspended ${suspendedMatches} matches due to stats changes`);
   
   return enrichedMatches;
 }

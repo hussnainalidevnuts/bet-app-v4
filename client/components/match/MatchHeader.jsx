@@ -196,8 +196,11 @@ const MatchHeader = ({ matchData, onScoreUpdate }) => {
     useEffect(() => {
         if (isLive && matchData?.id) {
             fetchLiveData();
-            // Set up interval to refresh live data every 30 seconds
-            const interval = setInterval(fetchLiveData, 30000);
+            // Set up interval to refresh live data every 200ms (0.2 seconds) for real-time updates
+            const interval = setInterval(() => {
+                if (typeof document !== 'undefined' && document.hidden) return; // pause when tab hidden
+                fetchLiveData();
+            }, 200);
             return () => clearInterval(interval);
         }
     }, [matchData?.id, isLive]);

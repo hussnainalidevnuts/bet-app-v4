@@ -2174,22 +2174,33 @@
             },
             "away": {
               "id": 10271,
-              "score": 0,
+              "score": 2,
               "name": "Dinamo Bucuresti",
               "longName": "Dinamo Bucuresti"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 3,
             "tournamentStage": "1",
             "status": {
               "utcTime": "2026-01-07T14:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "07.01.2026 15:00:00"
+                "firstHalfStarted": "07.01.2026 15:00:30",
+                "secondHalfStarted": "07.01.2026 16:03:44"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "0 - 2",
+              "liveTime": {
+                "short": "51‎’‎",
+                "shortKey": "",
+                "long": "50:29",
+                "longKey": "",
+                "maxTime": 90,
+                "addedTime": 0
+              }
             },
             "timeTS": 1767794400000
           }
@@ -2223,17 +2234,27 @@
               "longName": "APEA Akrotiri"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 2,
             "tournamentStage": "2",
             "status": {
               "utcTime": "2026-01-07T15:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "07.01.2026 16:00:00"
+                "firstHalfStarted": "07.01.2026 16:02:24"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "0 - 0",
+              "liveTime": {
+                "short": "7‎’‎",
+                "shortKey": "",
+                "long": "6:49",
+                "longKey": "",
+                "maxTime": 45,
+                "addedTime": 0
+              }
             },
             "timeTS": 1767798000000
           },
@@ -2249,22 +2270,32 @@
             },
             "away": {
               "id": 4126,
-              "score": 0,
+              "score": 1,
               "name": "Enosis Paralimni",
               "longName": "Enosis Paralimni"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 2,
             "tournamentStage": "2",
             "status": {
               "utcTime": "2026-01-07T15:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "07.01.2026 16:00:00"
+                "firstHalfStarted": "07.01.2026 16:01:31"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "0 - 1",
+              "liveTime": {
+                "short": "8‎’‎",
+                "shortKey": "",
+                "long": "7:42",
+                "longKey": "",
+                "maxTime": 45,
+                "addedTime": 0
+              }
             },
             "timeTS": 1767798000000
           },
@@ -2285,17 +2316,27 @@
               "longName": "Akritas Chlorakas"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 2,
             "tournamentStage": "2",
             "status": {
               "utcTime": "2026-01-07T15:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "07.01.2026 16:00:00"
+                "firstHalfStarted": "07.01.2026 16:03:57"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "0 - 0",
+              "liveTime": {
+                "short": "6‎’‎",
+                "shortKey": "",
+                "long": "5:16",
+                "longKey": "",
+                "maxTime": 45,
+                "addedTime": 0
+              }
             },
             "timeTS": 1767798000000
           }
@@ -2327,17 +2368,27 @@
               "longName": "Asteras Tripolis"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 2,
             "tournamentStage": "1/8",
             "status": {
               "utcTime": "2026-01-07T15:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "07.01.2026 16:00:00"
+                "firstHalfStarted": "07.01.2026 16:02:24"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "0 - 0",
+              "liveTime": {
+                "short": "7‎’‎",
+                "shortKey": "",
+                "long": "6:49",
+                "longKey": "",
+                "maxTime": 45,
+                "addedTime": 0
+              }
             },
             "timeTS": 1767798000000
           }
@@ -2659,43 +2710,6 @@
                 "shortKey": "fulltime_short",
                 "long": "Full-Time",
                 "longKey": "finished"
-              }
-            },
-            "timeTS": 1767728700000
-          },
-          {
-            "id": 4857317,
-            "leagueId": 901317,
-            "time": "06.01.2026 20:45",
-            "home": {
-              "id": 580382,
-              "score": 0,
-              "name": "Scarborough Athletic",
-              "longName": "Scarborough Athletic"
-            },
-            "away": {
-              "id": 799249,
-              "score": 0,
-              "name": "Hereford",
-              "longName": "Hereford"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 5,
-            "tournamentStage": "18",
-            "status": {
-              "utcTime": "2026-01-06T19:45:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "06.01.2026 20:45:00"
-              },
-              "periodLength": 45,
-              "cancelled": true,
-              "started": false,
-              "finished": false,
-              "reason": {
-                "short": "PP",
-                "shortKey": "postponed_short",
-                "long": "Postponed",
-                "longKey": "postponed"
               }
             },
             "timeTS": 1767728700000
@@ -3145,28 +3159,37 @@
             "time": "07.01.2026 14:00",
             "home": {
               "id": 209190,
-              "score": 0,
+              "score": 2,
               "name": "Al Ittihad Kalba",
               "longName": "Al Ittihad Kalba"
             },
             "away": {
               "id": 102111,
-              "score": 0,
+              "score": 2,
               "name": "Al-Wasl",
               "longName": "Al-Wasl"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 6,
             "tournamentStage": "12",
             "status": {
               "utcTime": "2026-01-07T13:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "07.01.2026 14:00:00"
+                "firstHalfStarted": "07.01.2026 14:02:21",
+                "secondHalfStarted": "07.01.2026 15:05:32"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": true,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "awarded": false,
+              "scoreStr": "2 - 2",
+              "reason": {
+                "short": "FT",
+                "shortKey": "fulltime_short",
+                "long": "Full-Time",
+                "longKey": "finished"
+              }
             },
             "timeTS": 1767790800000
           },
@@ -3218,28 +3241,38 @@
             "time": "07.01.2026 15:30",
             "home": {
               "id": 179097,
-              "score": 0,
+              "score": 3,
               "name": "Al-Ahli",
               "longName": "Al-Ahli"
             },
             "away": {
               "id": 101904,
-              "score": 0,
+              "score": 1,
               "name": "Al-Shamal",
               "longName": "Al-Shamal"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 2,
             "tournamentStage": "12",
             "status": {
               "utcTime": "2026-01-07T14:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "07.01.2026 15:30:00"
+                "firstHalfStarted": "07.01.2026 15:31:52"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "3 - 1",
+              "liveTime": {
+                "short": "38‎’‎",
+                "shortKey": "",
+                "long": "37:21",
+                "longKey": "",
+                "maxTime": 45,
+                "addedTime": 0
+              }
             },
             "timeTS": 1767796200000
           },
@@ -3494,7 +3527,7 @@
             "time": "07.01.2026 12:30",
             "home": {
               "id": 298067,
-              "score": 0,
+              "score": 5,
               "name": "Japan U23",
               "longName": "Japan U23"
             },
@@ -3505,17 +3538,26 @@
               "longName": "Syria U23"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 6,
             "tournamentStage": "1",
             "status": {
               "utcTime": "2026-01-07T11:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "07.01.2026 12:30:00"
+                "firstHalfStarted": "07.01.2026 12:30:28",
+                "secondHalfStarted": "07.01.2026 13:33:42"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": true,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "awarded": false,
+              "scoreStr": "5 - 0",
+              "reason": {
+                "short": "FT",
+                "shortKey": "fulltime_short",
+                "long": "Full-Time",
+                "longKey": "finished"
+              }
             },
             "timeTS": 1767785400000
           },
@@ -3536,17 +3578,26 @@
               "longName": "Iran U23"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 6,
             "tournamentStage": "1",
             "status": {
               "utcTime": "2026-01-07T11:30:00.000Z",
               "halfs": {
-                "firstHalfStarted": "07.01.2026 12:30:00"
+                "firstHalfStarted": "07.01.2026 12:30:20",
+                "secondHalfStarted": "07.01.2026 13:36:14"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": true,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "awarded": false,
+              "scoreStr": "0 - 0",
+              "reason": {
+                "short": "FT",
+                "shortKey": "fulltime_short",
+                "long": "Full-Time",
+                "longKey": "finished"
+              }
             },
             "timeTS": 1767785400000
           },
@@ -3556,7 +3607,7 @@
             "time": "07.01.2026 15:00",
             "home": {
               "id": 613636,
-              "score": 0,
+              "score": 2,
               "name": "Uzbekistan U23",
               "longName": "Uzbekistan U23"
             },
@@ -3567,17 +3618,28 @@
               "longName": "Lebanon U23"
             },
             "eliminatedTeamId": null,
-            "statusId": 1,
+            "statusId": 3,
             "tournamentStage": "1",
             "status": {
               "utcTime": "2026-01-07T14:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "07.01.2026 15:00:00"
+                "firstHalfStarted": "07.01.2026 15:01:19",
+                "secondHalfStarted": "07.01.2026 16:03:36"
               },
               "periodLength": 45,
-              "started": false,
+              "finished": false,
+              "started": true,
               "cancelled": false,
-              "finished": false
+              "ongoing": true,
+              "scoreStr": "2 - 0",
+              "liveTime": {
+                "short": "51‎’‎",
+                "shortKey": "",
+                "long": "50:37",
+                "longKey": "",
+                "maxTime": 90,
+                "addedTime": 0
+              }
             },
             "timeTS": 1767794400000
           },
@@ -4282,9 +4344,71 @@
         "name": "Ligue 1",
         "matches": [
           {
+            "id": 4907757,
+            "leagueId": 516,
+            "time": "08.01.2026 14:00",
+            "home": {
+              "id": 1531341,
+              "score": 0,
+              "name": "ES Ben Aknoun",
+              "longName": "ES Ben Aknoun"
+            },
+            "away": {
+              "id": 1660716,
+              "score": 0,
+              "name": "Olympique Akbou",
+              "longName": "Olympique Akbou"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "15",
+            "status": {
+              "utcTime": "2026-01-08T13:00:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "08.01.2026 14:00:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1767877200000
+          },
+          {
+            "id": 4907750,
+            "leagueId": 516,
+            "time": "08.01.2026 14:00",
+            "home": {
+              "id": 1387865,
+              "score": 0,
+              "name": "MC El Bayadh",
+              "longName": "MC El Bayadh"
+            },
+            "away": {
+              "id": 316402,
+              "score": 0,
+              "name": "ES Mostaganem",
+              "longName": "ES Mostaganem"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "15",
+            "status": {
+              "utcTime": "2026-01-08T13:00:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "08.01.2026 14:00:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1767877200000
+          },
+          {
             "id": 4907753,
             "leagueId": 516,
-            "time": "08.01.2026 19:00",
+            "time": "08.01.2026 17:45",
             "home": {
               "id": 45655,
               "score": 0,
@@ -4301,16 +4425,16 @@
             "statusId": 1,
             "tournamentStage": "15",
             "status": {
-              "utcTime": "2026-01-08T18:00:00.000Z",
+              "utcTime": "2026-01-08T16:45:00.000Z",
               "halfs": {
-                "firstHalfStarted": "08.01.2026 19:00:00"
+                "firstHalfStarted": "08.01.2026 17:45:00"
               },
               "periodLength": 45,
               "started": false,
               "cancelled": false,
               "finished": false
             },
-            "timeTS": 1767895200000
+            "timeTS": 1767890700000
           }
         ],
         "internalRank": 0,
@@ -5594,71 +5718,9 @@
         "name": "Ligue 1",
         "matches": [
           {
-            "id": 4907757,
-            "leagueId": 516,
-            "time": "09.01.2026 19:00",
-            "home": {
-              "id": 1531341,
-              "score": 0,
-              "name": "ES Ben Aknoun",
-              "longName": "ES Ben Aknoun"
-            },
-            "away": {
-              "id": 1660716,
-              "score": 0,
-              "name": "Olympique Akbou",
-              "longName": "Olympique Akbou"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "15",
-            "status": {
-              "utcTime": "2026-01-09T18:00:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "09.01.2026 19:00:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1767981600000
-          },
-          {
-            "id": 4907752,
-            "leagueId": 516,
-            "time": "09.01.2026 19:00",
-            "home": {
-              "id": 1792386,
-              "score": 0,
-              "name": "MB Rouissat",
-              "longName": "MB Rouissat"
-            },
-            "away": {
-              "id": 1387869,
-              "score": 0,
-              "name": "USM Khenchela",
-              "longName": "USM Khenchela"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "15",
-            "status": {
-              "utcTime": "2026-01-09T18:00:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "09.01.2026 19:00:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1767981600000
-          },
-          {
             "id": 4907756,
             "leagueId": 516,
-            "time": "09.01.2026 19:00",
+            "time": "08.01.2026 20:00",
             "home": {
               "id": 101628,
               "score": 0,
@@ -5675,16 +5737,140 @@
             "statusId": 1,
             "tournamentStage": "15",
             "status": {
-              "utcTime": "2026-01-09T18:00:00.000Z",
+              "utcTime": "2026-01-08T19:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "09.01.2026 19:00:00"
+                "firstHalfStarted": "08.01.2026 20:00:00"
               },
               "periodLength": 45,
               "started": false,
               "cancelled": false,
               "finished": false
             },
-            "timeTS": 1767981600000
+            "timeTS": 1767898800000
+          },
+          {
+            "id": 4907754,
+            "leagueId": 516,
+            "time": "09.01.2026 16:00",
+            "home": {
+              "id": 101629,
+              "score": 0,
+              "name": "ASO Chlef",
+              "longName": "ASO Chlef"
+            },
+            "away": {
+              "id": 6353,
+              "score": 0,
+              "name": "MC Alger",
+              "longName": "MC Alger"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "15",
+            "status": {
+              "utcTime": "2026-01-09T15:00:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "09.01.2026 16:00:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1767970800000
+          },
+          {
+            "id": 4907751,
+            "leagueId": 516,
+            "time": "09.01.2026 16:00",
+            "home": {
+              "id": 277392,
+              "score": 0,
+              "name": "CS Constantine",
+              "longName": "CS Constantine"
+            },
+            "away": {
+              "id": 316399,
+              "score": 0,
+              "name": "JS Saoura",
+              "longName": "JS Saoura"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "15",
+            "status": {
+              "utcTime": "2026-01-09T15:00:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "09.01.2026 16:00:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1767970800000
+          },
+          {
+            "id": 4907752,
+            "leagueId": 516,
+            "time": "09.01.2026 16:00",
+            "home": {
+              "id": 1792386,
+              "score": 0,
+              "name": "MB Rouissat",
+              "longName": "MB Rouissat"
+            },
+            "away": {
+              "id": 1387869,
+              "score": 0,
+              "name": "USM Khenchela",
+              "longName": "USM Khenchela"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "15",
+            "status": {
+              "utcTime": "2026-01-09T15:00:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "09.01.2026 16:00:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1767970800000
+          },
+          {
+            "id": 4907755,
+            "leagueId": 516,
+            "time": "09.01.2026 18:00",
+            "home": {
+              "id": 101633,
+              "score": 0,
+              "name": "CR Belouizdad",
+              "longName": "CR Belouizdad"
+            },
+            "away": {
+              "id": 101630,
+              "score": 0,
+              "name": "JS Kabylie",
+              "longName": "JS Kabylie"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "15",
+            "status": {
+              "utcTime": "2026-01-09T17:00:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "09.01.2026 18:00:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1767978000000
           }
         ],
         "internalRank": 0,
@@ -16605,6 +16791,111 @@
         ],
         "parentLeagueId": 8947,
         "internalRank": 24,
+        "liveRank": 0,
+        "simpleLeague": false
+      },
+      {
+        "ccode": "IRQ",
+        "id": 905798,
+        "primaryId": 524,
+        "name": "Stars League",
+        "matches": [
+          {
+            "id": 5125154,
+            "leagueId": 905798,
+            "time": "10.01.2026 13:00",
+            "home": {
+              "id": 191818,
+              "score": 0,
+              "name": "Al Karkh",
+              "longName": "Al Karkh"
+            },
+            "away": {
+              "id": 101643,
+              "score": 0,
+              "name": "Al Najaf",
+              "longName": "Al Najaf"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "11",
+            "status": {
+              "utcTime": "2026-01-10T12:00:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "10.01.2026 13:00:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768046400000
+          },
+          {
+            "id": 5125153,
+            "leagueId": 905798,
+            "time": "10.01.2026 13:00",
+            "home": {
+              "id": 1811195,
+              "score": 0,
+              "name": "Al-Gharraf",
+              "longName": "Al-Gharraf"
+            },
+            "away": {
+              "id": 1298364,
+              "score": 0,
+              "name": "Newroz",
+              "longName": "Newroz"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "11",
+            "status": {
+              "utcTime": "2026-01-10T12:00:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "10.01.2026 13:00:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768046400000
+          },
+          {
+            "id": 5125155,
+            "leagueId": 905798,
+            "time": "10.01.2026 15:30",
+            "home": {
+              "id": 101660,
+              "score": 0,
+              "name": "Al Talaba",
+              "longName": "Al Talaba"
+            },
+            "away": {
+              "id": 101662,
+              "score": 0,
+              "name": "Al Kahrabaa",
+              "longName": "Al Kahrabaa"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "11",
+            "status": {
+              "utcTime": "2026-01-10T14:30:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "10.01.2026 15:30:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768055400000
+          }
+        ],
+        "parentLeagueId": 524,
+        "internalRank": 0,
         "liveRank": 0,
         "simpleLeague": false
       },
@@ -29731,6 +30022,173 @@
         "simpleLeague": false
       },
       {
+        "ccode": "IRQ",
+        "id": 905798,
+        "primaryId": 524,
+        "name": "Stars League",
+        "matches": [
+          {
+            "id": 5125156,
+            "leagueId": 905798,
+            "time": "13.01.2026 13:00",
+            "home": {
+              "id": 101655,
+              "score": 0,
+              "name": "Al Shorta",
+              "longName": "Al Shorta"
+            },
+            "away": {
+              "id": 1811191,
+              "score": 0,
+              "name": "Al-Mosul",
+              "longName": "Al-Mosul"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "12",
+            "status": {
+              "utcTime": "2026-01-13T12:00:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "13.01.2026 13:00:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768305600000
+          },
+          {
+            "id": 5125157,
+            "leagueId": 905798,
+            "time": "13.01.2026 13:00",
+            "home": {
+              "id": 165214,
+              "score": 0,
+              "name": "Diyala",
+              "longName": "Diyala"
+            },
+            "away": {
+              "id": 101659,
+              "score": 0,
+              "name": "Al Zawraa",
+              "longName": "Al Zawraa"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "12",
+            "status": {
+              "utcTime": "2026-01-13T12:00:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "13.01.2026 13:00:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768305600000
+          },
+          {
+            "id": 5125158,
+            "leagueId": 905798,
+            "time": "13.01.2026 15:30",
+            "home": {
+              "id": 1680577,
+              "score": 0,
+              "name": "Al-Karma",
+              "longName": "Al-Karma"
+            },
+            "away": {
+              "id": 1087313,
+              "score": 0,
+              "name": "Al-Qasim",
+              "longName": "Al-Qasim"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "12",
+            "status": {
+              "utcTime": "2026-01-13T14:30:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "13.01.2026 15:30:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768314600000
+          },
+          {
+            "id": 5125159,
+            "leagueId": 905798,
+            "time": "13.01.2026 15:30",
+            "home": {
+              "id": 165215,
+              "score": 0,
+              "name": "Amanat Baghdad",
+              "longName": "Amanat Baghdad"
+            },
+            "away": {
+              "id": 101656,
+              "score": 0,
+              "name": "Al Quwa Al Jawiya",
+              "longName": "Al Quwa Al Jawiya"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "12",
+            "status": {
+              "utcTime": "2026-01-13T14:30:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "13.01.2026 15:30:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768314600000
+          },
+          {
+            "id": 5125160,
+            "leagueId": 905798,
+            "time": "13.01.2026 15:30",
+            "home": {
+              "id": 101649,
+              "score": 0,
+              "name": "Erbil",
+              "longName": "Erbil"
+            },
+            "away": {
+              "id": 101650,
+              "score": 0,
+              "name": "Duhok",
+              "longName": "Duhok"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "12",
+            "status": {
+              "utcTime": "2026-01-13T14:30:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "13.01.2026 15:30:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768314600000
+          }
+        ],
+        "parentLeagueId": 524,
+        "internalRank": 0,
+        "liveRank": 0,
+        "simpleLeague": false
+      },
+      {
         "ccode": "AUS",
         "id": 9495,
         "primaryId": 9495,
@@ -32930,6 +33388,173 @@
         ],
         "parentLeagueId": 8947,
         "internalRank": 24,
+        "liveRank": 0,
+        "simpleLeague": false
+      },
+      {
+        "ccode": "IRQ",
+        "id": 905798,
+        "primaryId": 524,
+        "name": "Stars League",
+        "matches": [
+          {
+            "id": 5125162,
+            "leagueId": 905798,
+            "time": "14.01.2026 13:00",
+            "home": {
+              "id": 101662,
+              "score": 0,
+              "name": "Al Kahrabaa",
+              "longName": "Al Kahrabaa"
+            },
+            "away": {
+              "id": 191814,
+              "score": 0,
+              "name": "Zakho",
+              "longName": "Zakho"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "12",
+            "status": {
+              "utcTime": "2026-01-14T12:00:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "14.01.2026 13:00:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768392000000
+          },
+          {
+            "id": 5125161,
+            "leagueId": 905798,
+            "time": "14.01.2026 13:00",
+            "home": {
+              "id": 1811195,
+              "score": 0,
+              "name": "Al-Gharraf",
+              "longName": "Al-Gharraf"
+            },
+            "away": {
+              "id": 101661,
+              "score": 0,
+              "name": "Al Naft",
+              "longName": "Al Naft"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "12",
+            "status": {
+              "utcTime": "2026-01-14T12:00:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "14.01.2026 13:00:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768392000000
+          },
+          {
+            "id": 5125163,
+            "leagueId": 905798,
+            "time": "14.01.2026 13:00",
+            "home": {
+              "id": 1298364,
+              "score": 0,
+              "name": "Newroz",
+              "longName": "Newroz"
+            },
+            "away": {
+              "id": 101660,
+              "score": 0,
+              "name": "Al Talaba",
+              "longName": "Al Talaba"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "12",
+            "status": {
+              "utcTime": "2026-01-14T12:00:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "14.01.2026 13:00:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768392000000
+          },
+          {
+            "id": 5125164,
+            "leagueId": 905798,
+            "time": "14.01.2026 15:30",
+            "home": {
+              "id": 101644,
+              "score": 0,
+              "name": "Al Minaa",
+              "longName": "Al Minaa"
+            },
+            "away": {
+              "id": 191818,
+              "score": 0,
+              "name": "Al Karkh",
+              "longName": "Al Karkh"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "12",
+            "status": {
+              "utcTime": "2026-01-14T14:30:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "14.01.2026 15:30:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768401000000
+          },
+          {
+            "id": 5125165,
+            "leagueId": 905798,
+            "time": "14.01.2026 15:30",
+            "home": {
+              "id": 101643,
+              "score": 0,
+              "name": "Al Najaf",
+              "longName": "Al Najaf"
+            },
+            "away": {
+              "id": 191820,
+              "score": 0,
+              "name": "Naft Maysan",
+              "longName": "Naft Maysan"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "12",
+            "status": {
+              "utcTime": "2026-01-14T14:30:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "14.01.2026 15:30:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1768401000000
+          }
+        ],
+        "parentLeagueId": 524,
+        "internalRank": 0,
         "liveRank": 0,
         "simpleLeague": false
       },
@@ -72197,6 +72822,142 @@
         "localRank": 28
       },
       {
+        "ccode": "ESP",
+        "id": 87,
+        "primaryId": 87,
+        "name": "LaLiga",
+        "matches": [
+          {
+            "id": 4837315,
+            "leagueId": 87,
+            "time": "23.01.2026 21:00",
+            "home": {
+              "id": 8581,
+              "score": 0,
+              "name": "Levante",
+              "longName": "Levante"
+            },
+            "away": {
+              "id": 10268,
+              "score": 0,
+              "name": "Elche",
+              "longName": "Elche"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "21",
+            "status": {
+              "utcTime": "2026-01-23T20:00:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "23.01.2026 21:00:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1769198400000
+          },
+          {
+            "id": 4837318,
+            "leagueId": 87,
+            "time": "24.01.2026 14:00",
+            "home": {
+              "id": 8370,
+              "score": 0,
+              "name": "Rayo Vallecano",
+              "longName": "Rayo Vallecano"
+            },
+            "away": {
+              "id": 8371,
+              "score": 0,
+              "name": "Osasuna",
+              "longName": "Osasuna"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "21",
+            "status": {
+              "utcTime": "2026-01-24T13:00:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "24.01.2026 14:00:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1769259600000
+          },
+          {
+            "id": 4837316,
+            "leagueId": 87,
+            "time": "24.01.2026 16:15",
+            "home": {
+              "id": 10267,
+              "score": 0,
+              "name": "Valencia",
+              "longName": "Valencia"
+            },
+            "away": {
+              "id": 8558,
+              "score": 0,
+              "name": "Espanyol",
+              "longName": "Espanyol"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "21",
+            "status": {
+              "utcTime": "2026-01-24T15:15:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "24.01.2026 16:15:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1769267700000
+          },
+          {
+            "id": 4837313,
+            "leagueId": 87,
+            "time": "24.01.2026 18:30",
+            "home": {
+              "id": 8302,
+              "score": 0,
+              "name": "Sevilla",
+              "longName": "Sevilla"
+            },
+            "away": {
+              "id": 8315,
+              "score": 0,
+              "name": "Athletic Club",
+              "longName": "Athletic Club"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "21",
+            "status": {
+              "utcTime": "2026-01-24T17:30:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "24.01.2026 18:30:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1769275800000
+          }
+        ],
+        "internalRank": 10,
+        "liveRank": 100,
+        "simpleLeague": false,
+        "localRank": 26
+      },
+      {
         "ccode": "FRA",
         "id": 53,
         "primaryId": 53,
@@ -83413,288 +84174,9 @@
         "name": "LaLiga",
         "matches": [
           {
-            "id": 4837311,
-            "leagueId": 87,
-            "time": "25.01.2026 19:00",
-            "home": {
-              "id": 9906,
-              "score": 0,
-              "name": "Atletico Madrid",
-              "longName": "Atletico Madrid"
-            },
-            "away": {
-              "id": 8661,
-              "score": 0,
-              "name": "Mallorca",
-              "longName": "Mallorca"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-25T18:00:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "25.01.2026 19:00:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1769364000000
-          },
-          {
-            "id": 4837312,
-            "leagueId": 87,
-            "time": "25.01.2026 19:00",
-            "home": {
-              "id": 8634,
-              "score": 0,
-              "name": "Barcelona",
-              "longName": "Barcelona"
-            },
-            "away": {
-              "id": 8670,
-              "score": 0,
-              "name": "Real Oviedo",
-              "longName": "Real Oviedo"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-25T18:00:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "25.01.2026 19:00:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1769364000000
-          },
-          {
-            "id": 4837310,
-            "leagueId": 87,
-            "time": "25.01.2026 19:00",
-            "home": {
-              "id": 9866,
-              "score": 0,
-              "name": "Deportivo Alaves",
-              "longName": "Deportivo Alaves"
-            },
-            "away": {
-              "id": 8603,
-              "score": 0,
-              "name": "Real Betis",
-              "longName": "Real Betis"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-25T18:00:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "25.01.2026 19:00:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1769364000000
-          },
-          {
-            "id": 4837317,
-            "leagueId": 87,
-            "time": "25.01.2026 19:00",
-            "home": {
-              "id": 7732,
-              "score": 0,
-              "name": "Girona",
-              "longName": "Girona"
-            },
-            "away": {
-              "id": 8305,
-              "score": 0,
-              "name": "Getafe",
-              "longName": "Getafe"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-25T18:00:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "25.01.2026 19:00:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1769364000000
-          },
-          {
-            "id": 4837315,
-            "leagueId": 87,
-            "time": "25.01.2026 19:00",
-            "home": {
-              "id": 8581,
-              "score": 0,
-              "name": "Levante",
-              "longName": "Levante"
-            },
-            "away": {
-              "id": 10268,
-              "score": 0,
-              "name": "Elche",
-              "longName": "Elche"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-25T18:00:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "25.01.2026 19:00:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1769364000000
-          },
-          {
-            "id": 4837318,
-            "leagueId": 87,
-            "time": "25.01.2026 19:00",
-            "home": {
-              "id": 8370,
-              "score": 0,
-              "name": "Rayo Vallecano",
-              "longName": "Rayo Vallecano"
-            },
-            "away": {
-              "id": 8371,
-              "score": 0,
-              "name": "Osasuna",
-              "longName": "Osasuna"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-25T18:00:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "25.01.2026 19:00:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1769364000000
-          },
-          {
-            "id": 4837314,
-            "leagueId": 87,
-            "time": "25.01.2026 19:00",
-            "home": {
-              "id": 8560,
-              "score": 0,
-              "name": "Real Sociedad",
-              "longName": "Real Sociedad"
-            },
-            "away": {
-              "id": 9910,
-              "score": 0,
-              "name": "Celta Vigo",
-              "longName": "Celta Vigo"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-25T18:00:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "25.01.2026 19:00:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1769364000000
-          },
-          {
-            "id": 4837313,
-            "leagueId": 87,
-            "time": "25.01.2026 19:00",
-            "home": {
-              "id": 8302,
-              "score": 0,
-              "name": "Sevilla",
-              "longName": "Sevilla"
-            },
-            "away": {
-              "id": 8315,
-              "score": 0,
-              "name": "Athletic Club",
-              "longName": "Athletic Club"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-25T18:00:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "25.01.2026 19:00:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1769364000000
-          },
-          {
-            "id": 4837316,
-            "leagueId": 87,
-            "time": "25.01.2026 19:00",
-            "home": {
-              "id": 10267,
-              "score": 0,
-              "name": "Valencia",
-              "longName": "Valencia"
-            },
-            "away": {
-              "id": 8558,
-              "score": 0,
-              "name": "Espanyol",
-              "longName": "Espanyol"
-            },
-            "eliminatedTeamId": null,
-            "statusId": 1,
-            "tournamentStage": "21",
-            "status": {
-              "utcTime": "2026-01-25T18:00:00.000Z",
-              "halfs": {
-                "firstHalfStarted": "25.01.2026 19:00:00"
-              },
-              "periodLength": 45,
-              "started": false,
-              "cancelled": false,
-              "finished": false
-            },
-            "timeTS": 1769364000000
-          },
-          {
             "id": 4837319,
             "leagueId": 87,
-            "time": "25.01.2026 19:00",
+            "time": "24.01.2026 21:00",
             "home": {
               "id": 10205,
               "score": 0,
@@ -83711,16 +84193,109 @@
             "statusId": 1,
             "tournamentStage": "21",
             "status": {
-              "utcTime": "2026-01-25T18:00:00.000Z",
+              "utcTime": "2026-01-24T20:00:00.000Z",
               "halfs": {
-                "firstHalfStarted": "25.01.2026 19:00:00"
+                "firstHalfStarted": "24.01.2026 21:00:00"
               },
               "periodLength": 45,
               "started": false,
               "cancelled": false,
               "finished": false
             },
-            "timeTS": 1769364000000
+            "timeTS": 1769284800000
+          },
+          {
+            "id": 4837311,
+            "leagueId": 87,
+            "time": "25.01.2026 14:00",
+            "home": {
+              "id": 9906,
+              "score": 0,
+              "name": "Atletico Madrid",
+              "longName": "Atletico Madrid"
+            },
+            "away": {
+              "id": 8661,
+              "score": 0,
+              "name": "Mallorca",
+              "longName": "Mallorca"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "21",
+            "status": {
+              "utcTime": "2026-01-25T13:00:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "25.01.2026 14:00:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1769346000000
+          },
+          {
+            "id": 4837312,
+            "leagueId": 87,
+            "time": "25.01.2026 16:15",
+            "home": {
+              "id": 8634,
+              "score": 0,
+              "name": "Barcelona",
+              "longName": "Barcelona"
+            },
+            "away": {
+              "id": 8670,
+              "score": 0,
+              "name": "Real Oviedo",
+              "longName": "Real Oviedo"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "21",
+            "status": {
+              "utcTime": "2026-01-25T15:15:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "25.01.2026 16:15:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1769354100000
+          },
+          {
+            "id": 4837314,
+            "leagueId": 87,
+            "time": "25.01.2026 18:30",
+            "home": {
+              "id": 8560,
+              "score": 0,
+              "name": "Real Sociedad",
+              "longName": "Real Sociedad"
+            },
+            "away": {
+              "id": 9910,
+              "score": 0,
+              "name": "Celta Vigo",
+              "longName": "Celta Vigo"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "21",
+            "status": {
+              "utcTime": "2026-01-25T17:30:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "25.01.2026 18:30:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1769362200000
           }
         ],
         "internalRank": 10,
@@ -94134,6 +94709,49 @@
   },
   "20260126": {
     "leagues": [
+      {
+        "ccode": "ESP",
+        "id": 87,
+        "primaryId": 87,
+        "name": "LaLiga",
+        "matches": [
+          {
+            "id": 4837310,
+            "leagueId": 87,
+            "time": "25.01.2026 21:00",
+            "home": {
+              "id": 9866,
+              "score": 0,
+              "name": "Deportivo Alaves",
+              "longName": "Deportivo Alaves"
+            },
+            "away": {
+              "id": 8603,
+              "score": 0,
+              "name": "Real Betis",
+              "longName": "Real Betis"
+            },
+            "eliminatedTeamId": null,
+            "statusId": 1,
+            "tournamentStage": "21",
+            "status": {
+              "utcTime": "2026-01-25T20:00:00.000Z",
+              "halfs": {
+                "firstHalfStarted": "25.01.2026 21:00:00"
+              },
+              "periodLength": 45,
+              "started": false,
+              "cancelled": false,
+              "finished": false
+            },
+            "timeTS": 1769371200000
+          }
+        ],
+        "internalRank": 10,
+        "liveRank": 100,
+        "simpleLeague": false,
+        "localRank": 26
+      },
       {
         "ccode": "FRA",
         "id": 53,

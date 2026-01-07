@@ -177,6 +177,7 @@ export const fetchMatchByIdV2 = createAsyncThunk(
           eventId,
           matchData: data,
           betOffers: data.data?.betOffers || [],
+          marketsSuspended: data.marketsSuspended || false,
           timestamp: data.timestamp,
           source: 'unibet-api'
         };
@@ -209,6 +210,7 @@ export const silentUpdateMatchByIdV2 = createAsyncThunk(
           eventId,
           matchData: data,
           betOffers: data.data?.betOffers || [],
+          marketsSuspended: data.marketsSuspended || false,
           timestamp: data.timestamp,
           source: data.source || 'unibet-api'
         };
@@ -468,6 +470,7 @@ const matchesSlice = createSlice({
         state.matchDetailsV2[action.payload.eventId] = {
           matchData: action.payload.matchData,
           betOffers: action.payload.betOffers,
+          marketsSuspended: action.payload.marketsSuspended || false,
           timestamp: action.payload.timestamp,
           source: action.payload.source
         };
@@ -515,10 +518,11 @@ const matchesSlice = createSlice({
       // Silent update reducers for V2
       .addCase(silentUpdateMatchByIdV2.fulfilled, (state, action) => {
         if (!action.payload) return;
-        const { eventId, matchData, betOffers, timestamp, source } = action.payload;
+        const { eventId, matchData, betOffers, marketsSuspended, timestamp, source } = action.payload;
         state.matchDetailsV2[eventId] = {
           matchData,
           betOffers,
+          marketsSuspended: marketsSuspended || false,
           timestamp,
           source
         };

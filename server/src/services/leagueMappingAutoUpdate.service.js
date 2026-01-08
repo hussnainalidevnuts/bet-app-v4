@@ -6,6 +6,7 @@ import { GoogleGenAI } from '@google/genai';
 import { v2 as cloudinary } from 'cloudinary';
 import { downloadLeagueMappingClean } from '../utils/cloudinaryCsvLoader.js';
 import { normalizeTeamName, calculateNameSimilarity } from '../unibet-calc/utils/fotmob-helpers.js';
+import { waitForRateLimit } from '../utils/geminiRateLimiter.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -706,6 +707,9 @@ class LeagueMappingAutoUpdate {
             const { key: geminiApiKey, name: keyName } = apiKeys[i];
             
             try {
+                // ✅ RATE LIMIT: Wait before making Gemini API call
+                await waitForRateLimit();
+                
                 console.log(`[LeagueMapping] 🤖 Using Gemini AI fallback (${keyName}) for: ${unibetLeague.name} (${unibetLeague.country || 'Unknown country'})`);
                 
                 // Prepare Unibet league data for Gemini

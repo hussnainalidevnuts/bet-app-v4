@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { waitForRateLimit } from '../../utils/geminiRateLimiter.js';
 
 /**
  * Use Gemini AI to match player name when normal matching fails
@@ -46,6 +47,9 @@ export async function findPlayerWithGemini(matchDetails, participantName) {
         const { key: geminiApiKey, name: keyName } = apiKeys[i];
         
         try {
+            // ✅ RATE LIMIT: Wait before making Gemini API call
+            await waitForRateLimit();
+            
             console.log(`   🤖 Using Gemini AI fallback (${keyName}) to find player: "${participantName}"`);
             
             // Extract all team players from matchDetails

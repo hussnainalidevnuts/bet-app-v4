@@ -32,8 +32,9 @@ export async function downloadCsvFromCloudinary(fileName) {
         const publicId = `league-mapping/${fileName}.csv`;
         const timestamp = Date.now();
         let url = cloudinary.url(publicId, {
-            resource_type: 'raw',
-            format: 'csv'
+            resource_type: 'raw'
+            // ✅ Removed format: 'csv' since publicId already includes .csv extension
+            // This prevents double extension (.csv.csv) issue
         });
         
         // ✅ Add cache-busting query parameter to force fresh download

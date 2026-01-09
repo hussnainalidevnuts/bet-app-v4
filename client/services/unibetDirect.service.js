@@ -35,7 +35,7 @@ const unibetDirectClient = axios.create({
 
 // ✅ NEW: Separate axios instance for betoffers (needs more time for complex data)
 const unibetBetOffersClient = axios.create({
-  timeout: 3000, // 3 seconds timeout for betoffers (more complex data, matches API route timeout)
+  timeout: 15000, // 15 seconds timeout for betoffers (allows time for proxy rotation and retries)
   headers: UNIBET_HEADERS
 });
 
@@ -67,7 +67,7 @@ class UnibetDirectService {
       
       // Use Next.js API route as proxy (handles CORS)
       const url = `${NEXT_API_BETOFFERS}/${eventId}`;
-      // ✅ Use betoffers client with higher timeout (3s) to match API route
+      // ✅ Use betoffers client with higher timeout (15s) to allow for proxy rotation and retries
       const response = await unibetBetOffersClient.get(url);
       
       console.log(`✅ [NEXT PROXY] Successfully fetched bet offers for event: ${eventId}`);

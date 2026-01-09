@@ -225,6 +225,13 @@ const betSlipSlice = createSlice({
       if (state.bets.length === 0) {
         state.isOpen = false;
         state.isExpanded = false;
+        // ✅ Clear odds change notification when last bet is removed
+        state.oddsChangeNotification = {
+          message: '',
+          timestamp: null,
+          show: false
+        };
+        state.placeBetDisabled = false;
       } else if (state.bets.length === 1) {
         state.activeTab = "singles";
       }
@@ -242,6 +249,13 @@ const betSlipSlice = createSlice({
       state.totalStake = 0;
       state.potentialReturn = 0;
       state.lastError = null;
+      // ✅ Clear odds change notification when clearing all bets
+      state.oddsChangeNotification = {
+        message: '',
+        timestamp: null,
+        show: false
+      };
+      state.placeBetDisabled = false;
     },
 
     toggleBetSlip: (state) => {
@@ -266,6 +280,13 @@ const betSlipSlice = createSlice({
     closeBetSlip: (state) => {
       state.isOpen = false;
       state.isExpanded = false;
+      // ✅ Clear odds change notification when closing bet slip
+      state.oddsChangeNotification = {
+        message: '',
+        timestamp: null,
+        show: false
+      };
+      state.placeBetDisabled = false;
     },
 
     setActiveTab: (state, action) => {
@@ -506,6 +527,85 @@ const getMatchDataFromState = (matchId, matchesState, leaguesState) => {
   return null;
 };
 
+// Helper function to check if odds are suspended
+const checkOddsSuspension = (bet, matchData, liveMatchesState) => {
+  // Check suspension status from match detail data (betOffers)
+  if (matchData?.matchData?.data?.betOffers) {
+    const betOffers = matchData.matchData.data.betOffers;
+    for (const offer of betOffers) {
+      if (offer.outcomes && Array.isArray(offer.outcomes)) {
+        const outcome = offer.outcomes.find(o => o.id === bet.oddId);
+        if (outcome) {
+          if (outcome.status !== 'OPEN') {
+            return {
+              suspended: true,
+              reason: `The betting option "${bet.label || bet.selection}" for ${bet.match.team1} vs ${bet.match.team2} is currently suspended and cannot be placed.`
+            };
+          }
+          // Found and it's open, no need to check further
+          return { suspended: false };
+        }
+      }
+    }
+  }
+  
+  // Also check from league matches data (if available)
+  if (matchData?.data?.betOffers) {
+    const betOffers = matchData.data.betOffers;
+    for (const offer of betOffers) {
+      if (offer.outcomes && Array.isArray(offer.outcomes)) {
+        const outcome = offer.outcomes.find(o => o.id === bet.oddId);
+        if (outcome) {
+          if (outcome.status !== 'OPEN') {
+            return {
+              suspended: true,
+              reason: `The betting option "${bet.label || bet.selection}" for ${bet.match.team1} vs ${bet.match.team2} is currently suspended and cannot be placed.`
+            };
+          }
+          return { suspended: false };
+        }
+      }
+    }
+  }
+  
+  // Check from live matches if it's a live bet
+  if (bet.inplay && liveMatchesState) {
+    const liveMatches = liveMatchesState.matches || [];
+    const liveMatch = liveMatches.find(m => m.id === bet.match.id);
+    
+    if (liveMatch?.mainBetOffer?.outcomes) {
+      const outcome = liveMatch.mainBetOffer.outcomes.find(o => 
+        (o.id === bet.oddId) || (o.outcomeId === bet.oddId)
+      );
+      if (outcome && outcome.status !== 'OPEN') {
+        return {
+          suspended: true,
+          reason: `The betting option "${bet.label || bet.selection}" for ${bet.match.team1} vs ${bet.match.team2} is currently suspended and cannot be placed.`
+        };
+      }
+    }
+    
+    // Also check liveOdds if available
+    if (liveMatch?.liveOdds?.outcomes) {
+      const outcome = liveMatch.liveOdds.outcomes.find(o => 
+        (o.id === bet.oddId) || (o.outcomeId === bet.oddId)
+      );
+      if (outcome && outcome.status !== 'OPEN') {
+        return {
+          suspended: true,
+          reason: `The betting option "${bet.label || bet.selection}" for ${bet.match.team1} vs ${bet.match.team2} is currently suspended and cannot be placed.`
+        };
+      }
+    }
+  }
+  
+  // If we can't find the outcome, we can't verify suspension status
+  // In this case, let the server handle it (it will reject if suspended)
+  // But we log a warning
+  console.warn(`⚠️ [placeBetThunk] Could not verify suspension status for bet ${bet.id} (oddId: ${bet.oddId})`);
+  return { suspended: false }; // Allow to proceed, server will validate
+};
+
 // Helper function to extract Unibet metadata from match data
 const extractUnibetMetadata = (bet, matchData) => {
   
@@ -610,6 +710,7 @@ export const placeBetThunk = createAsyncThunk(
     // Get match data from Redux state for Unibet metadata extraction
     const matchesState = getState().matches;
     const leaguesState = getState().leagues;
+    const liveMatchesState = getState().liveMatches;
     
     try {
       const results = [];
@@ -633,6 +734,13 @@ export const placeBetThunk = createAsyncThunk(
           
           // Extract Unibet metadata from match data (try multiple sources)
           const matchData = getMatchDataFromState(bet.match.id, matchesState, leaguesState);
+          
+          // ✅ NEW: Check if odds are suspended before placing bet
+          const suspensionCheck = checkOddsSuspension(bet, matchData, liveMatchesState);
+          if (suspensionCheck.suspended) {
+            throw new Error(suspensionCheck.reason);
+          }
+          
           const unibetMetadata = extractUnibetMetadata(bet, matchData);
           
           // ✅ CRITICAL: Extract match start time from multiple sources for bet placement
@@ -750,8 +858,13 @@ export const placeBetThunk = createAsyncThunk(
           const label = bet.label || bet.selection;
           
           // Extract Unibet metadata from match data for each leg (try multiple sources)
-          
           const matchData = getMatchDataFromState(bet.match.id, matchesState, leaguesState);
+          
+          // ✅ NEW: Check if odds are suspended before placing combination bet
+          const suspensionCheck = checkOddsSuspension(bet, matchData, liveMatchesState);
+          if (suspensionCheck.suspended) {
+            throw new Error(suspensionCheck.reason);
+          }
           
           const unibetMetadata = extractUnibetMetadata(bet, matchData);
           

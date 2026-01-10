@@ -154,6 +154,9 @@ const BetSlip = () => {
         const checkInterval = setInterval(() => {
             // Check if any bet odds values changed
             const oddsChanged = bets.some(bet => {
+                // ✅ ADD: Check if bet exists and has required properties
+                if (!bet || !bet.id || !bet.odds) return false;
+                
                 const initialOdd = initialOdds[bet.id];
                 if (!initialOdd) return false;
                 const currentOdd = bet.odds;
@@ -181,6 +184,9 @@ const BetSlip = () => {
             // ✅ NEW: Check if any odds got suspended
             // Helper function to get match data from state
             const getMatchDataFromState = (matchId, matchesState, leaguesState) => {
+                // ✅ ADD: Check if matchId exists
+                if (!matchId) return null;
+                
                 // First try to get from match details (individual match page)
                 let matchData = matchesState?.matchDetailsV2?.[matchId]?.matchData;
                 
@@ -217,6 +223,11 @@ const BetSlip = () => {
 
             // Helper function to check suspension
             const checkSuspension = (bet) => {
+                // ✅ ADD: Check if bet and bet.match exist
+                if (!bet || !bet.match || !bet.match.id || !bet.oddId) {
+                    return false; // Can't check suspension without match data
+                }
+                
                 const matchData = getMatchDataFromState(bet.match.id, matchesState, leaguesState);
                 
                 // Check suspension status from match detail data (betOffers)
@@ -248,7 +259,7 @@ const BetSlip = () => {
                 // Check from live matches if it's a live bet
                 if (bet.inplay && liveMatchesState) {
                     const liveMatches = liveMatchesState.matches || [];
-                    const liveMatch = liveMatches.find(m => m.id === bet.match.id);
+                    const liveMatch = liveMatches.find(m => m && m.id === bet.match.id);
                     
                     if (liveMatch?.mainBetOffer?.outcomes) {
                         const outcome = liveMatch.mainBetOffer.outcomes.find(o => 
@@ -272,7 +283,10 @@ const BetSlip = () => {
                 return false;
             };
 
-            const hasSuspendedOdds = bets.some(bet => checkSuspension(bet));
+            // ✅ ADD: Filter out invalid bets before checking suspension
+            const hasSuspendedOdds = bets
+                .filter(bet => bet && bet.match && bet.match.id && bet.oddId) // Only check valid bets
+                .some(bet => checkSuspension(bet));
 
             if (hasSuspendedOdds) {
                 console.log('⏸️ Bet placement stopped - odds suspended');

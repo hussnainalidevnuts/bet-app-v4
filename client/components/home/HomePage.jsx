@@ -118,7 +118,7 @@ const HomePage = () => {
     if (error) {
         return (
             <div className="flex-1 bg-gray-100">
-                <div className="p-3 lg:p-6 overflow-hidden">
+                <div className="px-4 py-4 md:px-6 md:py-6 overflow-hidden">
                     <div className="flex items-center justify-center h-64">
                         <div className="text-red-500">Error: {error}</div>
                     </div>
@@ -129,7 +129,7 @@ const HomePage = () => {
 
     return (
         <div className="flex-1 bg-gray-100">
-            <div className="p-3 lg:p-6 overflow-hidden pb-20 md:pb-3 lg:pb-6">
+            <div className="px-4 py-4 md:px-6 md:py-6 overflow-hidden pb-[calc(1.25rem+env(safe-area-inset-bottom))] md:pb-3 lg:pb-6">
                 <div className="flex flex-col xl:flex-row gap-4 lg:gap-6">
                     {/* Main content area */}
                     <div className="flex-1 min-w-0">

@@ -1360,7 +1360,27 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
             );
             if (skipThisSection) return;
             section.options.forEach(option => {
-                const playerName = option.name || option.label;
+                // ✅ FIX: Use same logic as "To Score" market - prioritize participant over name
+                // Prefer explicit participant/player name over generic "Yes" / "No"
+                const participantName =
+                    typeof option.participant === 'string' && option.participant.trim().length > 0
+                        ? option.participant.trim()
+                        : undefined;
+                const rawName =
+                    typeof option.name === 'string' && option.name.trim().length > 0
+                        ? option.name.trim()
+                        : undefined;
+                
+                // Ignore names that are just "Yes"/"No" – those are not player names
+                const isYesNoName =
+                    rawName &&
+                    (rawName.toLowerCase() === 'yes' ||
+                        rawName.toLowerCase() === 'no' ||
+                        rawName.toLowerCase() === 'ot_yes' ||
+                        rawName.toLowerCase() === 'ot_no');
+                
+                const playerName = participantName || (!isYesNoName ? rawName : undefined);
+                
                 if (!playerName) return;
                 const lowerName = String(playerName).toLowerCase();
                 // Exclude non-player outcomes and team names

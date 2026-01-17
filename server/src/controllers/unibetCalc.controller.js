@@ -180,10 +180,10 @@ export class UnibetCalcController {
                     
                     results.push(result);
                     
-                    // ✅ NEW: Add 1 minute delay before processing next bet (except for last bet)
+                    // ✅ NEW: Add 10 second delay before processing next bet (except for last bet)
                     if (i < bets.length - 1) {
-                        console.log(`⏳ [processAll] Waiting 1 minute before processing next bet...`);
-                        await new Promise(resolve => setTimeout(resolve, 60 * 1000)); // 1 minute delay
+                        console.log(`⏳ [processAll] Waiting 10 seconds before processing next bet...`);
+                        await new Promise(resolve => setTimeout(resolve, 10 * 1000)); // 10 second delay
                     }
                     
                 } catch (error) {

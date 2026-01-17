@@ -6556,9 +6556,9 @@ class BetOutcomeCalculator {
                         console.log(`   - First goal scorer match (string): ${scorerMatches} → ${actualOutcome}`);
                     } else {
                         // Method 3: Original string matching as last resort
-                        const scorerMatches = firstGoalScorer.toLowerCase().includes(selection) || 
-                                           selection.includes(firstGoalScorer.toLowerCase());
-                        won = scorerMatches;
+                    const scorerMatches = firstGoalScorer.toLowerCase().includes(selection) || 
+                                       selection.includes(firstGoalScorer.toLowerCase());
+                    won = scorerMatches;
                         actualOutcome = firstGoalScorer;
                         console.log(`   - First goal scorer match (fallback string): ${scorerMatches} → ${actualOutcome}`);
                     }
@@ -8285,15 +8285,18 @@ class BetOutcomeCalculator {
             
             // Check if match is not finished from FotMob - implement 5-minute retry logic with max limit
             // ESTIMATED_MATCH_DURATION is already defined in Step 2 (135 minutes = 2hrs 15mins)
-            const MAX_RETRIES = 30; // Max 30 retries = 150 minutes (30 × 5 mins)
-            const MAX_TOTAL_TIME = ESTIMATED_MATCH_DURATION + (MAX_RETRIES * 5); // 135 + 150 = 285 mins (4hrs 45mins)
+            // Total retry time = 500 - 135 = 365 mins
+            // Max retries = 365 / 5 = 73 retries (every 5 mins)
+            const MAX_TOTAL_TIME = 500; // 500 minutes = ~8.3 hours
+            const MAX_RETRIES = Math.floor((MAX_TOTAL_TIME - ESTIMATED_MATCH_DURATION) / 5); // 73 retries
             
             if (!isMatchFinishedFromStatus && timeSinceStart !== null && timeSinceStart >= ESTIMATED_MATCH_DURATION) {
                 // Match should be finished (135 min passed) but FotMob says not finished
-                // Check if we've exceeded max retry time (285 mins total)
+                // ✅ FIX: Check if we've exceeded max retry time (1000 mins total instead of 285)
                 if (timeSinceStart >= MAX_TOTAL_TIME) {
                     console.log(`🚫 Match exceeded maximum retry time (${timeSinceStart.toFixed(1)} min > ${MAX_TOTAL_TIME} min)`);
                     console.log(`   - Retry count: ${bet.fotmobRetryCount || 0}/${MAX_RETRIES}`);
+                    console.log(`   - Total time limit: ${MAX_TOTAL_TIME} minutes (~${(MAX_TOTAL_TIME/60).toFixed(1)} hours)`);
                     console.log(`   - Cancelling bet due to match exceeding too much time`);
                     
                     // Cancel the bet with reason

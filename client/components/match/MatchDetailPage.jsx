@@ -217,6 +217,13 @@ const MatchDetailPage = ({ matchId }) => {
                 .filter(offer => {
                     const marketName = offer.criterion?.label || offer.criterion?.englishLabel || offer.betOfferType?.name;
                     const isImplemented = isMarketImplemented(marketName);
+                    const occurrenceNumber = offer.criterion?.occurrenceNumber;
+                    const hasScorerKeyword = marketName && (marketName.toLowerCase().includes('scorer') || marketName.toLowerCase().includes('goal'));
+                    
+                    // Check if this is a scorer/goal market
+                    if (hasScorerKeyword || occurrenceNumber != null) {
+                        // Scorer/goal market processing
+                    }
                     
                     // Debug penalty markets
                     if (marketName && marketName.toLowerCase().includes('penalty')) {
@@ -236,6 +243,9 @@ const MatchDetailPage = ({ matchId }) => {
                         id: offer.id,
                         name: offerName,
                         suspended: isOfferSuspended, // ✅ Preserve offer-level suspension
+                        // ✅ NEW: Preserve criterion data for occurrenceNumber detection
+                        criterion: offer.criterion || null, // Preserve full criterion object
+                        betOfferType: offer.betOfferType || null, // Preserve betOfferType too
                         outcomes: (offer.outcomes || []).map(outcome => ({
                         id: outcome.id,
                         name: outcome.label || outcome.participant || outcome.name, // Use participant name if available, otherwise use label
@@ -274,6 +284,9 @@ const MatchDetailPage = ({ matchId }) => {
                         id: offer.id,
                         name: offer.criterion?.label || offer.criterion?.englishLabel || offer.betOfferType?.name,
                         suspended: isOfferSuspended, // ✅ Preserve offer-level suspension
+                        // ✅ NEW: Preserve criterion data for occurrenceNumber detection
+                        criterion: offer.criterion || null, // Preserve full criterion object
+                        betOfferType: offer.betOfferType || null, // Preserve betOfferType too
                         outcomes: (offer.outcomes || []).map(outcome => ({
                             id: outcome.id,
                             name: outcome.label || outcome.participant || outcome.name, // Use participant name if available, otherwise use label
@@ -310,7 +323,7 @@ const MatchDetailPage = ({ matchId }) => {
         const transformedClassifiedOdds = {};
         Object.entries(categorizedMarkets).forEach(([categoryId, markets]) => {
             let groupedMarkets;
-            if (categoryId === 'scorers') {
+            if (categoryId === 'goal-scorer') {
                 groupedMarkets = buildScorerMarkets(markets, displayMatchData.participants);
             } else {
                 // Default grouping: group markets by name and flatten outcomes
@@ -320,6 +333,9 @@ const MatchDetailPage = ({ matchId }) => {
                         acc[marketName] = {
                             market_description: marketName,
                             market_id: market.id,
+                            // ✅ NEW: Preserve criterion from first market with this name
+                            criterion: market.criterion || null,
+                            betOfferType: market.betOfferType || null,
                             odds: []
                         };
                     }
@@ -608,6 +624,12 @@ function isMarketImplemented(marketName) {
         console.log('✅ Win to Nil market matched by flexible pattern:', name);
         return true;
     }
+    // ✅ NEW: Add "Scorer of Goal (X)" pattern matching for live matches
+    // This matches "Scorer of Goal (2)", "Scorer of Goal (3)", etc. for live matches
+    if (name.includes('scorer of goal')) {
+        console.log('✅ Scorer of Goal market matched by flexible pattern:', name);
+        return true;
+    }
     if (name.includes('half time') && name.includes('full time')) return true;
     if (name.includes('total goals by') && !name.includes('2nd half') && !name.includes('30:00-59:59')) return true;
     if (name.includes('total goals by') && !name.includes('1st half') && !name.includes('30:00-59:59')) return true;
@@ -807,8 +829,11 @@ function categorizeMarkets(bettingData) {
         }
 
         // Goal scorers & player goals
+        // ✅ FIX: Match both "First Goal Scorer" and "Scorer of Goal (X)" patterns
+        // Examples: "First Goal Scorer", "Scorer of Goal (5)", "Goal Scorer", "Goalscorer"
         if (
             marketName.includes('first goal scorer') ||
+            marketName.includes('scorer of goal') || // ✅ NEW: Matches "Scorer of Goal (X)" for live matches
             marketName.includes('goalscorer') ||
             (marketName.includes('goal scorer') && !marketName.includes('time of'))
         ) {
@@ -997,9 +1022,14 @@ function buildScorerMarkets(markets, participants = []) {
     Array.from(byTeamCriterion.entries()).forEach(([key, rows]) => {
         const [teamName, criterionLabel] = key.split('|');
         const marketKey = `${criterionLabel} — ${teamName}`;
+        // ✅ FIX: Preserve full criterion object from first market (with occurrenceNumber)
+        const firstMarket = rows[0]?.market;
         result[marketKey] = {
             market_description: marketKey,
-            market_id: rows[0]?.market?.id || 'scorer',
+            market_id: firstMarket?.id || 'scorer',
+            // ✅ FIX: Preserve full criterion object (not just label) for occurrenceNumber detection
+            criterion: firstMarket?.criterion || null,
+            betOfferType: firstMarket?.betOfferType || null,
             odds: rows.map(r => ({
                 id: r.outcome.id,
                 label: r.player,

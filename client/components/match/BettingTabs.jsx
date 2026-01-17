@@ -46,6 +46,39 @@ const BettingTabs = ({ matchData }) => {
     const scrollAreaRef = useRef(null)
     const [canScrollLeft, setCanScrollLeft] = useState(false)
     const [canScrollRight, setCanScrollRight] = useState(true)
+    const [liveScore, setLiveScore] = useState(null) // ✅ NEW: Store live score separately
+
+    // ✅ NEW: Fetch live score from API (same as MatchHeader)
+    useEffect(() => {
+        if (!matchData?.id || matchData?.state !== 'STARTED') return;
+        
+        const fetchLiveScore = async () => {
+            try {
+                const response = await fetch(`/api/unibet/live-matches?ncid=${Date.now()}`);
+                const data = await response.json();
+                
+                if (data.success && data.matches) {
+                    const match = data.matches.find(m => String(m.id) === String(matchData.id));
+                    if (match?.kambiLiveData?.score) {
+                        const score = match.kambiLiveData.score;
+                        const scoreString = `${score.home || 0}-${score.away || 0}`;
+                        setLiveScore(scoreString);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch live score:', error);
+            }
+        };
+        
+        fetchLiveScore();
+        // Poll every 1 second for live matches
+        const interval = setInterval(() => {
+            if (typeof document !== 'undefined' && document.hidden) return;
+            fetchLiveScore();
+        }, 1000);
+        
+        return () => clearInterval(interval);
+    }, [matchData?.id, matchData?.state]);
 
     // Debug logging
     console.log('🎯 BettingTabs received matchData:', matchData);
@@ -92,6 +125,9 @@ const BettingTabs = ({ matchData }) => {
                         id: marketId,
                         title: marketData.market_description,
                         type: marketData.market_id.toString(),
+                        // ✅ NEW: Preserve criterion and betOfferType from marketData
+                        criterion: marketData.criterion || null,
+                        betOfferType: marketData.betOfferType || null,
                         options: marketData.odds?.map(odd => ({
                             id: odd.id,
                             label: odd.label,
@@ -105,7 +141,11 @@ const BettingTabs = ({ matchData }) => {
                             winning: odd.winning,
                             handicap: odd.handicap,
                             total: odd.total,
-                            suspended: odd.suspended
+                            suspended: odd.suspended,
+                            // ✅ NEW: Preserve participant data for player name matching
+                            participant: odd.participant || null,
+                            participantId: odd.participantId || null,
+                            eventParticipantId: odd.eventParticipantId || null
                         }))
                     }));
 
@@ -130,6 +170,9 @@ const BettingTabs = ({ matchData }) => {
             id: marketId,
             title: marketData.market_description,
             type: marketData.market_id.toString(),
+            // ✅ NEW: Preserve criterion and betOfferType from marketData
+            criterion: marketData.criterion || null,
+            betOfferType: marketData.betOfferType || null,
             options: marketData.odds?.map(odd => ({
                 id: odd.id,
                 label: odd.label,
@@ -143,7 +186,11 @@ const BettingTabs = ({ matchData }) => {
                 winning: odd.winning,
                 handicap: odd.handicap,
                 total: odd.total,
-                suspended: odd.suspended
+                suspended: odd.suspended,
+                // ✅ NEW: Preserve participant data for player name matching
+                participant: odd.participant || null,
+                participantId: odd.participantId || null,
+                eventParticipantId: odd.eventParticipantId || null
             }))
         }));
 
@@ -277,6 +324,7 @@ const BettingTabs = ({ matchData }) => {
                             groupedMarkets={getTabData(tab)}
                             emptyMessage={`${tab.label} betting options will be displayed here`}
                             matchData={matchData}
+                            liveScore={liveScore}
                         />
                     </TabsContent>
                 ))}
@@ -285,7 +333,7 @@ const BettingTabs = ({ matchData }) => {
     )
 }
 
-const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
+const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData, liveScore }) => {
     if (!groupedMarkets || groupedMarkets.length === 0) {
         return (
             <div className="text-center py-12 text-gray-400">
@@ -1327,7 +1375,10 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
     };
 
     // Special rendering function for Goal Scorer categories (group by player, show First Goal Scorer and To Score side by side)
+    // ✅ FIX: Use liveScore from props (passed from BettingTabs)
     const renderGoalScorerCategory = (category) => {
+        // ✅ FIX: Use liveScore from props (passed from BettingTabs)
+        const currentLiveScore = liveScore;
         // Group all options by player name across all markets in the category
         const playerMap = {};
         const { homeTeam, awayTeam } = getHomeAndAwayTeams(matchData);
@@ -1344,13 +1395,63 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
             return lower === '1' || lower === '2' || lower === 'x' || lower === 'tie' || lower === 'draw' || lower === 'no goal';
         };
 
+        // ✅ NEW: Calculate total goals from live score to determine next goal number
+        let totalGoals = 0;
+        let nextGoalNumber = 1; // Default to "First Goal Scorer"
+        
+        // ✅ FIX: Use liveScore state (from API) if available, otherwise fallback to matchData
+        const currentScore = currentLiveScore || matchData?.liveData?.score || matchData?.score;
+        if (currentScore) {
+            // Parse score string like "1-1" or score object like {home: 1, away: 1}
+            if (typeof currentScore === 'string') {
+                const parts = currentScore.split(/[-:]/).map(s => parseInt(s.trim()) || 0);
+                if (parts.length >= 2) {
+                    totalGoals = parts[0] + parts[1];
+                }
+            } else if (typeof currentScore === 'object') {
+                const home = parseInt(currentScore.home) || 0;
+                const away = parseInt(currentScore.away) || 0;
+                totalGoals = home + away;
+            }
+            nextGoalNumber = totalGoals + 1;
+        }
+
+
         category.markets.forEach(section => {
             const marketType = (section.title || '').toLowerCase();
+            const marketDescription = (section.description || '').toLowerCase();
+            const sectionType = (section.type || '').toLowerCase();
+            
+            // ✅ IMPROVED: Check multiple fields for "First Goal Scorer" detection
+            // Also include "Scorer of Goal (X)" markets for live matches (occurrenceNumber >= 1)
+            const occurrenceNumber = section.criterion?.occurrenceNumber;
+            const isScorerOfGoalMarket = 
+                (occurrenceNumber != null && occurrenceNumber >= 1) ||
+                marketType.includes('scorer of goal') ||
+                marketDescription.includes('scorer of goal');
+            
+            const isFirstGoalScorer = 
+                marketType.includes('first goal scorer') ||
+                marketDescription.includes('first goal scorer') ||
+                sectionType === 'first-goal-scorer' ||
+                sectionType === '12' || // Market ID 12 is "First Goal Scorer" (from bet.service.js)
+                // ✅ NEW: Check criterion.occurrenceNumber === 1 (most reliable for live matches)
+                (occurrenceNumber === 1) ||
+                // Check for variations like "Scorer of First Goal" or "First Scorer"
+                marketType.includes('first scorer') ||
+                marketDescription.includes('first scorer') ||
+                (marketType.includes('scorer') && marketType.includes('first'));
+            
+            
             // Skip team/aggregate scorer markets
+            // ✅ FIX: Don't skip "Scorer of Goal (X)" markets (isScorerOfGoalMarket)
             const skipThisSection = (
-                marketType.includes('first team') ||
+                marketType.includes('first team') &&
+                !isFirstGoalScorer && 
+                !isScorerOfGoalMarket // ✅ Don't skip "Scorer of Goal (X)" markets
+            ) || (
                 marketType.includes('both teams') ||
-                marketType.includes('team to score') ||
+                (marketType.includes('team to score') && !isFirstGoalScorer && !isScorerOfGoalMarket) ||
                 marketType.includes('to score or assist') ||
                 marketType.includes('to assist') ||
                 marketType.includes('from a penalty') ||
@@ -1358,6 +1459,8 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
                 marketType.includes('outside the penalty') ||
                 marketType.includes('penalty kick')
             );
+            
+            
             if (skipThisSection) return;
             section.options.forEach(option => {
                 // ✅ FIX: Use same logic as "To Score" market - prioritize participant over name
@@ -1394,18 +1497,70 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
                     };
                 }
 
-                // Determine market type based on section title
-                // First Goal Scorer: match explicitly
-                if (marketType.includes('first goal scorer')) {
-                    playerMap[playerName].firstGoalScorer = option;
+                // Determine market type based on section title and multiple fields
+                // ✅ IMPROVED: Include both First Goal Scorer (occurrenceNumber === 1) 
+                // and Scorer of Goal (X) markets (occurrenceNumber > 1) in firstGoalScorer slot
+                if (isFirstGoalScorer || isScorerOfGoalMarket) {
+                    // ✅ FIX: Prioritize market with occurrenceNumber matching next goal number based on live score
+                    // If score is 1-3 (4 goals total), nextGoalNumber = 5, so we search for "Scorer of Goal (5)"
+                    // If score is 0-0 (0 goals total), nextGoalNumber = 1, so we search for "First Goal Scorer" (occurrenceNumber === 1)
+                    const currentMarket = playerMap[playerName].firstGoalScorer;
+                    const occurrenceMatchesNextGoal = occurrenceNumber != null && occurrenceNumber === nextGoalNumber;
+                    
+                    // ✅ IMPROVED LOGIC: Always prefer exact match (occurrenceNumber === nextGoalNumber)
+                    // Priority 1: If this market matches next goal number, ALWAYS select it (even if suspended)
+                    // Priority 2: If no exact match, prefer non-suspended over suspended
+                    // Priority 3: If no current market, accept any market (prefer non-suspended)
+                    const currentMatchesNextGoal = currentMarket?.occurrenceNumber === nextGoalNumber;
+                    const shouldUpdate = 
+                        // Priority 1: This market matches nextGoalNumber and current doesn't - ALWAYS prefer this
+                        (occurrenceMatchesNextGoal && !currentMatchesNextGoal) ||
+                        // Priority 2: This market matches nextGoalNumber and current also matches - prefer non-suspended
+                        (occurrenceMatchesNextGoal && currentMatchesNextGoal && !option.suspended && currentMarket?.suspended) ||
+                        // Priority 3: No exact match yet, and this is better (higher occurrenceNumber or non-suspended)
+                        (!occurrenceMatchesNextGoal && !currentMatchesNextGoal && (
+                            !currentMarket ||
+                            (occurrenceNumber != null && 
+                             (currentMarket.occurrenceNumber == null || 
+                              occurrenceNumber > currentMarket.occurrenceNumber) ||
+                             (!option.suspended && currentMarket?.suspended))
+                        ));
+                    
+                    // Priority 1: Always accept exact match (occurrenceNumber === nextGoalNumber) if we don't have one
+                    // This ensures we search for "Scorer of Goal (X)" based on live score
+                    if (occurrenceMatchesNextGoal && (!currentMarket || !currentMatchesNextGoal)) {
+                        playerMap[playerName].firstGoalScorer = {
+                            ...option,
+                            occurrenceNumber: occurrenceNumber || null,
+                            sectionTitle: section.title || null
+                        };
+                    } else if (shouldUpdate && !option.suspended) {
+                        // Priority 2: Update if shouldUpdate is true and market is not suspended
+                        playerMap[playerName].firstGoalScorer = {
+                            ...option,
+                            occurrenceNumber: occurrenceNumber || null,
+                            sectionTitle: section.title || null
+                        };
+                    } else if (shouldUpdate && option.suspended && !currentMarket) {
+                        // Priority 3: Only use suspended market if we have no other option
+                        playerMap[playerName].firstGoalScorer = {
+                            ...option,
+                            occurrenceNumber: occurrenceNumber || null,
+                            sectionTitle: section.title || null
+                        };
+                    }
                 } else {
                     // Pure "To Score" only – exclude assist/combos/variants
                     const isPureToScore = (
                         // Check for "to score" (includes check to catch variations like "Player To Score")
-                        marketType.includes('to score')
+                        marketType.includes('to score') ||
+                        marketDescription.includes('to score') ||
+                        marketType.includes('anytime goal scorer') ||
+                        marketDescription.includes('anytime goal scorer')
                     ) && (
                         // exclude variants we don't want
                         !marketType.includes('assist') &&
+                        !marketDescription.includes('assist') &&
                         !marketType.includes('or assist') &&
                         !marketType.includes('at least') &&
                         !marketType.includes('team member') &&
@@ -1416,9 +1571,10 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
                         !marketType.includes('penalty') &&
                         !marketType.includes('penalty kick') &&
                         // Exclude "First Goal Scorer" (already handled above)
-                        !marketType.includes('first goal scorer') &&
+                        !isFirstGoalScorer &&
                         // Exclude "Last Goal Scorer"
-                        !marketType.includes('last goal scorer')
+                        !marketType.includes('last goal scorer') &&
+                        !marketDescription.includes('last goal scorer')
                     );
                     if (isPureToScore) {
                         playerMap[playerName].toScore = option;
@@ -1452,7 +1608,105 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
                 <div className="p-3">
                     {/* Market Headers */}
                     <div className="flex justify-between items-center px-2 py-1 bg-gray-100 rounded">
-                        <div className="text-sm font-medium text-gray-700 text-center flex-1">First Goal Scorer</div>
+                        <div className="text-sm font-medium text-gray-700 text-center flex-1">
+                            {/* ✅ IMPROVED: Show dynamic title based on current match state and next goal number */}
+                            {(() => {
+                                // ✅ NEW: Calculate total goals from live score if available
+                                let totalGoals = 0;
+                                let nextGoalNumber = 1; // Default to "First Goal Scorer"
+                                
+                                // ✅ FIX: Use liveScore state (from API) if available, otherwise fallback to matchData
+                                const currentScore = currentLiveScore || matchData?.liveData?.score || matchData?.score;
+                                if (currentScore) {
+                                    // Parse score string like "1-1" or score object like {home: 1, away: 1}
+                                    if (typeof currentScore === 'string') {
+                                        const parts = currentScore.split(/[-:]/).map(s => parseInt(s.trim()) || 0);
+                                        if (parts.length >= 2) {
+                                            totalGoals = parts[0] + parts[1];
+                                        }
+                                    } else if (typeof currentScore === 'object') {
+                                        const home = parseInt(currentScore.home) || 0;
+                                        const away = parseInt(currentScore.away) || 0;
+                                        totalGoals = home + away;
+                                    }
+                                    nextGoalNumber = totalGoals + 1;
+                                }
+                                
+                                // Find the best matching market:
+                                // 1. First try to find market with occurrenceNumber matching next goal number
+                                // 2. If not found, use highest occurrenceNumber from active markets
+                                let bestOccurrenceNum = null;
+                                let hasActiveMarket = false;
+                                let foundExactMatch = false;
+                                
+                                // Priority 1: Find exact match for next goal number from active markets
+                                for (const [_, m] of rows) {
+                                    const firstScorer = m.firstGoalScorer;
+                                    if (firstScorer && !firstScorer.suspended) {
+                                        hasActiveMarket = true;
+                                        const occurrenceNum = firstScorer.occurrenceNumber;
+                                        if (occurrenceNum != null) {
+                                            if (occurrenceNum === nextGoalNumber) {
+                                                // ✅ Perfect match - use this
+                                                bestOccurrenceNum = occurrenceNum;
+                                                foundExactMatch = true;
+                                                break;
+                                            }
+                                            // Track highest occurrenceNumber as fallback
+                                            if (bestOccurrenceNum == null || occurrenceNum > bestOccurrenceNum) {
+                                                bestOccurrenceNum = occurrenceNum;
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // Priority 2: If no exact match found, use highest occurrenceNumber from active markets
+                                if (!foundExactMatch && bestOccurrenceNum != null) {
+                                    // Using highest available occurrenceNumber
+                                }
+                                
+                                // Priority 3: If no active market found, check suspended markets for display
+                                if (!hasActiveMarket) {
+                                    for (const [_, m] of rows) {
+                                        const firstScorer = m.firstGoalScorer;
+                                        if (firstScorer) {
+                                            const occurrenceNum = firstScorer.occurrenceNumber;
+                                            if (occurrenceNum != null) {
+                                                if (occurrenceNum === nextGoalNumber) {
+                                                    bestOccurrenceNum = occurrenceNum;
+                                                    foundExactMatch = true;
+                                                    break;
+                                                }
+                                                if (bestOccurrenceNum == null || occurrenceNum > bestOccurrenceNum) {
+                                                    bestOccurrenceNum = occurrenceNum;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // Display title based on bestOccurrenceNum
+                                let finalTitle = 'First Goal Scorer'; // default
+                                if (bestOccurrenceNum != null) {
+                                    if (bestOccurrenceNum === 1) {
+                                        finalTitle = 'First Goal Scorer';
+                                    } else {
+                                        finalTitle = `Scorer of Goal (${bestOccurrenceNum})`;
+                                    }
+                                } else {
+                                    // Fallback: check section title if available
+                                    const firstSection = category.markets.find(s => 
+                                        s.criterion?.occurrenceNumber != null || 
+                                        s.title?.toLowerCase().includes('scorer of goal')
+                                    );
+                                    if (firstSection?.criterion?.occurrenceNumber) {
+                                        const num = firstSection.criterion.occurrenceNumber;
+                                        finalTitle = num === 1 ? 'First Goal Scorer' : `Scorer of Goal (${num})`;
+                                    }
+                                }
+                                return finalTitle;
+                            })()}
+                        </div>
                         <div className="text-sm font-medium text-gray-700 text-center flex-1">To Score</div>
                     </div>
 
@@ -1839,6 +2093,7 @@ const BettingMarketGroup = ({ groupedMarkets, emptyMessage, matchData }) => {
             </div>
         ));
     };
+    
     // All tab: use accordion
     if (isAllTab) {
         return (

@@ -289,7 +289,7 @@ const BetSlip = () => {
     if (bets.length === 0) {
         // Only render empty state if bet slip is open
         if (!betSlip.isOpen) {
-            return null;
+        return null;
         }
 
         // Show empty bet slip instead of closing it

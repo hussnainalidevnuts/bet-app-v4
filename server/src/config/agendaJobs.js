@@ -703,10 +703,10 @@ agenda.define("processCancelledBets", async (job) => {
           console.log(`[Agenda]    - ✅ Resolved! New status: ${result.status}`);
         }
         
-        // Add 1 minute delay before next bet (except for last one)
+        // Add 10 second delay before next bet (except for last one)
         if (i < bets.length - 1) {
-          console.log(`[Agenda] ⏳ Waiting 1 minute before processing next cancelled bet...`);
-          await new Promise(resolve => setTimeout(resolve, 60 * 1000)); // 1 minute delay
+          console.log(`[Agenda] ⏳ Waiting 10 seconds before processing next cancelled bet...`);
+          await new Promise(resolve => setTimeout(resolve, 10 * 1000)); // 10 second delay
         }
         
       } catch (error) {

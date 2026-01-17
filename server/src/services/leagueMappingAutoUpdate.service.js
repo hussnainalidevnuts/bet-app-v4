@@ -1369,7 +1369,12 @@ class LeagueMappingAutoUpdate {
                 
                 ---
                 
-                ## Response Format (JSON only, no other text):
+                ## Response Format (CRITICAL - FOLLOW EXACTLY):
+                
+                ⚠️ YOU MUST RETURN ONLY VALID JSON - NOT CODE, NOT FUNCTIONS, NOT EXPLANATIONS
+                ⚠️ DO NOT WRAP RESPONSE IN MARKDOWN CODE BLOCKS
+                ⚠️ DO NOT RETURN JAVASCRIPT CODE OR FUNCTION DEFINITIONS
+                ⚠️ RETURN ONLY THE JSON OBJECT - START WITH { AND END WITH }
                 
                 If match found:
                 {
@@ -1385,7 +1390,9 @@ class LeagueMappingAutoUpdate {
                 {
                   "matched": false,
                   "reason": "No league name or team+time match found"
-                }`;
+                }
+                
+                ⚠️ REMINDER: Return ONLY the JSON object above. Do not write code or functions.`;
                 
 
                                  
@@ -1434,19 +1441,108 @@ class LeagueMappingAutoUpdate {
                     console.warn(`[LeagueMapping] ⚠️ Failed to save Gemini response:`, saveError.message);
                 }
 
-                // Parse JSON response
+                // Parse JSON response - Handle both JSON and markdown code blocks
                 let geminiResult;
                 try {
-                    // Extract JSON from response (handle markdown code blocks)
-                    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                    let cleanedResponse = responseText.trim();
+                    
+                    // ✅ FIX: Remove markdown code block markers if present
+                    // Handle ```json or ```javascript or ``` blocks
+                    if (cleanedResponse.startsWith('```')) {
+                        // Remove opening code block marker (```json, ```javascript, or just ```)
+                        cleanedResponse = cleanedResponse.replace(/^```(?:json|javascript)?\s*\n?/i, '');
+                        // Remove closing code block marker
+                        cleanedResponse = cleanedResponse.replace(/\n?```\s*$/i, '').trim();
+                    }
+                    
+                    // ✅ FIX: Try to find JSON object in cleaned response
+                    // Look for { ... } pattern (non-greedy to avoid matching too much)
+                    const jsonMatch = cleanedResponse.match(/\{[\s\S]*?\}/);
+                    
                     if (jsonMatch) {
+                        // Try parsing the matched JSON
                         geminiResult = JSON.parse(jsonMatch[0]);
+                        console.log(`[LeagueMapping] ✅ Successfully parsed Gemini JSON response`);
                     } else {
-                        throw new Error('No JSON found in response');
+                        // ✅ FIX: If no JSON found, check if it's code instead
+                        if (cleanedResponse.includes('function') || cleanedResponse.includes('=>') || cleanedResponse.includes('const ') || cleanedResponse.includes('@param')) {
+                            console.warn(`[LeagueMapping] ⚠️ Gemini returned JavaScript code instead of JSON result. This is an intermittent issue.`);
+                            console.warn(`[LeagueMapping] ⚠️ Attempting to extract JSON from code comments or return statements...`);
+                            
+                            // Try multiple patterns to extract JSON from code
+                            let extractedJson = null;
+                            
+                            // Pattern 1: Look for JSON in return statement
+                            const returnMatch = cleanedResponse.match(/return\s+(\{[\s\S]*?\})\s*;/);
+                            if (returnMatch) {
+                                try {
+                                    extractedJson = JSON.parse(returnMatch[1]);
+                                    console.log(`[LeagueMapping] ✅ Found JSON in return statement`);
+                                } catch (e) {
+                                    // Continue to next pattern
+                                }
+                            }
+                            
+                            // Pattern 2: Look for JSON in variable assignment (const result = {...})
+                            if (!extractedJson) {
+                                const constMatch = cleanedResponse.match(/(?:const|let|var)\s+\w+\s*=\s*(\{[\s\S]*?\})\s*;/);
+                                if (constMatch) {
+                                    try {
+                                        extractedJson = JSON.parse(constMatch[1]);
+                                        console.log(`[LeagueMapping] ✅ Found JSON in variable assignment`);
+                                    } catch (e) {
+                                        // Continue to next pattern
+                                    }
+                                }
+                            }
+                            
+                            // Pattern 3: Look for JSON in comments (sometimes Gemini puts example in comments)
+                            if (!extractedJson) {
+                                const commentMatch = cleanedResponse.match(/\/\/.*?(\{[\s\S]*?\})/);
+                                if (commentMatch) {
+                                    try {
+                                        extractedJson = JSON.parse(commentMatch[1]);
+                                        console.log(`[LeagueMapping] ✅ Found JSON in comment`);
+                                    } catch (e) {
+                                        // Continue
+                                    }
+                                }
+                            }
+                            
+                            if (extractedJson) {
+                                geminiResult = extractedJson;
+                            } else {
+                                // ✅ If still no JSON found, this is pure code - retry with more explicit prompt
+                                throw new Error('Gemini returned code instead of JSON, and no JSON extractable from code. Will retry with more explicit prompt.');
+                            }
+                        } else {
+                            throw new Error('No JSON object found in response');
+                        }
                     }
                 } catch (parseError) {
                     console.error(`[LeagueMapping] ❌ Could not parse Gemini response as JSON:`, parseError.message);
-                    console.error(`[LeagueMapping] Full response: ${responseText}`);
+                    
+                    // ✅ Check if this is a code response issue
+                    const isCodeResponse = responseText.includes('function') || responseText.includes('=>') || responseText.includes('@param');
+                    if (isCodeResponse) {
+                        console.error(`[LeagueMapping] ⚠️ INTERMITTENT ISSUE: Gemini returned JavaScript code instead of JSON`);
+                        console.error(`[LeagueMapping] ⚠️ This happens sometimes - Gemini misunderstood the prompt and returned code`);
+                        console.error(`[LeagueMapping] ⚠️ Attempted extraction patterns: return statements, variable assignments, comments`);
+                        console.error(`[LeagueMapping] ⚠️ No JSON could be extracted from the code response`);
+                    } else {
+                        console.error(`[LeagueMapping] ⚠️ This is an intermittent Gemini issue - response format unexpected`);
+                    }
+                    
+                    console.error(`[LeagueMapping] Full response (first 500 chars): ${responseText.substring(0, 500)}...`);
+                    // ✅ Save full response for debugging
+                    try {
+                        const errorFilePath = path.join(this.tempDir, `gemini_parse_error_${unibetLeague.id}_${Date.now()}.txt`);
+                        await fs.promises.writeFile(errorFilePath, responseText);
+                        console.error(`[LeagueMapping] 💾 Saved full error response to: ${errorFilePath}`);
+                        console.error(`[LeagueMapping] 💡 Suggestion: Check the saved error file to see what Gemini returned`);
+                    } catch (saveError) {
+                        // Ignore save error
+                    }
                     return null;
                 }
 

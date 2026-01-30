@@ -177,7 +177,7 @@ const MatchListPage = ({ config }) => {
         <div className="bg-slate-100 min-h-screen relative">
             {/* Main content */}
             <div className="lg:mr-80 xl:mr-96">
-                <div className="px-4 py-4 sm:px-3 sm:py-3 md:p-4 pt-[100px] pb-[100px] md:pt-0 md:pb-4">
+                <div className="px-4 py-4 sm:px-3 sm:py-3 md:p-4 pt-[100px] pb-[100px] md:pt-4 md:pb-4">
                     {/* Header */}
                     <div className="mb-4 bg-white p-3 w-full"> {/* Fixed: Removed md:w-screen to prevent overflow */}
                         {/* Breadcrumb */}

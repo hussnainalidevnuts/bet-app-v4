@@ -491,7 +491,5 @@ body {
   }
 }
 
-/* NOTE: iPhone 13 mini-specific content padding is now handled with Tailwind
-   utility classes (max-[390px]:pt-[50px] / max-[390px]:pb-[50px]) directly in
-   the React components (HomePage, MatchListPage, BettingHistoryPage).
-   No device-specific CSS media query is needed here anymore. */
+/* NOTE: Mobile top/bottom padding (100px) is applied on all mobile in ContentWrapper
+   (pt-[100px] pb-[100px] md:pt-0 md:pb-0) so every page gets consistent safe area. */

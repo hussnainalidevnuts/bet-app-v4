@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 import { useDispatch, useSelector } from "react-redux"
 import { createUser, selectIsLoading, selectError, selectMessage, clearError, clearMessage } from "@/lib/features/admin/adminUserSlice"
+import { selectUser } from "@/lib/features/auth/authSlice"
 import { toast } from "sonner"
 
 //INFO: Zod validation schema for admin user creation
@@ -40,6 +41,8 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
     const isLoading = useSelector(selectIsLoading)
     const error = useSelector(selectError)
     const message = useSelector(selectMessage)
+    const currentUser = useSelector(selectUser)
+    const isSuperAdmin = currentUser?.isSuperAdmin || currentUser?.email === "admin@gmail.com"
 
     const form = useForm({
         resolver: zodResolver(createUserSchema), defaultValues: {
@@ -72,10 +75,17 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
         }
     }, [message, dispatch, form, onClose])
 
+    useEffect(() => {
+        if (!isSuperAdmin) {
+            form.setValue("role", "user")
+        }
+    }, [isSuperAdmin, form])
+
     const onSubmit = async (data) => {
         try {
-            console.log("Create user data:", data)
-            await dispatch(createUser(data)).unwrap()
+            const payload = isSuperAdmin ? data : { ...data, role: "user" }
+            console.log("Create user data:", payload)
+            await dispatch(createUser(payload)).unwrap()
         } catch (error) {
             console.error("Create user error:", error)
             toast.error("Failed to create user")
@@ -93,10 +103,12 @@ const CreateUserDialog = ({ isOpen, onClose, children }) => {
         { value: "prefer-not-to-say", label: "Prefer not to say" },
     ]
 
-    const roles = [
-        { value: "user", label: "User" },
-        { value: "admin", label: "Admin" },
-    ]
+    const roles = isSuperAdmin
+        ? [
+            { value: "user", label: "User" },
+            { value: "admin", label: "Admin" },
+        ]
+        : [{ value: "user", label: "User" }]
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>

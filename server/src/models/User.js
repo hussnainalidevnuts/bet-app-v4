@@ -61,6 +61,10 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+    isSuperAdmin: {
+      type: Boolean,
+      default: false,
+    },
     balance: {
       type: Number,
       default: 0,

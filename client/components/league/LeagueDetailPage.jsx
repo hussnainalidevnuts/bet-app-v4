@@ -1,16 +1,20 @@
 "use client"
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import LeagueHeader from "./LeagueHeader";
 import LeagueAccordions from "./LeagueAccordions";
 import MatchVisualization from "../match/MatchVisualization";
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { fetchMatchesByLeague, selectMatchesLoading, selectMatchesByLeague } from '@/lib/features/leagues/leaguesSlice';
+import { fetchMatchesByLeague, silentUpdateMatchesByLeague, selectMatchesLoading, selectMatchesByLeague } from '@/lib/features/leagues/leaguesSlice';
 import { Loader2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
+
+const POLL_INTERVAL_MS = 200; // Same as In-Play page for real-time odds
+
 const LeagueDetailPage = ({ leagueId }) => {
     const [selectedBetType, setSelectedBetType] = useState("total-goals");
     const dispatch = useDispatch();
+    const pollingIntervalRef = useRef(null);
     const selectMatchesLoadingValue = useSelector(selectMatchesLoading);
     const selectMatches = useSelector(state => selectMatchesByLeague(state, leagueId));
     const betTypeLabels = {
@@ -20,15 +24,50 @@ const LeagueDetailPage = ({ leagueId }) => {
         "over-under": "Over/Under",
         "both-teams": "Both Teams to Score"
     };
+
+    // Initial fetch
     useEffect(() => {
+        if (!leagueId) return;
         console.log('🔍 LeagueDetailPage: Fetching matches for leagueId:', leagueId);
         dispatch(fetchMatchesByLeague(leagueId));
-    }, [dispatch, leagueId])
+    }, [dispatch, leagueId]);
 
+    // Polling for odds updates (same pattern as In-Play page)
     useEffect(() => {
-        console.log(selectMatches, "THIS IS MATCHES");
+        if (!leagueId) return;
+        const startPolling = () => {
+            pollingIntervalRef.current = setInterval(() => {
+                if (typeof document !== 'undefined' && document.hidden) return;
+                dispatch(silentUpdateMatchesByLeague(leagueId));
+            }, POLL_INTERVAL_MS);
+        };
+        startPolling();
+        return () => {
+            if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current);
+                pollingIntervalRef.current = null;
+            }
+        };
+    }, [dispatch, leagueId]);
 
-    }, [selectMatches])
+    // Pause polling when tab hidden, resume when visible
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                if (pollingIntervalRef.current) {
+                    clearInterval(pollingIntervalRef.current);
+                    pollingIntervalRef.current = null;
+                }
+            } else if (leagueId && !pollingIntervalRef.current) {
+                pollingIntervalRef.current = setInterval(() => {
+                    if (document.hidden) return;
+                    dispatch(silentUpdateMatchesByLeague(leagueId));
+                }, POLL_INTERVAL_MS);
+            }
+        }
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [dispatch, leagueId]);
 
     if (selectMatchesLoadingValue) {
         return <div className='flex items-center justify-center min-h-[calc(100vh-198px)]'><Loader2 className='animate-spin h-10 w-10 text-base' /></div>

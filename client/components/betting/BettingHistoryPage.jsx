@@ -75,6 +75,14 @@ const BettingHistoryPage = ({ userId }) => {
     });
   };
 
+  // Shorten market name for display: "Scorer of Goal (2) - Full Time (For own goals...)" → "Scorer of Goal (2)"
+  const formatMarketNameForDisplay = (name) => {
+    if (!name || typeof name !== 'string') return name || '-';
+    const match = name.match(/^Scorer of Goal\s*\(\s*\d+\s*\)/i);
+    if (match) return match[0].trim();
+    return name;
+  };
+
   // Helper function to format selection with player name for player markets
   const formatSelection = (bet) => {
     // Check if this is a player market (has player name in betDetails or unibetMeta)
@@ -268,7 +276,7 @@ const BettingHistoryPage = ({ userId }) => {
                       </TableCell>
                       <TableCell className="max-w-32">
                         <div className="truncate" title={leg.unibetMeta?.marketName || leg.betDetails?.market_description || leg.betDetails?.market_name}>
-                          {leg.unibetMeta?.marketName || leg.betDetails?.market_description || leg.betDetails?.market_name || "-"}
+                          {formatMarketNameForDisplay(leg.unibetMeta?.marketName || leg.betDetails?.market_description || leg.betDetails?.market_name || "-")}
                         </div>
                       </TableCell>
                       <TableCell className="max-w-32">
@@ -417,7 +425,7 @@ const BettingHistoryPage = ({ userId }) => {
             <div className="flex justify-between">
               <span className="text-gray-500">Market:</span>
               <span className="text-gray-900">
-                {isCombo ? "Multiple Markets" : (bet.betDetails?.market_description || bet.betDetails?.market_name || "-")}
+                {isCombo ? "Multiple Markets" : formatMarketNameForDisplay(bet.unibetMeta?.marketName || bet.betDetails?.market_description || bet.betDetails?.market_name || "-")}
               </span>
             </div>
             <div className="flex justify-between">
@@ -445,17 +453,16 @@ const BettingHistoryPage = ({ userId }) => {
               }`}>
                 {(() => {
                   const status = bet.status.toLowerCase();
+                  const stake = Number(bet.stake) || 0;
+                  const payout = Number(bet.payout) || 0;
+                  // Combination bet: use payout - stake when profit is 0 but won and payout > 0 (existing records)
+                  const comboWonNoProfit = isCombo && status === "won" && payout > 0 && (bet.profit === undefined || bet.profit === null || Number(bet.profit) === 0);
+                  const displayProfit = comboWonNoProfit ? (payout - stake) : (bet.profit !== undefined && bet.profit !== null ? Number(bet.profit) : null);
                   
-                  // Use profit field from database if available (preferred)
-                  if (bet.profit !== undefined && bet.profit !== null) {
-                    const profit = Number(bet.profit);
-                    if (profit > 0) {
-                      return `+$${profit.toFixed(2)}`;
-                    } else if (profit < 0) {
-                      return `-$${Math.abs(profit).toFixed(2)}`;
-                    } else {
-                      return "$0.00";
-                    }
+                  if (displayProfit !== null) {
+                    if (displayProfit > 0) return `+$${displayProfit.toFixed(2)}`;
+                    if (displayProfit < 0) return `-$${Math.abs(displayProfit).toFixed(2)}`;
+                    return "$0.00";
                   }
                   
                   // Fallback to calculation if profit field not available
@@ -542,7 +549,7 @@ const BettingHistoryPage = ({ userId }) => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Market:</span>
-                    <span className="text-gray-900 truncate ml-2">{leg.unibetMeta?.marketName || leg.betDetails?.market_description || leg.betDetails?.market_name || "-"}</span>
+                    <span className="text-gray-900 truncate ml-2">{formatMarketNameForDisplay(leg.unibetMeta?.marketName || leg.betDetails?.market_description || leg.betDetails?.market_name || "-")}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Selection:</span>
@@ -854,14 +861,15 @@ const BettingHistoryPage = ({ userId }) => {
                               </TableCell>
                               <TableCell className="max-w-48">
                                 {(() => {
-                                  const singleMarketTitle = item.unibetMeta?.marketName
+                                  const rawMarketTitle = item.unibetMeta?.marketName
                                     || item.betDetails?.market_description
                                     || item.betDetails?.market_name
                                     || "-";
+                                  const singleMarketTitle = formatMarketNameForDisplay(rawMarketTitle);
                                   return (
                                     <div
                                       className="truncate"
-                                      title={isCombo ? "Multiple Markets" : singleMarketTitle}
+                                      title={isCombo ? "Multiple Markets" : rawMarketTitle}
                                     >
                                       {isCombo ? "Multiple Markets" : singleMarketTitle}
                                 </div>
@@ -881,25 +889,27 @@ const BettingHistoryPage = ({ userId }) => {
                               <TableCell>
                                 {(() => {
                                   const status = item.status.toLowerCase();
+                                  const stake = Number(item.stake) || 0;
+                                  const payout = Number(item.payout) || 0;
+                                  // Combination bet: use payout - stake when profit is 0 but won and payout > 0 (existing records)
+                                  const comboWonNoProfit = isCombo && status === "won" && payout > 0 && (item.profit === undefined || item.profit === null || Number(item.profit) === 0);
+                                  const displayProfit = comboWonNoProfit ? (payout - stake) : (item.profit !== undefined && item.profit !== null ? Number(item.profit) : null);
                                   
-                                  // Use profit field from database if available (preferred)
-                                  if (item.profit !== undefined && item.profit !== null) {
-                                    const profit = Number(item.profit);
-                                    if (profit > 0) {
+                                  if (displayProfit !== null) {
+                                    if (displayProfit > 0) {
                                       return (
-                                  <span className="font-medium text-green-600">
-                                          +${profit.toFixed(2)}
-                                  </span>
-                                      );
-                                    } else if (profit < 0) {
-                                      return (
-                                        <span className="font-medium text-red-600">
-                                          -${Math.abs(profit).toFixed(2)}
+                                        <span className="font-medium text-green-600">
+                                          +${displayProfit.toFixed(2)}
                                         </span>
                                       );
-                                    } else {
-                                      return <span className="text-gray-500">$0.00</span>;
+                                    } else if (displayProfit < 0) {
+                                      return (
+                                        <span className="font-medium text-red-600">
+                                          -${Math.abs(displayProfit).toFixed(2)}
+                                        </span>
+                                      );
                                     }
+                                    return <span className="text-gray-500">$0.00</span>;
                                   }
                                   
                                   // Fallback to calculation if profit field not available

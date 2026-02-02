@@ -39,8 +39,8 @@ const getAllUsers = async (req, res) => {
     console.log("🔍 User making request:", req.user);
     console.log("📊 Query parameters:", req.query);
 
-    const { page, limit } = req.query;
-    const result = await UserService.getAllUsers({ page, limit });
+    const { page, limit, createdBy } = req.query;
+    const result = await UserService.getAllUsers({ page, limit, createdBy, requester: req.user });
     console.log("✅ Successfully fetched users:", result);
 
     res.json(result);
@@ -63,7 +63,7 @@ const getAllUsers = async (req, res) => {
 const searchUsers = async (req, res) => {
   try {
     const { query } = req.query;
-    const users = await UserService.searchUsers(query);
+    const users = await UserService.searchUsers(query, req.user);
     res.json(users);
   } catch (error) {
     console.error("Error in searchUsers:", error);
@@ -76,7 +76,7 @@ const searchUsers = async (req, res) => {
 // Get user stats (admin only)
 const getUserStats = async (req, res) => {
   try {
-    const stats = await UserService.getUserStats();
+    const stats = await UserService.getUserStats(req.user);
     res.json({ stats });
   } catch (error) {
     console.error("Error in getUserStats:", error);
@@ -183,7 +183,7 @@ const deactivateAccount = async (req, res) => {
 // Create new user (admin only)
 const createUser = async (req, res) => {
   try {
-    const newUser = await UserService.createUserByAdmin(req.body, req.user.id);
+    const newUser = await UserService.createUserByAdmin(req.body, req.user);
 
     res.status(201).json({
       success: true,

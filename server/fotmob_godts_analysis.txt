@@ -1,0 +1,13 @@
+=== GOALS (header.events) ===
+Goal 1: Mika Godts @ 21' team=away isOwnGoal=false
+Goal 2: Mika Godts @ 40' team=away isOwnGoal=false
+Goal 3: Miliano Jonathans @ 74' team=home isOwnGoal=false
+Goal 4: Arthur Zagre @ 79' team=home isOwnGoal=false
+
+=== MIKA GODTS in response ===
+Occurrences of Godts: 106
+First occurrence context: 23311,"assistKey":"assist_by","assistInput":"Gyan de Regt"}]},"awayTeamGoals":{"Godts":[{"reactKey":"1367669721Goal1396372undefinedfalse","timeStr":21,"type":"G
+
+=== OWN GOAL in response ===
+Occurrences of ownGoal/own goal/isOwnGoal: 101
+ownGoal context: 7/miliano-jonathans","overloadTimeStr":false,"isHome":true,"ownGoal":null,"goalDescription":"Header","goalDescriptionKey":"header","suffix":null,"suffixKey":nul

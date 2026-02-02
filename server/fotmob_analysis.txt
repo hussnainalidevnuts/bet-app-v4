@@ -1,0 +1,6 @@
+header.events keys: homeTeamGoals,awayTeamGoals,homeTeamRedCards,awayTeamRedCards
+header.events.events length: 0
+content.matchFacts.events.events length: 16
+First event type: Goal
+First event time: 21 timeStr: 21 minute: undefined
+Corner events: 0

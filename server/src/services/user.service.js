@@ -2,6 +2,12 @@ import User from "../models/User.js";
 import { CustomError } from "../utils/customErrors.js";
 import Bet from "../models/Bet.js";
 
+const SUPER_ADMIN_EMAIL = "admin@gmail.com";
+
+const isSuperAdminUser = (user) => {
+  if (!user) return false;
+  return user.isSuperAdmin === true || user.email === SUPER_ADMIN_EMAIL;
+};
 
 
 class UserService {
@@ -14,7 +20,7 @@ class UserService {
    * @param {string} adminId - ID of the admin creating the user
    * @returns {Promise<Object>} Created user object
    */
-  async createUserByAdmin(userData, adminId) {
+  async createUserByAdmin(userData, adminUser) {
     try {      const {
         firstName,
         lastName,
@@ -45,6 +51,14 @@ class UserService {
         );
       }
 
+      if (role === 'admin' && !isSuperAdminUser(adminUser)) {
+        throw new CustomError(
+          "User Creation: Only super admin can create admin accounts",
+          403,
+          "UNAUTHORIZED"
+        );
+      }
+
           // Create new user instance
       const user = new User({
         firstName: firstName.trim(),
@@ -55,7 +69,7 @@ class UserService {
         gender,
         role,
         isActive,        
-        createdBy: adminId 
+        createdBy: adminUser?._id 
       });
 
       await user.save();
@@ -110,6 +124,16 @@ class UserService {
           401,
           "INVALID_CREDENTIALS"
         );
+      }
+
+      // Ensure super admin flag is set for the primary admin
+      if (user.email === SUPER_ADMIN_EMAIL && !user.isSuperAdmin) {
+        await User.findByIdAndUpdate(
+          user._id,
+          { isSuperAdmin: true },
+          { runValidators: false }
+        );
+        user.isSuperAdmin = true;
       }
 
       // ✅ FIX: Only check isActive for non-admin users (admins can login even if inactive)
@@ -380,12 +404,19 @@ class UserService {
     try {
       console.log("🔍 UserService.getAllUsers called with options:", options);
       
-      const { page = 1, limit = 10 } = options;
+      const { page = 1, limit = 10, requester = null, createdBy = null } = options;
       const skip = (page - 1) * limit;
+      
+      const query = {};
+      if (requester && requester.role === "admin" && !isSuperAdminUser(requester)) {
+        query.createdBy = requester._id;
+      } else if (requester && requester.role === "admin" && isSuperAdminUser(requester) && createdBy) {
+        query.createdBy = createdBy;
+      }
       
       // Get total count of users
       console.log("📊 Fetching total users count...");
-      const totalUsers = await User.countDocuments();
+      const totalUsers = await User.countDocuments(query);
       console.log("📊 Total users count:", totalUsers);
       
       // Calculate pagination info
@@ -395,7 +426,7 @@ class UserService {
       
       // Get paginated users
       console.log("📊 Fetching users with pagination...");
-      const users = await User.find()
+      const users = await User.find(query)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(parseInt(limit))
@@ -441,7 +472,7 @@ class UserService {
    * @param {string} query - Search query
    * @returns {Promise<Array>} Array of matching users
    */
-  async searchUsers(query) {
+  async searchUsers(query, requester = null) {
     try {
       if (!query || typeof query !== 'string') {
         throw new CustomError(
@@ -449,13 +480,18 @@ class UserService {
           400,
           "VALIDATION_ERROR"
         );
-      }      const users = await User.find({
+      }
+      const searchQuery = {
         $or: [
           { firstName: { $regex: query, $options: 'i' } },
           { lastName: { $regex: query, $options: 'i' } },
           { email: { $regex: query, $options: 'i' } }
         ]
-      })
+      };
+      if (requester && requester.role === "admin" && !isSuperAdminUser(requester)) {
+        searchQuery.createdBy = requester._id;
+      }
+      const users = await User.find(searchQuery)
         .sort({ createdAt: -1 });
 
       return { users };
@@ -478,17 +514,22 @@ class UserService {
    * Get user statistics
    * @returns {Promise<Object>} User statistics
    */
-  async getUserStats() {
+  async getUserStats(requester = null) {
     try {
-      const totalUsers = await User.countDocuments();
-      const activeUsers = await User.countDocuments({ isActive: true });
-      const inactiveUsers = await User.countDocuments({ isActive: false });
-      const adminUsers = await User.countDocuments({ role: "admin" });
+      const query = {};
+      if (requester && requester.role === "admin" && !isSuperAdminUser(requester)) {
+        query.createdBy = requester._id;
+      }
+      const totalUsers = await User.countDocuments(query);
+      const activeUsers = await User.countDocuments({ ...query, isActive: true });
+      const inactiveUsers = await User.countDocuments({ ...query, isActive: false });
+      const adminUsers = await User.countDocuments({ ...query, role: "admin" });
 
       // Get users registered in the last 30 days
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const recentUsers = await User.countDocuments({
+        ...query,
         createdAt: { $gte: thirtyDaysAgo },
       });
 

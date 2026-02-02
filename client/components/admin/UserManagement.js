@@ -74,6 +74,7 @@ import {
   clearMessage,
   resetErrorState,
 } from "@/lib/features/admin/adminUserSlice";
+import { selectUser } from "@/lib/features/auth/authSlice";
 import CreateUserDialog from "./CreateUserDialog";
 import TransactionDialog from "./TransactionDialog";
 import { useRouter } from "next/navigation";
@@ -86,6 +87,8 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
   const loading = useSelector(selectIsLoading);
   const error = useSelector(selectError);
   const message = useSelector(selectMessage);
+  const currentUser = useSelector(selectUser);
+  const isSuperAdmin = currentUser?.isSuperAdmin || currentUser?.email === "admin@gmail.com";
 
   // State
   const [showCreateUserDialog, setShowCreateUserDialog] = useState(false);
@@ -93,6 +96,7 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
   const [userToDelete, setUserToDelete] = useState(null);
   const [localSearch, setLocalSearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
+  const [selectedAdminFilter, setSelectedAdminFilter] = useState(null);
 
   // Add new state for transaction dialog
   const [showTransactionDialog, setShowTransactionDialog] = useState(false);
@@ -108,11 +112,19 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
     };
   }, [dispatch]);
 
+  const fetchUsersPage = (page, limit, createdByOverride = null) => {
+    return dispatch(fetchUsers({
+      page,
+      limit,
+      createdBy: createdByOverride ?? (selectedAdminFilter?._id || null)
+    }));
+  };
+
   // Initial load
   useEffect(() => {
     dispatch(resetErrorState());
 
-    dispatch(fetchUsers({ page: 1, limit: pageSize }))
+    fetchUsersPage(1, pageSize)
       .unwrap()
       .then(() => {
         dispatch(resetErrorState());
@@ -138,7 +150,7 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
         // No need to make an API call
       } else {
         // If we don't have users yet, fetch them first
-        dispatch(fetchUsers({ page: 1, limit: 50 }))
+      fetchUsersPage(1, 50)
           .unwrap()
           .then(() => dispatch(resetErrorState()))
           .catch(() => setTimeout(() => dispatch(resetErrorState()), 100));
@@ -149,7 +161,7 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
       setLocalSearch("");
 
       // Fetch first page of users when search is cleared
-      dispatch(fetchUsers({ page: 1, limit: 10 }))
+      fetchUsersPage(1, 10)
         .unwrap()
         .then(() => dispatch(resetErrorState()))
         .catch(() => setTimeout(() => dispatch(resetErrorState()), 100));
@@ -172,11 +184,23 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
         await dispatch(deleteUser(userToDelete._id)).unwrap();
         setDeleteDialogOpen(false);
         setUserToDelete(null);
-        dispatch(fetchUsers({ page: 1, limit: 10 }));
+        fetchUsersPage(1, 10);
       } catch (error) {
         setTimeout(() => dispatch(resetErrorState()), 100);
       }
     }
+  };
+
+  const handleAdminRowClick = (user, event) => {
+    if (!isSuperAdmin) return;
+    if (event?.target?.closest("button") || event?.target?.closest("[data-no-row-click]")) return;
+    if (user.role !== "admin") return;
+    setSelectedAdminFilter(user);
+    dispatch(resetErrorState());
+    fetchUsersPage(1, pageSize, user._id)
+      .unwrap()
+      .then(() => dispatch(resetErrorState()))
+      .catch(() => setTimeout(() => dispatch(resetErrorState()), 100));
   };
 
   const cancelDeleteUser = () => {
@@ -269,6 +293,27 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
       {/* Users Table */}
       <Card className="rounded-none shadow-none px-2 py-2 gap-0">
         <CardContent className="p-1">
+          {selectedAdminFilter && (
+            <div className="mb-3 flex items-center justify-between rounded border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+              <span>
+                Showing users created by: <span className="font-semibold">{selectedAdminFilter.email}</span>
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSelectedAdminFilter(null);
+                  dispatch(resetErrorState());
+                  fetchUsersPage(1, pageSize)
+                    .unwrap()
+                    .then(() => dispatch(resetErrorState()))
+                    .catch(() => setTimeout(() => dispatch(resetErrorState()), 100));
+                }}
+              >
+                Clear filter
+              </Button>
+            </div>
+          )}
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -328,7 +373,11 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
                   </TableRow>
                 ) : (
                   filteredUsers.map((user) => (
-                    <TableRow key={user._id} className="hover:bg-gray-50 text-[13px]">
+                    <TableRow
+                      key={user._id}
+                      className={`hover:bg-gray-50 text-[13px] ${user.role === "admin" && isSuperAdmin ? "cursor-pointer" : ""}`}
+                      onClick={user.role === "admin" && isSuperAdmin ? (event) => handleAdminRowClick(user, event) : undefined}
+                    >
                       <TableCell className="font-medium">
                         {user.firstName} {user.lastName}
                       </TableCell>
@@ -347,7 +396,7 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
                           {user.role}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right" data-no-row-click>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -408,7 +457,7 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
                     const newSize = Number(value);
                     setPageSize(newSize);
                     dispatch(resetErrorState());
-                    dispatch(fetchUsers({ page: 1, limit: newSize }))
+                    fetchUsersPage(1, newSize)
                       .unwrap()
                       .then(() => dispatch(resetErrorState()))
                       .catch(() => {
@@ -437,7 +486,7 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
                 className="h-8 w-8"
                 onClick={() => {
                   dispatch(resetErrorState());
-                  dispatch(fetchUsers({ page: (pagination?.currentPage || 1) - 1, limit: 10 }))
+                  fetchUsersPage((pagination?.currentPage || 1) - 1, 10)
                     .unwrap()
                     .then(() => dispatch(resetErrorState()))
                     .catch(() => {
@@ -473,7 +522,7 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
                       className="h-8 w-8 mx-0.5"
                       onClick={() => {
                         dispatch(resetErrorState());
-                        dispatch(fetchUsers({ page: pageNum, limit: 10 }))
+                        fetchUsersPage(pageNum, 10)
                           .unwrap()
                           .then(() => dispatch(resetErrorState()))
                           .catch(() => {
@@ -493,7 +542,7 @@ export default function UserManagement({ searchQuery = "", statusFilter = "all",
                 className="h-8 w-8"
                 onClick={() => {
                   dispatch(resetErrorState());
-                  dispatch(fetchUsers({ page: (pagination?.currentPage || 1) + 1, limit: 10 }))
+                  fetchUsersPage((pagination?.currentPage || 1) + 1, 10)
                     .unwrap()
                     .then(() => dispatch(resetErrorState()))
                     .catch(() => {

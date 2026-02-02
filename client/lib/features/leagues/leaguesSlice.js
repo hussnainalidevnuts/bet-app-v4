@@ -173,6 +173,66 @@ export const fetchMatchesByLeague = createAsyncThunk(
   }
 );
 
+// Silent update for polling: same as fetchMatchesByLeague but does not set matchesLoading (no spinner)
+export const silentUpdateMatchesByLeague = createAsyncThunk(
+  "leagues/silentUpdateMatchesByLeague",
+  async (leagueId, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.get(`/v2/breadcrumbs/${leagueId}`);
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch breadcrumbs');
+      }
+      const { league, matches } = response.data.data;
+      const transformedMatches = [];
+      if (matches.layout && matches.layout.sections) {
+        const mainSection = matches.layout.sections.find(section => section.position === 'MAIN');
+        if (mainSection && mainSection.widgets && mainSection.widgets.length > 0) {
+          const tournamentWidget = mainSection.widgets.find(widget => widget.widgetType === 'TOURNAMENT');
+          if (tournamentWidget && tournamentWidget.matches && tournamentWidget.matches.events) {
+            tournamentWidget.matches.events.forEach(matchData => {
+              const event = matchData.event;
+              transformedMatches.push({
+                id: event.id,
+                name: event.name,
+                englishName: event.englishName,
+                homeName: event.homeName,
+                awayName: event.awayName,
+                start: event.start,
+                state: event.state,
+                sport: event.sport,
+                groupId: event.groupId,
+                group: event.group,
+                participants: event.participants,
+                betOffers: matchData.betOffers,
+                mainBetOffer: matchData.mainBetOffer
+              });
+            });
+          }
+        }
+      }
+      let leagueName = 'Football';
+      if (transformedMatches.length > 0 && transformedMatches[0].group) {
+        leagueName = transformedMatches[0].group;
+      }
+      return {
+        league: {
+          id: league.id,
+          url: league.url,
+          name: leagueName,
+          imageUrl: getFotmobLogoByUnibetId(league.id) || null
+        },
+        matches: transformedMatches
+      };
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch breadcrumbs"
+      );
+    }
+  }
+);
+
 const leaguesSlice = createSlice({
   name: "leagues",
   initialState: {
@@ -262,6 +322,17 @@ const leaguesSlice = createSlice({
       .addCase(fetchMatchesByLeague.rejected, (state, action) => {
         state.matchesLoading = false;
         state.matchesError = action.payload;
+      })
+      // Silent update (polling): update data without setting loading
+      .addCase(silentUpdateMatchesByLeague.fulfilled, (state, action) => {
+        if (action.payload && action.payload.league && action.payload.matches) {
+          const { league, matches } = action.payload;
+          state.matchesByLeague[league.id] = { matches, league };
+        }
+      })
+      .addCase(silentUpdateMatchesByLeague.rejected, (state, action) => {
+        // Keep existing data on error; don't set matchesLoading or matchesError
+        console.warn('Silent league matches update failed:', action.payload);
       });
   },
 });

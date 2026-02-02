@@ -51,6 +51,7 @@ export const MarketCodes = {
     PLAYER_RED_CARD: 'PLAYER_RED_CARD',
     TEAM_RED_CARD: 'TEAM_RED_CARD',
     FIRST_GOAL_SCORER: 'FIRST_GOAL_SCORER',
+    SCORER_OF_GOAL_X: 'SCORER_OF_GOAL_X', // Scorer of Goal (2), (3), etc. - who scored the Nth goal
     GOALKEEPER_SAVES: 'GOALKEEPER_SAVES',
     GOALKEEPER_SAVES_TOTAL: 'GOALKEEPER_SAVES_TOTAL',
     PLAYER_ASSIST: 'PLAYER_ASSIST',
@@ -130,6 +131,17 @@ export const MARKET_REGISTRY = [
             const crit = norm.criterionLower;
             // Match "First Goal Scorer" markets (more specific, check first)
             return n.includes('first goal scorer') || crit.includes('first goal scorer');
+        }
+    },
+    {
+        code: MarketCodes.SCORER_OF_GOAL_X,
+        priority: 106,
+        match: (bet, norm) => {
+            const n = norm.marketNameLower;
+            const crit = norm.criterionLower;
+            // Match "Scorer of Goal (2)", "Scorer of Goal (3)", etc. - NOT "First Goal Scorer" or "own goal" markets
+            const hasScorerOfGoalX = /scorer of goal\s*\(\s*\d+\s*\)/.test(n) || /scorer of goal\s*\(\s*\d+\s*\)/.test(crit);
+            return hasScorerOfGoalX;
         }
     },
     {
@@ -582,6 +594,8 @@ export const MARKET_REGISTRY = [
         match: (bet, norm) => {
             const n = norm.marketNameLower;
             const crit = norm.criterionLower;
+            // Exclude "Scorer of Goal (X)" - that market only mentions "own goal" in the rule text
+            if (/scorer of goal\s*\(\s*\d+\s*\)/.test(n) || /scorer of goal\s*\(\s*\d+\s*\)/.test(crit)) return false;
             return (n.includes('own goal') || crit.includes('own goal'));
         }
     },

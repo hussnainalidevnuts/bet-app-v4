@@ -46,31 +46,48 @@ import User from '../models/User.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Helper: get match minute from FotMob event (FotMob uses "time"/"timeStr", not "minute")
+function getEventMatchMinute(event) {
+    if (event.minute !== undefined && event.minute !== null) return Number(event.minute);
+    if (typeof event.time === 'number') return event.time;
+    if (event.timeStr !== undefined && event.timeStr !== null) return Number(event.timeStr);
+    if (event.shotmapEvent?.min !== undefined && event.shotmapEvent?.min !== null) return Number(event.shotmapEvent.min);
+    return null;
+}
+
+// Helper: get match second from event (FotMob may use overloadTime for added time)
+function getEventMatchSecond(event) {
+    if (event.second !== undefined && event.second !== null) return Number(event.second);
+    if (event.overloadTime !== undefined && event.overloadTime !== null) return Number(event.overloadTime);
+    return 0;
+}
+
 // Helper function to get corners in a specific time window
+// FotMob: timeline is in content.matchFacts.events.events; events use "time"/"timeStr", not "minute"
 function getCornersInTimeWindow(matchDetails, team, startMinute, startSecond, endMinute, endSecond) {
-    const events = matchDetails?.header?.events?.events || [];
+    const headerEvents = matchDetails?.header?.events?.events || [];
+    const matchFactsEvents = matchDetails?.content?.matchFacts?.events?.events || [];
+    const events = [...headerEvents, ...matchFactsEvents];
     let cornerCount = 0;
-    
+
     for (const event of events) {
-        if (event.type === 'Corner' && event.minute !== undefined) {
-            const eventMinute = event.minute;
-            const eventSecond = event.second || 0;
-            
-            // Check if event is within time window
-            const eventTime = eventMinute * 60 + eventSecond;
-            const startTime = startMinute * 60 + startSecond;
-            const endTime = endMinute * 60 + endSecond;
-            
-            if (eventTime >= startTime && eventTime <= endTime) {
-                // Check if it's for the correct team
-                const isHomeTeam = event.isHome === true;
-                if ((team === 'home' && isHomeTeam) || (team === 'away' && !isHomeTeam)) {
-                    cornerCount++;
-                }
+        if (event.type !== 'Corner') continue;
+        const eventMinute = getEventMatchMinute(event);
+        if (eventMinute == null) continue;
+
+        const eventSecond = getEventMatchSecond(event);
+        const eventTime = eventMinute * 60 + eventSecond;
+        const startTime = startMinute * 60 + startSecond;
+        const endTime = endMinute * 60 + endSecond;
+
+        if (eventTime >= startTime && eventTime <= endTime) {
+            const isHomeTeam = event.isHome === true;
+            if ((team === 'home' && isHomeTeam) || (team === 'away' && !isHomeTeam)) {
+                cornerCount++;
             }
         }
     }
-    
+
     return cornerCount;
 }
 
@@ -4807,34 +4824,37 @@ class BetOutcomeCalculator {
             console.log(`   - Time window: ${startMinute}:${startSecond.toString().padStart(2, '0')} - ${endMinute}:${endSecond.toString().padStart(2, '0')}`);
             console.log(`   - Adjusted for half: ${adjustedStartMinute}:${startSecond.toString().padStart(2, '0')} - ${adjustedEndMinute}:${endSecond.toString().padStart(2, '0')}`);
             
-            // Find the first corner in the time window
-            const events = matchDetails?.header?.events?.events || [];
+            // Find the first corner in the time window (FotMob: use both events sources + time/timeStr)
+            const headerEvents = matchDetails?.header?.events?.events || [];
+            const matchFactsEvents = matchDetails?.content?.matchFacts?.events?.events || [];
+            const events = [...headerEvents, ...matchFactsEvents];
             let firstCornerInWindow = null;
             let firstCornerTime = null;
-            
+
             for (const event of events) {
-                if (event.type === 'Corner' && event.minute !== undefined) {
-                    const eventMinute = event.minute;
-                    const eventSecond = event.second || 0;
-                    
-                    // Check if event is within time window
-                    const eventTime = eventMinute * 60 + eventSecond;
-                    const startTime = adjustedStartMinute * 60 + startSecond;
-                    const endTime = adjustedEndMinute * 60 + endSecond;
-                    
-                    if (eventTime >= startTime && eventTime <= endTime) {
-                        if (!firstCornerInWindow || eventTime < firstCornerTime) {
-                            firstCornerInWindow = event;
-                            firstCornerTime = eventTime;
-                        }
+                if (event.type !== 'Corner') continue;
+                const eventMinute = getEventMatchMinute(event);
+                if (eventMinute == null) continue;
+
+                const eventSecond = getEventMatchSecond(event);
+                const eventTime = eventMinute * 60 + eventSecond;
+                const startTime = adjustedStartMinute * 60 + startSecond;
+                const endTime = adjustedEndMinute * 60 + endSecond;
+
+                if (eventTime >= startTime && eventTime <= endTime) {
+                    if (!firstCornerInWindow || eventTime < firstCornerTime) {
+                        firstCornerInWindow = event;
+                        firstCornerTime = eventTime;
                     }
                 }
             }
-            
+
             console.log(`   - First corner in window: ${firstCornerInWindow ? 'Found' : 'None'}`);
             if (firstCornerInWindow) {
+                const m = getEventMatchMinute(firstCornerInWindow);
+                const s = getEventMatchSecond(firstCornerInWindow);
                 console.log(`   - First corner team: ${firstCornerInWindow.isHome ? 'Home' : 'Away'}`);
-                console.log(`   - First corner time: ${firstCornerInWindow.minute}:${(firstCornerInWindow.second || 0).toString().padStart(2, '0')}`);
+                console.log(`   - First corner time: ${m}:${String(s).padStart(2, '0')}`);
             }
             
             // Determine actual outcome
@@ -8026,6 +8046,108 @@ class BetOutcomeCalculator {
                 status: won ? 'won' : 'lost',
                 reason: `Team Score From Penalty: ${actualOutcome}`,
                 payout: payout,
+                stake: bet.stake,
+                odds: bet.odds
+            };
+        } else if (marketCode === MarketCodes.SCORER_OF_GOAL_X) {
+            // Scorer of Goal (2), (3), etc. - who scored the Nth goal (not OWN_GOAL market)
+            const marketName = String(bet.marketName || '').toLowerCase();
+            const matchGoalNum = marketName.match(/scorer of goal\s*\(\s*(\d+)\s*\)/);
+            const goalNumber = matchGoalNum ? parseInt(matchGoalNum[1], 10) : null;
+            const selection = String(bet.outcomeLabel || '').toLowerCase();
+            const { homeScore: ftHome, awayScore: ftAway } = getFinalScore(matchDetails);
+            const { homeName, awayName } = getTeamNames(matchDetails);
+
+            console.log(`🎯 SCORER OF GOAL (X) MARKET: goal #${goalNumber}, selection="${selection}"`);
+            console.log(`   - Full Time: ${ftHome}-${ftAway}`);
+            console.log(`   - Teams: ${homeName} vs ${awayName}`);
+
+            if (!goalNumber || goalNumber < 1) {
+                console.log(`   ❌ Could not parse goal number from market name`);
+                return {
+                    status: 'cancelled',
+                    reason: 'Scorer of Goal (X): could not parse goal number from market name',
+                    payout: 0,
+                    stake: bet.stake,
+                    odds: bet.odds
+                };
+            }
+
+            const nthGoalData = getNthGoal(matchDetails, goalNumber);
+            const totalGoals = (getGoalEvents(matchDetails)).length;
+
+            if (selection === 'no goal' || selection === 'no goals') {
+                const noNthGoal = !nthGoalData;
+                const won = noNthGoal;
+                const actualOutcome = noNthGoal ? `No goal (fewer than ${goalNumber} goals)` : `Goal #${goalNumber} was scored`;
+                const payout = won ? bet.stake * bet.odds : 0;
+                console.log(`   - No goal bet: ${actualOutcome} → ${won ? 'WON' : 'LOST'}`);
+                return {
+                    status: won ? 'won' : 'lost',
+                    reason: `Scorer of Goal (${goalNumber}): ${actualOutcome}`,
+                    payout,
+                    stake: bet.stake,
+                    odds: bet.odds
+                };
+            }
+
+            if (!nthGoalData) {
+                console.log(`   - Fewer than ${goalNumber} goals in match (total: ${totalGoals}) → LOST`);
+                return {
+                    status: 'lost',
+                    reason: `Scorer of Goal (${goalNumber}): Only ${totalGoals} goal(s) scored`,
+                    payout: 0,
+                    stake: bet.stake,
+                    odds: bet.odds
+                };
+            }
+
+            const nthGoal = nthGoalData.raw;
+            const nthScorerName = nthGoal.player?.name || nthGoal.nameStr || nthGoal.fullName || '';
+            const nthScorerPlayerId = nthGoal.playerId || nthGoal.player?.id || nthGoal.shotmapEvent?.playerId;
+            const nthGoalMinute = getAbsoluteMinuteFromEvent(nthGoal);
+            console.log(`   - Goal #${goalNumber}: ${nthScorerName} at minute ${nthGoalMinute} (playerId: ${nthScorerPlayerId})`);
+
+            let participantName = bet.participant || bet.playerName || null;
+            if (!participantName) {
+                const outLbl = String(bet.outcomeLabel || bet.outcomeEnglishLabel || '').trim();
+                if (outLbl && !/^no\s*goal/i.test(outLbl)) participantName = outLbl;
+            }
+            if (!participantName) participantName = selection;
+
+            let matchedPlayerId = null;
+            let geminiNoMatch = false;
+            if (participantName) {
+                console.log(`   - Looking up player by name: "${participantName}"`);
+                const result = await findPlayerIdByName(matchDetails, participantName);
+                matchedPlayerId = result?.playerId || null;
+                geminiNoMatch = result?.geminiNoMatch || false;
+                console.log(`   - Found Player ID: ${matchedPlayerId}${geminiNoMatch ? ' (Gemini NO_MATCH)' : ''}`);
+            }
+
+            let won = false;
+            if (matchedPlayerId && nthScorerPlayerId) {
+                won = Number(matchedPlayerId) === Number(nthScorerPlayerId);
+                console.log(`   - Player ID match: ${matchedPlayerId} === ${nthScorerPlayerId} → ${won ? 'WON' : 'LOST'}`);
+            } else if (participantName && nthScorerName) {
+                const nameMatch = nthScorerName.toLowerCase().includes(participantName.toLowerCase()) ||
+                    participantName.toLowerCase().includes(nthScorerName.toLowerCase());
+                won = nameMatch;
+                console.log(`   - Name match (fallback): ${nameMatch} → ${won ? 'WON' : 'LOST'}`);
+            }
+
+            if (geminiNoMatch && !won) {
+                console.log(`   - Gemini NO_MATCH and no name match → LOST`);
+            }
+
+            const payout = won ? bet.stake * bet.odds : 0;
+            const actualOutcome = `Goal #${goalNumber}: ${nthScorerName}`;
+            console.log(`   - Result: ${won ? 'WON' : 'LOST'} - ${actualOutcome}`);
+
+            return {
+                status: won ? 'won' : 'lost',
+                reason: `Scorer of Goal (${goalNumber}): ${actualOutcome}`,
+                payout,
                 stake: bet.stake,
                 odds: bet.odds
             };

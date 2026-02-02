@@ -988,12 +988,18 @@ export class UnibetCalcController {
             console.log(`💾 [processCombinationBetInternal]    - Reason length: ${mainReasonToSave.length} characters`);
             console.log(`💾 [processCombinationBetInternal]    - Legs: ${updatedBet.result.legs} (${updatedBet.result.wonLegs} won, ${updatedBet.result.lostLegs} lost, ${updatedBet.result.canceledLegs} canceled, ${updatedBet.result.pendingLegs} pending)`);
             
+            const stake = Number(bet.stake) || 0;
+            const payout = Number(updatedBet.payout) || 0;
+            const profit = updatedBet.status === 'won' ? (payout - stake) : (updatedBet.status === 'lost' ? -stake : 0);
+            console.log(`💾 [processCombinationBetInternal]    - Profit: ${profit} (${updatedBet.status}: ${updatedBet.status === 'won' ? `payout ${payout} - stake ${stake}` : updatedBet.status === 'lost' ? `-stake ${stake}` : '0'})`);
+            
             const savedBet = await Bet.findByIdAndUpdate(
                 bet._id,
                 { 
                     $set: {
                         status: updatedBet.status,
                         payout: updatedBet.payout,
+                        profit,
                         'result.status': updatedBet.result.status,
                         'result.payout': updatedBet.result.payout,
                         'result.reason': mainReasonToSave,

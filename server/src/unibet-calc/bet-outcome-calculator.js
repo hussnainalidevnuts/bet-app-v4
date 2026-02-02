@@ -2394,6 +2394,7 @@ class BetOutcomeCalculator {
                 reason: `Team Total Goals ${periodLabel} (${isHome ? 'home' : 'away'}) ${selection} ${line}: total=${total} → ${status}`
             };
 
+        /* TIME-WINDOW MARKET commented out – re-enable in market-registry.js and here to support
         } else if (marketCode === MarketCodes.MATCH_TOTAL_GOALS_INTERVAL_OU) {
             // Total Goals in a specific window (e.g., "Total Goals - 30:00-59:59" or "Total Goals by Team - 30:00-59:59")
             const name = (bet.marketName || '').toLowerCase();
@@ -2568,6 +2569,7 @@ class BetOutcomeCalculator {
                 matchId: matchDetails.general?.matchId,
                 reason: `Total Goals ${selection} ${line}: total=${total} → ${status}`
             };
+        } */
         } else if (marketCode === MarketCodes.MATCH_TOTAL_GOALS_1ST_HALF_OU) {
             // Total Goals - 1st Half (Over/Under)
             const halftimeScores = getHalftimeScore(matchDetails);
@@ -4691,6 +4693,7 @@ class BetOutcomeCalculator {
                 reason: `First Goal: ${firstGoalTeamName} at minute ${firstGoalMinute} → ${actualOutcome} (${status})`
             };
 
+        /* TIME-WINDOW: CORNER_OCCURRENCE_TIME_WINDOW commented out
         } else if (marketCode === MarketCodes.CORNER_OCCURRENCE_TIME_WINDOW) {
             // Corner occurrence in specific time window (e.g., 45:00-49:59 - 2nd Half)
             const selection = String(bet.outcomeLabel || bet.outcomeEnglishLabel || '').toLowerCase();
@@ -4785,6 +4788,8 @@ class BetOutcomeCalculator {
                     betSelection: selection
                 }
             };
+        } */
+        /* TIME-WINDOW: FIRST_CORNER_TIME_WINDOW commented out
         } else if (marketCode === MarketCodes.FIRST_CORNER_TIME_WINDOW) {
             // First corner in specific time window (e.g., 45:00-49:59 - 2nd Half)
             const selection = String(bet.outcomeLabel || bet.outcomeEnglishLabel || '');
@@ -4895,6 +4900,8 @@ class BetOutcomeCalculator {
                     betSelection: selection
                 }
             };
+        } */
+        /* TIME-WINDOW: CORNERS_TOTAL_OU_TIME_WINDOW commented out
         } else if (marketCode === MarketCodes.CORNERS_TOTAL_OU_TIME_WINDOW) {
             // Total Corners Over/Under in specific time window (e.g., 50:00-59:59)
             const selection = String(bet.outcomeLabel || bet.outcomeEnglishLabel || '').toLowerCase();
@@ -4975,6 +4982,8 @@ class BetOutcomeCalculator {
                     betSelection: selection
                 }
             };
+        } */
+        /* TIME-WINDOW: CORNERS_MOST_TIME_WINDOW commented out
         } else if (marketCode === MarketCodes.CORNERS_MOST_TIME_WINDOW) {
             // Most Corners in specific time window (e.g., 50:00-59:59)
             const selection = String(bet.outcomeLabel || bet.outcomeEnglishLabel || '').toLowerCase();
@@ -5041,6 +5050,7 @@ class BetOutcomeCalculator {
                     betSelection: selection
                 }
             };
+        } */
         } else if (marketCode === MarketCodes.CORNERS_MOST) {
             // Most Corners: compare team corner counts
             const sel = String(bet.outcomeLabel || '').toLowerCase();

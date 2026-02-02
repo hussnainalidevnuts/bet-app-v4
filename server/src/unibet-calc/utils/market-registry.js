@@ -376,15 +376,15 @@ export const MARKET_REGISTRY = [
                    !norm.hints.hasTimeWindow; // Exclude time window markets
         }
     },
-    {
-        code: MarketCodes.MATCH_TOTAL_GOALS_INTERVAL_OU,
-        priority: 75,
-        match: (bet, norm) => {
-            const name = norm.marketNameLower;
-            // Handle both match totals and team totals with time windows
-            return (name.includes('total goals') || name.includes('goals in')) && norm.hints.hasTimeWindow;
-        }
-    },
+    // TIME-WINDOW MARKET (commented out – re-enable to support Total Goals in specific minute ranges)
+    // {
+    //     code: MarketCodes.MATCH_TOTAL_GOALS_INTERVAL_OU,
+    //     priority: 75,
+    //     match: (bet, norm) => {
+    //         const name = norm.marketNameLower;
+    //         return (name.includes('total goals') || name.includes('goals in')) && norm.hints.hasTimeWindow;
+    //     }
+    // },
     {
         code: MarketCodes.MATCH_TOTAL_GOALS_OU,
         priority: 70,
@@ -428,41 +428,42 @@ export const MARKET_REGISTRY = [
         priority: 50,
         match: (bet, norm) => norm.marketNameLower.includes('first to') && norm.marketNameLower.includes('corners')
     },
-    {
-        code: MarketCodes.CORNERS_MOST_TIME_WINDOW,
-        priority: 60,
-        match: (bet, norm) => {
-            const n = norm.marketNameLower;
-            return n.includes('most corners') && n.includes('-') && norm.hints.hasTimeWindow;
-        }
-    },
-    {
-        code: MarketCodes.CORNERS_TOTAL_OU_TIME_WINDOW,
-        priority: 65,
-        match: (bet, norm) => {
-            const n = norm.marketNameLower;
-            return n.includes('total corners') && n.includes('-') && norm.hints.hasTimeWindow;
-        }
-    },
-    {
-        code: MarketCodes.CORNER_OCCURRENCE_TIME_WINDOW,
-        priority: 70,
-        match: (bet, norm) => {
-            const n = norm.marketNameLower;
-            return n.includes('corner') && n.includes('-') && norm.hints.hasTimeWindow && 
-                   (n.includes('2nd half') || n.includes('1st half') || n.includes('half')) &&
-                   !n.includes('first corner');
-        }
-    },
-    {
-        code: MarketCodes.FIRST_CORNER_TIME_WINDOW,
-        priority: 75,
-        match: (bet, norm) => {
-            const n = norm.marketNameLower;
-            return n.includes('first corner') && n.includes('-') && norm.hints.hasTimeWindow && 
-                   (n.includes('2nd half') || n.includes('1st half') || n.includes('half'));
-        }
-    },
+    // TIME-WINDOW MARKETS (commented out – re-enable to support corners in specific minute ranges)
+    // {
+    //     code: MarketCodes.CORNERS_MOST_TIME_WINDOW,
+    //     priority: 60,
+    //     match: (bet, norm) => {
+    //         const n = norm.marketNameLower;
+    //         return n.includes('most corners') && n.includes('-') && norm.hints.hasTimeWindow;
+    //     }
+    // },
+    // {
+    //     code: MarketCodes.CORNERS_TOTAL_OU_TIME_WINDOW,
+    //     priority: 65,
+    //     match: (bet, norm) => {
+    //         const n = norm.marketNameLower;
+    //         return n.includes('total corners') && n.includes('-') && norm.hints.hasTimeWindow;
+    //     }
+    // },
+    // {
+    //     code: MarketCodes.CORNER_OCCURRENCE_TIME_WINDOW,
+    //     priority: 70,
+    //     match: (bet, norm) => {
+    //         const n = norm.marketNameLower;
+    //         return n.includes('corner') && n.includes('-') && norm.hints.hasTimeWindow &&
+    //                (n.includes('2nd half') || n.includes('1st half') || n.includes('half')) &&
+    //                !n.includes('first corner');
+    //     }
+    // },
+    // {
+    //     code: MarketCodes.FIRST_CORNER_TIME_WINDOW,
+    //     priority: 75,
+    //     match: (bet, norm) => {
+    //         const n = norm.marketNameLower;
+    //         return n.includes('first corner') && n.includes('-') && norm.hints.hasTimeWindow &&
+    //                (n.includes('2nd half') || n.includes('1st half') || n.includes('half'));
+    //     }
+    // },
 
     // Cards
     {
